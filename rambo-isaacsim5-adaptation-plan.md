@@ -1,5 +1,7 @@
 # RAMBO → Isaac Sim 5.1 / Isaac Lab 2.3.2 Migration
 
+The completed implementation sequence, exact acceptance results, and fresh Blackwell host reproduction procedure are recorded in [rambo-isaacsim51-blackwell-runbook.md](rambo-isaacsim51-blackwell-runbook.md).
+
 ## Objective
 
 This migration delivers a reliable **dual-mode playback loop** on RTX 50-series hardware. Quadruped and biped are equal first-class targets: each keeps its own task registration, QP topology, controller semantics, checkpoint, observation schema, and acceptance result. A completed follow-on milestone also restores the quadruped “walk + FL physical button press” loco-manip teleoperation loop without changing that mode's released policy contract.

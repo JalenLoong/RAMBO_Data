@@ -129,7 +129,7 @@ scripts/rambo/run.sh scripts/rambo/validate.py \
   --output-dir /workspace/rambo-validation/biped
 ```
 
-See [rambo-isaacsim5-adaptation-plan.md](rambo-isaacsim5-adaptation-plan.md) for migration scope, checkpoint hashes, and acceptance criteria.
+See [rambo-isaacsim5-adaptation-plan.md](rambo-isaacsim5-adaptation-plan.md) for migration scope and acceptance criteria. For the complete implementation history, exact validated metrics, fresh-Blackwell-host procedure, and troubleshooting guide, use [rambo-isaacsim51-blackwell-runbook.md](rambo-isaacsim51-blackwell-runbook.md).
 
 ## Quadruped loco-manip teleoperation
 
