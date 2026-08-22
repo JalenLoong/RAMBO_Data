@@ -2,7 +2,7 @@
 
 ## Objective
 
-This migration delivers a reliable **dual-mode playback loop** on RTX 50-series hardware. Quadruped and biped are equal first-class targets: each keeps its own task registration, QP topology, controller semantics, checkpoint, observation schema, and acceptance result.
+This migration delivers a reliable **dual-mode playback loop** on RTX 50-series hardware. Quadruped and biped are equal first-class targets: each keeps its own task registration, QP topology, controller semantics, checkpoint, observation schema, and acceptance result. A completed follow-on milestone also restores the quadruped “walk + FL physical button press” loco-manip teleoperation loop without changing that mode's released policy contract.
 
 The first milestone is complete only when both tasks load their original checkpoints, run a deterministic 30-second rollout, and produce clean GUI and offscreen RGB on the following runtime:
 
@@ -23,14 +23,16 @@ In scope:
 
 - `Isaac-RAMBO-Quadruped-Go2-v0`: 405-dimensional observation and 18-dimensional action.
 - `Isaac-RAMBO-Biped-Go2-v0`: 435-dimensional observation and 18-dimensional action.
+- `Isaac-RAMBO-Quadruped-Button-Go2-v0`: the unchanged quadruped 405/18 policy plus task-side base/FL commands and physical button telemetry.
 - Existing pretrained checkpoint playback, QP/actuator compatibility, a native front RGB camera for both modes, and GUI/offscreen rendering validation.
+- Quadruped keyboard teleoperation for base walking and FL Cartesian motion, with a native USD spring-loaded button, press latch, release detection, and deterministic combined smoke test.
 - A standalone RAMBO external extension installed over the official Isaac Lab pip distribution.
 
 Out of scope for this milestone:
 
 - WAM/LingBot-VA integration, 15-dimensional high-level actions, three-camera contracts, synchronized trajectory datasets, and data synthesis.
 - Training, logger/video restoration, checkpoint resume, and policy retraining.
-- Button, Manipulator, teleoperation, and the legacy trajectory recorder. They are preserved but not ported.
+- WAM/arm Manipulator tasks, their teleoperation paths, and the legacy trajectory recorder. They remain preserved but are not ported.
 - Legacy 4.5-vs-5.1 numerical parity. The old Torch 2.5.1 CUDA 12.4 stack cannot execute qpth on RTX 5080 (`sm_120`), so it is historical evidence rather than a test gate.
 
 ## Baseline and Git preservation
@@ -109,14 +111,19 @@ The loader uses `map_location` and explicit `weights_only=False` only after veri
 | Mode | Expected checkpoint | SHA256 | Observation / action |
 | --- | --- | --- | --- |
 | Quadruped | `model_2000.pt` | `1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706` | 405 / 18 |
+| Quadruped Button loco-manip | `model_2000.pt` | `1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706` | 405 / 18 |
 | Biped | `model_4000.pt` | `c16e64bf1ca2dc16878c386b742cd303e65040f52e8744cd0c96c540c595b2a6` | 435 / 18 |
 
 The public runner interface is common to both modes:
 
 ```bash
-python scripts/rambo/play.py --task <task-id> --checkpoint <path>
-python scripts/rambo/validate.py --task <task-id> --checkpoint <path> \
+scripts/rambo/run.sh scripts/rambo/play.py --task <task-id> --checkpoint <path>
+scripts/rambo/run.sh scripts/rambo/validate.py --task <task-id> --checkpoint <path> \
   --steps 3000 --enable_cameras --output-dir <directory>
+scripts/rambo/run.sh scripts/rambo/teleop_loco_manip.py \
+  --checkpoint <quadruped-model_2000.pt>
+scripts/rambo/run.sh scripts/rambo/teleop_loco_manip.py --headless --smoke-loco-manip \
+  --checkpoint <quadruped-model_2000.pt>
 ```
 
 Validation uses `seed=42`, one environment, disabled observation noise/domain randomization/random initial state/random episode progress, and a temporary 31-second episode limit. Quadruped uses its zero gait-phase offset. Biped uses the target-runtime/checkpoint-validated fixed `contact_phase_offset_s=19.6`: it advances only the contact/gait clock, not `episode_length_buf`, so it is neither randomized progress nor a warm-up and leaves the full 31-second budget intact. The copied biped contact sequence is extended to cover `19.6 + 31` seconds. Each mode owns one base-mounted front camera at 640×480 with a 0.08-second update period; only a new timestamped frame is consumed. Because the biped base is pitched -90 degrees, its camera uses transformed parent-frame position and rotation offsets so the lens sits in front of, rather than looks into, the chassis.
@@ -128,5 +135,6 @@ Validation uses `seed=42`, one environment, disabled observation noise/domain ra
 3. Each task registers, creates, resets, and accepts zero/scripted actions. Tests cover task registration, controller mapping, delay/saturation, CRL2 wrapper dimensions, and checkpoint metadata for both modes.
 4. Each checkpoint completes 3,000 control steps without early termination/truncation, NaN/Inf in observations/actions/QP values/GRFs/targets/torques, or torque beyond the actuator limits. The native safety gates are height/orientation ≥ 0.1 m / ≤ 0.75 rad for quadruped and ≥ 0.3 m / ≤ 0.8 rad for biped.
 5. Each validation writes 375 fresh RGB frames with timestamps and `summary.json`. Automatic checks reject black, fixed, malformed, or missing frames; a contact sheet/video from both GUI and offscreen output receives a final no-snow/no-corruption visual check.
+6. The quadruped Button task loads the same verified 405/18 checkpoint, initializes its 5.1 GUI keyboard device, and completes a single-session deterministic gate: measurable base walking, FL manipulator transition, at least 12 mm of physical button travel for five control steps, foot retraction, and spring return below 2 mm without an environment reset. On the validation host it walked 0.524 m, reached 16.8 mm button travel, returned to 0 mm, and reported `LOCO_MANIP_SMOKE_LOCO_MANIP_SUCCESS`.
 
 Only after these gates pass may later work reconnect WAM/data generation, port training, or delete the vendored Isaac Lab source.

@@ -13,22 +13,24 @@ from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg  # noqa: 
 from rambo.validation.checkpoints import contract_for_task  # noqa: E402
 
 
-def test_registry_helper_resolves_rambo_yaml_for_each_mode_without_isaaclab_tasks() -> None:
-    """Both modes keep their own registered CRL2 configuration entry points."""
+def test_registry_helper_resolves_rambo_yaml_for_each_task_without_isaaclab_tasks() -> None:
+    """Both modes and the quadruped loco-manip task use RAMBO-owned entry points."""
 
     import rambo.tasks  # noqa: F401 - registration is the behavior under test.
 
     expected = {
-        "Isaac-RAMBO-Quadruped-Go2-v0": ("rambo_quadruped", 405, 18),
-        "Isaac-RAMBO-Biped-Go2-v0": ("rambo_biped", 435, 18),
+        "Isaac-RAMBO-Quadruped-Go2-v0": ("rambo_quadruped.qp_env:QPEnv", 405, 18),
+        "Isaac-RAMBO-Quadruped-Button-Go2-v0": (
+            "rambo_quadruped.button_env:ButtonQPEnv",
+            405,
+            18,
+        ),
+        "Isaac-RAMBO-Biped-Go2-v0": ("rambo_biped.qp_env:QPEnv", 435, 18),
     }
-    for task, (mode_module, observation_dim, action_dim) in expected.items():
+    for task, (entry_point, observation_dim, action_dim) in expected.items():
         spec = gym.spec(task)
-        assert spec.entry_point.endswith(".qp_env:QPEnv")
-        assert (
-            f"rambo.tasks.direct.{mode_module}.qp_env:QPEnvCfg"
-            == spec.kwargs["env_cfg_entry_point"]
-        )
+        assert spec.entry_point.endswith(entry_point)
+        assert spec.kwargs["env_cfg_entry_point"].startswith("rambo.tasks.direct.")
         cfg = load_cfg_from_registry(task, "crl2_cfg_entry_point")
         assert isinstance(cfg, dict)
         assert cfg["general"]["num_envs"] > 0
@@ -65,7 +67,11 @@ def test_runtime_scripts_and_tasks_do_not_depend_on_vendored_isaaclab_tasks() ->
     """External-extension runners retain only the official asset dependency."""
 
     repository_root = Path(__file__).resolve().parents[2]
-    for relative_path in ("scripts/rambo/play.py", "scripts/rambo/validate.py"):
+    for relative_path in (
+        "scripts/rambo/play.py",
+        "scripts/rambo/validate.py",
+        "scripts/rambo/teleop_loco_manip.py",
+    ):
         assert "isaaclab_tasks" not in (repository_root / relative_path).read_text(encoding="utf-8")
     for relative_path in (
         "source/rambo/rambo/tasks/direct/rambo_quadruped/qp_env.py",
@@ -74,3 +80,7 @@ def test_runtime_scripts_and_tasks_do_not_depend_on_vendored_isaaclab_tasks() ->
         contents = (repository_root / relative_path).read_text(encoding="utf-8")
         assert "from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG" in contents
         assert "from isaaclab_assets import UNITREE_GO2_CFG" not in contents
+    button_contents = (
+        repository_root / "source/rambo/rambo/tasks/direct/rambo_quadruped/button_env.py"
+    ).read_text(encoding="utf-8")
+    assert "isaaclab_tasks" not in button_contents

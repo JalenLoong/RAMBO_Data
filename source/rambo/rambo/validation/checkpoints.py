@@ -60,6 +60,18 @@ CHECKPOINT_CONTRACTS: Final[dict[str, CheckpointContract]] = {
         gravity_target=(-1.0, 0.0, 0.0),
         max_orientation_error=0.8,
     ),
+    "Isaac-RAMBO-Quadruped-Button-Go2-v0": CheckpointContract(
+        task="Isaac-RAMBO-Quadruped-Button-Go2-v0",
+        mode="quadruped_loco_manip",
+        sha256="1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706",
+        observation_dim=405,
+        action_dim=18,
+        iteration=2000,
+        normalizer_count=100003840,
+        min_base_height=0.1,
+        gravity_target=(0.0, 0.0, -1.0),
+        max_orientation_error=0.75,
+    ),
 }
 
 

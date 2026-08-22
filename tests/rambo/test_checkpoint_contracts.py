@@ -50,10 +50,17 @@ def test_released_checkpoint_matches_its_dual_mode_contract(task: str, relative_
 
 def test_contracts_keep_both_modes_as_explicit_first_class_entries() -> None:
     quadruped = contract_for_task("Isaac-RAMBO-Quadruped-Go2-v0")
+    loco_manip = contract_for_task("Isaac-RAMBO-Quadruped-Button-Go2-v0")
     biped = contract_for_task("Isaac-RAMBO-Biped-Go2-v0")
 
-    assert set(CHECKPOINT_CONTRACTS) == {quadruped.task, biped.task}
+    assert set(CHECKPOINT_CONTRACTS) == {quadruped.task, loco_manip.task, biped.task}
     assert (quadruped.mode, quadruped.observation_dim, quadruped.action_dim) == ("quadruped", 405, 18)
+    assert (loco_manip.mode, loco_manip.observation_dim, loco_manip.action_dim) == (
+        "quadruped_loco_manip",
+        405,
+        18,
+    )
+    assert loco_manip.sha256 == quadruped.sha256
     assert (biped.mode, biped.observation_dim, biped.action_dim) == ("biped", 435, 18)
     assert quadruped.sha256 != biped.sha256
 

@@ -16,14 +16,15 @@ Accepted to IEEE Robotics and Automation Letters (RA-L) 2025.
 
 ## Current milestone
 
-This branch targets Isaac Sim 5.1 / Isaac Lab 2.3.2 on Linux for **checkpoint playback and rendering only**. It supports the two RAMBO modes as separate first-class tasks:
+This branch targets Isaac Sim 5.1 / Isaac Lab 2.3.2 on Linux. It supports the two RAMBO modes as separate first-class tasks and a quadruped FL loco-manipulation derivative:
 
 - `Isaac-RAMBO-Quadruped-Go2-v0`
 - `Isaac-RAMBO-Biped-Go2-v0`
+- `Isaac-RAMBO-Quadruped-Button-Go2-v0`
 
-The milestone validates original checkpoints, QP/controller execution, a 30-second deterministic rollout, and clean GUI/offscreen RGB for both modes. Training, WAM integration, 15-D high-level actions, trajectory data generation, Button/Manipulator tasks, and teleoperation remain outside this migration milestone. The Isaac Sim 4.5 experiments are preserved at `legacy-isaacsim-4.5-local`; do not use that Python 3.10 runtime for this branch.
+The dual-mode milestone validates original checkpoints, QP/controller execution, a 30-second deterministic rollout, and clean GUI/offscreen RGB for quadruped and biped. The follow-on loco-manipulation port reuses the original 405/18 quadruped checkpoint and restores keyboard-controlled walking plus FL Cartesian control against a physical spring-loaded button. Training, WAM integration, 15-D high-level actions, trajectory data generation, and policy retraining remain outside the current scope. The Isaac Sim 4.5 experiments are preserved at `legacy-isaacsim-4.5-local`; do not use that Python 3.10 runtime for this branch.
 
-The supported entry points on this branch are `scripts/setup_isaacsim51.sh` and `scripts/rambo/{play,validate,smoke}.py`. Historical `isaaclab.sh`, `apps/`, `scripts/environments/`, and `scripts/reinforcement_learning/` remain only as legacy references and are intentionally unsupported after the vendored Isaac Lab packages were removed; use the legacy tag for those workflows.
+The supported entry points on this branch are `scripts/setup_isaacsim51.sh` and `scripts/rambo/{play,validate,smoke,teleop_loco_manip}.py`. Historical `isaaclab.sh`, `apps/`, `scripts/environments/`, and `scripts/reinforcement_learning/` remain only as legacy references and are intentionally unsupported after the vendored Isaac Lab packages were removed; use the legacy tag for those workflows.
 
 ## Runtime requirements
 
@@ -129,6 +130,29 @@ scripts/rambo/run.sh scripts/rambo/validate.py \
 ```
 
 See [rambo-isaacsim5-adaptation-plan.md](rambo-isaacsim5-adaptation-plan.md) for migration scope, checkpoint hashes, and acceptance criteria.
+
+## Quadruped loco-manip teleoperation
+
+The Button task preserves the original 405-observation/18-action policy contract. Base velocity and the FL Cartesian target remain task-side commands; button displacement and success are telemetry and do not change the checkpoint network.
+
+Launch the interactive Isaac Sim 5.1 viewport with:
+
+```bash
+scripts/rambo/run.sh scripts/rambo/teleop_loco_manip.py \
+  --checkpoint /workspace/rambo/logs/crl2/rambo_quadruped/hf_quadruped/model_2000.pt
+```
+
+Click the viewport before typing. Arrow keys or numpad 8/2/4/6 command base translation, `Z`/`X` command yaw, `W`/`S` move FL forward/back, `A`/`D` move FL laterally, and `R`/`F` move FL up/down. `Space` or `L` stops the base. A successful five-step press latches the green status marker; retract the foot and press `C` to clear it.
+
+The combined headless gate performs the complete sequence in one environment: walk to the wall, stop, raise FL, press beyond 12 mm, hold, retract, and verify spring return below 2 mm.
+
+```bash
+scripts/rambo/run.sh scripts/rambo/teleop_loco_manip.py --headless \
+  --smoke-loco-manip \
+  --checkpoint /workspace/rambo/logs/crl2/rambo_quadruped/hf_quadruped/model_2000.pt
+```
+
+For isolated diagnosis, replace `--smoke-loco-manip` with `--smoke-walk` or `--smoke-press`.
 
 ## Citation
 

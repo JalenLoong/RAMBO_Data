@@ -16,3 +16,13 @@ gym.register(
         "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml",
     },
 )
+
+gym.register(
+    id="Isaac-RAMBO-Quadruped-Button-Go2-v0",
+    entry_point=f"{__name__}.button_env:ButtonQPEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.button_env:ButtonQPEnvCfg",
+        "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml",
+    },
+)
