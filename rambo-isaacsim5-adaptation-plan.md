@@ -44,7 +44,7 @@ branch: codex/legacy-isaacsim-4.5-local
 tag:    legacy-isaacsim-4.5-local
 ```
 
-The migration proceeds on `new_IsaacSim_IsaacLab`. Checkpoints, datasets, logs, and validation images stay outside Git. Do not modify the legacy Python 3.10 environment. Vendored `source/isaaclab*` remains available during the port and is removed from the adaptation branch only after both modes pass all gates.
+The migration proceeds on `new_IsaacSim_IsaacLab`. Checkpoints, datasets, logs, and validation images stay outside Git. Do not modify the legacy Python 3.10 environment. After both modes passed the acceptance gates, vendored `source/isaaclab*` was removed from the adaptation branch; use `legacy-isaacsim-4.5-local` for the recoverable 4.5 source snapshot.
 
 ## Runtime and package layout
 

@@ -23,6 +23,8 @@ This branch targets Isaac Sim 5.1 / Isaac Lab 2.3.2 on Linux for **checkpoint pl
 
 The milestone validates original checkpoints, QP/controller execution, a 30-second deterministic rollout, and clean GUI/offscreen RGB for both modes. Training, WAM integration, 15-D high-level actions, trajectory data generation, Button/Manipulator tasks, and teleoperation remain outside this migration milestone. The Isaac Sim 4.5 experiments are preserved at `legacy-isaacsim-4.5-local`; do not use that Python 3.10 runtime for this branch.
 
+The supported entry points on this branch are `scripts/setup_isaacsim51.sh` and `scripts/rambo/{play,validate,smoke}.py`. Historical `isaaclab.sh`, `apps/`, `scripts/environments/`, and `scripts/reinforcement_learning/` remain only as legacy references and are intentionally unsupported after the vendored Isaac Lab packages were removed; use the legacy tag for those workflows.
+
 ## Runtime requirements
 
 - Ubuntu 22.04 x86_64, Python 3.11, and at least 16 GB GPU VRAM.
