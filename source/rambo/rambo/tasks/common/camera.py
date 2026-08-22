@@ -11,6 +11,12 @@ from typing import Any
 # 375 RGB frames, rather than relying on a floating-point sensor clock.
 FRONT_RGB_UPDATE_PERIOD_S = 0.08
 
+# The Go2 base is rotated -90 degrees around Y in the biped task.  These
+# parent-frame offsets keep the physical camera at (+0.30, 0, +0.08) in the
+# initial world frame and pointing along world +X, clear of the chassis.
+UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS = (0.08, 0.0, -0.30)
+UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT = (math.sqrt(0.5), 0.0, math.sqrt(0.5), 0.0)
+
 
 def camera_update_interval_steps(update_period_s: float, physics_timestep_s: float) -> int:
     """Return the exact integer physics cadence for a RAMBO camera.
@@ -163,14 +169,15 @@ def make_front_rgb_camera_cfg(
     width: int = 640,
     height: int = 480,
     update_period: float = FRONT_RGB_UPDATE_PERIOD_S,
+    offset_pos: tuple[float, float, float] = (0.30, 0.0, 0.08),
     offset_rot: tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0),
 ) -> Any:
     """Create RAMBO's shared base-mounted front RGB camera configuration.
 
-    ``offset_rot`` is expressed in Isaac Lab's ``world`` camera convention,
-    but remains relative to the base prim.  The biped task pitches the Go2
-    base by 90 degrees to stand it upright, so it supplies a different local
-    rotation while retaining the same physical camera contract.
+    Both offsets remain relative to the base prim. ``offset_rot`` uses Isaac
+    Lab's ``world`` camera convention. The biped task pitches the Go2 base by
+    90 degrees to stand it upright, so it supplies transformed local position
+    and rotation offsets to keep the physical camera in front of the chassis.
     """
 
     try:
@@ -186,7 +193,7 @@ def make_front_rgb_camera_cfg(
     return CameraCfg(
         prim_path=prim_path,
         update_period=update_period,
-        offset=CameraCfg.OffsetCfg(pos=(0.30, 0.0, 0.08), rot=offset_rot, convention="world"),
+        offset=CameraCfg.OffsetCfg(pos=offset_pos, rot=offset_rot, convention="world"),
         data_types=["rgb"],
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=18.0,

@@ -19,6 +19,8 @@ from rambo.actuators.go2 import (  # noqa: E402
 )
 from rambo.validation.rollout import RgbFrameRecorder, configure_validation_cfg  # noqa: E402
 from rambo.tasks.common.camera import (  # noqa: E402
+    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS,
+    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT,
     advance_camera_cadence,
     camera_update_interval_steps,
     make_front_rgb_camera_cfg,
@@ -79,6 +81,16 @@ def test_front_camera_integer_cadence_is_exact_for_the_full_acceptance_rollout()
     assert len(due_physics_steps) == 375
     assert due_physics_steps[:3] == [40, 80, 120]
     assert due_physics_steps[-1] == 15_000
+
+
+def test_biped_camera_mount_is_transformed_with_the_upright_base() -> None:
+    """The biped mount must remain in front of, not inside, the rotated chassis."""
+
+    # The biped base is pitched -90 degrees around parent-frame Y.  Its local
+    # (0.08, 0, -0.30) mount therefore resolves to world (0.30, 0, 0.08).
+    pitch_minus_90 = np.array(((0.0, 0.0, -1.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0)))
+    np.testing.assert_allclose(pitch_minus_90 @ UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS, (0.30, 0.0, 0.08))
+    np.testing.assert_allclose(UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT, (np.sqrt(0.5), 0.0, np.sqrt(0.5), 0.0))
 
 
 def test_validation_config_removes_all_randomization_without_mutating_source_sequence() -> None:

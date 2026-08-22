@@ -22,7 +22,12 @@ import isaaclab.envs.mdp as mdp
 
 from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG
 from rambo.actuators import make_go2_delayed_dc_motor_cfgs
-from rambo.tasks.common.camera import create_front_rgb_camera, make_front_rgb_camera_cfg
+from rambo.tasks.common.camera import (
+    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS,
+    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT,
+    create_front_rgb_camera,
+    make_front_rgb_camera_cfg,
+)
 from rambo.utils import math as rambo_math
 from rambo.utils.articulation import (
     GO2_CALF_BODY_NAMES,
@@ -446,12 +451,14 @@ class QPEnvCfg(DirectRLEnvCfg):
     contact_sensor: ContactSensorCfg = ContactSensorCfg(
         prim_path="/World/envs/env_.*/Robot/.*", history_length=3, update_period=0.005, track_air_time=True
     )
-    # The biped's Go2 base is pitched -90 degrees to stand upright.  Rotate
-    # the camera +90 degrees in its parent frame so its world-convention +X
-    # forward axis remains horizontal rather than looking into the sky.
+    # The biped's Go2 base is pitched -90 degrees to stand upright.  Transform
+    # both camera offsets into that parent frame: the mount resolves to +0.30
+    # m forward and +0.08 m up in the initial world frame.  Transforming only
+    # rotation would leave the camera behind the chassis looking into its base.
     enable_rgb_camera = False
     front_camera = make_front_rgb_camera_cfg(
-        offset_rot=(np.sqrt(2) / 2, 0.0, np.sqrt(2) / 2, 0.0),
+        offset_pos=UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS,
+        offset_rot=UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT,
     )
     # Isaac Lab 2.3.2 refreshes RTX sensors this many times after a reset.
     num_rerenders_on_reset = 1

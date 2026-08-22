@@ -119,7 +119,7 @@ python scripts/rambo/validate.py --task <task-id> --checkpoint <path> \
   --steps 3000 --enable_cameras --output-dir <directory>
 ```
 
-Validation uses `seed=42`, one environment, disabled observation noise/domain randomization/random initial state/random episode progress, and a temporary 31-second episode limit. Quadruped uses its zero gait-phase offset. Biped uses the target-runtime/checkpoint-validated fixed `contact_phase_offset_s=19.6`: it advances only the contact/gait clock, not `episode_length_buf`, so it is neither randomized progress nor a warm-up and leaves the full 31-second budget intact. The copied biped contact sequence is extended to cover `19.6 + 31` seconds. Each mode owns one base-mounted front camera at 640×480 with a 0.08-second update period; only a new timestamped frame is consumed.
+Validation uses `seed=42`, one environment, disabled observation noise/domain randomization/random initial state/random episode progress, and a temporary 31-second episode limit. Quadruped uses its zero gait-phase offset. Biped uses the target-runtime/checkpoint-validated fixed `contact_phase_offset_s=19.6`: it advances only the contact/gait clock, not `episode_length_buf`, so it is neither randomized progress nor a warm-up and leaves the full 31-second budget intact. The copied biped contact sequence is extended to cover `19.6 + 31` seconds. Each mode owns one base-mounted front camera at 640×480 with a 0.08-second update period; only a new timestamped frame is consumed. Because the biped base is pitched -90 degrees, its camera uses transformed parent-frame position and rotation offsets so the lens sits in front of, rather than looks into, the chassis.
 
 ## Acceptance gates
 
