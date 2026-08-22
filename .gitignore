@@ -61,5 +61,10 @@ _build
 # Pre-Trained Checkpoints
 /.pretrained_checkpoints/
 
+# Local RAMBO migration inputs and generated validation artifacts
+/datasets/
+/artifacts/
+/validation-output/
+
 python.env
 poetry.lock

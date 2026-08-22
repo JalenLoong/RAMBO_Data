@@ -8,7 +8,8 @@ from isaaclab.markers.config import GREEN_ARROW_X_MARKER_CFG, BLUE_ARROW_X_MARKE
 
 from qpth.qp import QPFunction, QPSolvers
 
-from ..utils.helper import to_torch
+from rambo.utils.math import quat_error as rambo_quat_error
+from rambo.utils.tensor import to_torch
 
 
 class QPTorqueOptimizer:
@@ -95,11 +96,8 @@ class QPTorqueOptimizer:
         desired_acc_b[:, :3] = torch.matmul(self._env.base_rot_mat_rp_t, desired_acc_b[:, :3, None])[:, :, 0]
         desired_acc_b[:, 3:] = torch.matmul(self._env.base_rot_mat_rp_t, desired_acc_b[:, 3:, None])[:, :, 0]
 
-        desired_ee_force_fl_com = self._env._ee_force_fl_commands
+        desired_ee_force_fl_com = self._env._ee_force_commands
         desired_ee_force_fl_b = torch.matmul(self._env.base_rot_mat_rp_t, desired_ee_force_fl_com[:, :, None])[:, :, 0]
-
-        desired_ee_force_fr_com = self._env._ee_force_fr_commands
-        desired_ee_force_fr_b = torch.matmul(self._env.base_rot_mat_rp_t, desired_ee_force_fr_com[:, :, None])[:, :, 0]
 
         # construct mass matrix
         # (linear 3 + angular 3) x (FL_hip, FL_thigh, FL_calf, FR, ..., RL, ..., RR, ...)
@@ -119,11 +117,10 @@ class QPTorqueOptimizer:
             mass_mat,
             desired_acc_b,
             desired_ee_force_fl_b,
-            desired_ee_force_fr_b,
             self._Wq,
             self._Wf,
             self._Wfe,
-            self._env.base_rot_mat_rp,
+            self._env.base_rot_mat_rp,  # used to calculate gravity_in_base only
             self._foot_friction_coef,
             contact,
             device=self._device)
@@ -296,7 +293,7 @@ def compute_desired_acc(
                        base_position_kd * lin_vel_error +
                        desired_linear_acceleration)
 
-    ang_pos_error = math_utils.quat_error(desired_base_orientation_quat, base_orientation_quat)
+    ang_pos_error = rambo_quat_error(desired_base_orientation_quat, base_orientation_quat)
     ang_vel_error = desired_angular_velocity - base_angular_velocity
     desired_ang_acc = (base_orientation_kp * ang_pos_error +
                        base_orientation_kd * ang_vel_error +
@@ -338,7 +335,6 @@ def construct_mass_mat(foot_positions,
 def solve_grf_qpth(mass_mat,
                    desired_acc,
                    desired_ee_force_fl,
-                   desired_ee_force_fr,
                    Wq,
                    Wf,
                    Wfe,
@@ -347,9 +343,7 @@ def solve_grf_qpth(mass_mat,
                    foot_contact_state,
                    device: str = 'cuda'):
     # QP is solved in the body frame
-    desired_ee_reaction_force_fl = -desired_ee_force_fl
-    desired_ee_reaction_force_fr = -desired_ee_force_fr
-    desired_ee_reaction_force = torch.cat([desired_ee_reaction_force_fl, desired_ee_reaction_force_fr], dim=1)
+    desired_ee_reaction_force = -desired_ee_force_fl
 
     base_rot_mat_rp_t = torch.transpose(base_rot_mat_rp, 1, 2)
     num_envs = mass_mat.shape[0]
@@ -359,29 +353,29 @@ def solve_grf_qpth(mass_mat,
     g[:, :3] = torch.matmul(base_rot_mat_rp_t, g[:, :3, None])[:, :, 0]
     Q = torch.zeros((num_envs, 6, 6), device=device) + Wq[None, :]
 
-    S_ee = torch.zeros((num_envs, 6, 12), device=device)  # fl, fr
-    S_ee[:, :, 0:6] = torch.eye(6, device=device)
+    S_fl = torch.zeros((num_envs, 3, 12), device=device)
+    S_fl[:, :, 0:3] = torch.eye(3, device=device)
 
-    S_r = torch.zeros((num_envs, 6, 12), device=device)  # rl, rr
-    S_r[:, :, 6:] = torch.eye(6, device=device)
+    S_r = torch.zeros((num_envs, 9, 12), device=device)  # S_rest
+    S_r[:, :, 3:] = torch.eye(9, device=device)
 
-    R_ee = torch.zeros((num_envs, 6, 6), device=device) + (torch.eye(6, device=device) * Wfe)[None, :]
-    R_r = torch.zeros((num_envs, 6, 6), device=device) + (torch.eye(6, device=device) * Wf)[None, :]
+    R_fl = torch.zeros((num_envs, 3, 3), device=device) + (torch.eye(3, device=device) * Wfe)[None, :]
+    R_r = torch.zeros((num_envs, 9, 9), device=device) + (torch.eye(9, device=device) * Wf)[None, :]
 
     quad_term = torch.bmm(torch.bmm(torch.transpose(mass_mat, 1, 2), Q), mass_mat) + \
-                torch.bmm(torch.bmm(torch.transpose(S_ee, 1, 2), R_ee), S_ee) + \
+                torch.bmm(torch.bmm(torch.transpose(S_fl, 1, 2), R_fl), S_fl) + \
                 torch.bmm(torch.bmm(torch.transpose(S_r, 1, 2), R_r), S_r)
 
     linear_term = torch.bmm(torch.bmm(torch.transpose(mass_mat, 1, 2), Q), (g - desired_acc)[:, :, None])[:, :, 0] - \
-                  torch.bmm(torch.bmm(torch.transpose(S_ee, 1, 2), R_ee), desired_ee_reaction_force[:, :, None])[:, :, 0]
+                  torch.bmm(torch.bmm(torch.transpose(S_fl, 1, 2), R_fl), desired_ee_reaction_force[:, :, None])[:, :, 0]
 
-    G = torch.zeros((mass_mat.shape[0], 12, 12), device=device)
-    h = torch.zeros((mass_mat.shape[0], 12), device=device) + 1e-3
-    for leg_id in range(2):
-        G[:, leg_id * 2, leg_id * 3 + 2 + 6] = 1
-        G[:, leg_id * 2 + 1, leg_id * 3 + 2 + 6] = -1
+    G = torch.zeros((mass_mat.shape[0], 18, 12), device=device)
+    h = torch.zeros((mass_mat.shape[0], 18), device=device) + 1e-3
+    for leg_id in range(3):
+        G[:, leg_id * 2, leg_id * 3 + 2 + 3] = 1
+        G[:, leg_id * 2 + 1, leg_id * 3 + 2 + 3] = -1
 
-        row_id, col_id = 4 + leg_id * 4, leg_id * 3 + 6
+        row_id, col_id = 6 + leg_id * 4, leg_id * 3 + 3
         G[:, row_id, col_id] = 1
         G[:, row_id, col_id + 2] = -foot_friction_coef
 
@@ -396,7 +390,7 @@ def solve_grf_qpth(mass_mat,
         G[:, row_id:row_id + 4, col_id:col_id + 3] = torch.bmm(
             G[:, row_id:row_id + 4, col_id:col_id + 3], base_rot_mat_rp)
 
-    contact_ids = foot_contact_state[:, 2:].nonzero()
+    contact_ids = foot_contact_state[:, 1:].nonzero()
 
     h[contact_ids[:, 0], contact_ids[:, 1] * 2] = 130
     h[contact_ids[:, 0], contact_ids[:, 1] * 2 + 1] = -10

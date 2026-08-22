@@ -6,11 +6,20 @@ from torch.utils.tensorboard import SummaryWriter
 try:
     import wandb
 except ModuleNotFoundError:
-    raise ModuleNotFoundError("Wandb is required to log to Weights and Biases.")
+    # PPO imports this module for all logger backends, including the
+    # checkpoint-playback-only TensorBoard path used by RAMBO.  Keep W&B an
+    # optional dependency and fail only when the W&B writer is explicitly
+    # selected.
+    wandb = None
 
 
 class WandbSummaryWriter(SummaryWriter):
     def __init__(self, log_dir, cfg, flush_secs, project, group, offline_mode):
+        if wandb is None:
+            raise ModuleNotFoundError(
+                "Wandb is required only when CRL2 is configured with logger='wandb'. "
+                "Install it with `pip install wandb` or use logger='tensorboard'."
+            )
         super().__init__(log_dir, flush_secs)
 
         # self.log_path = os.path.dirname(os.path.abspath(log_dir))

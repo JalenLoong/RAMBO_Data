@@ -1,0 +1,16 @@
+[package]
+version = "0.1.0"
+title = "RAMBO Isaac Lab Tasks"
+author = "RAMBO Developers"
+maintainer = "RAMBO Developers"
+description = "RAMBO quadruped and biped DirectRL tasks for Isaac Lab."
+repository = "https://github.com/JalenLoong/rambo"
+category = "robotics"
+keywords = ["isaaclab", "rambo", "quadruped", "biped", "robotics"]
+
+[dependencies]
+"isaaclab" = {}
+"isaaclab_assets" = {}
+
+[[python.module]]
+name = "rambo"

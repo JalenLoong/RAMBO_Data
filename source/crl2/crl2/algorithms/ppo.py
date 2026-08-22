@@ -284,10 +284,17 @@ class PPO:
             save_dict['value_dict_{}'.format(i)] = self.values[i].state_dict()
         if self.alg_cfg['empirical_normalization']:
             save_dict["obs_normalizer"] = self.obs_normalizer.state_dict()
+            # count is a plain Python attribute rather than a module buffer.
+            # Persist it explicitly so checkpoint playback has the same update horizon.
+            save_dict["obs_normalizer_count"] = self.obs_normalizer.count
         torch.save(save_dict, path)
 
     def load(self, path, load_values=False, load_optimizer=False):
-        loaded_dict = torch.load(path)
+        # Keep CRL2's generic loader safe for arbitrary paths.  RAMBO playback
+        # uses rambo.validation.load_verified_checkpoint(), which hashes the
+        # released local file before its deliberately explicit
+        # weights_only=False deserialization.
+        loaded_dict = torch.load(path, map_location=self.device, weights_only=True)
         self.policy.load_state_dict(loaded_dict['policy_dict'])
         if load_values:
             for i in range(self.num_values):
@@ -296,6 +303,7 @@ class PPO:
             self.optimizer.load_state_dict(loaded_dict['optimizer_state_dict'])
         if self.alg_cfg['empirical_normalization']:
             self.obs_normalizer.load_state_dict(loaded_dict['obs_normalizer'])
+            self.obs_normalizer.count = int(loaded_dict.get("obs_normalizer_count", 0))
         self.current_iteration = loaded_dict['iteration']
         return loaded_dict['infos']
 

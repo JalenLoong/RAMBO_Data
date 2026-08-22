@@ -17,35 +17,47 @@ import isaaclab.utils.math as math_utils
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.markers import VisualizationMarkers
-from isaaclab.markers.config import RED_ARROW_X_MARKER_CFG, BLUE_ARROW_X_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG, \
-    GREEN_SPHERE_MARKER_CFG, BLUE_SPHERE_MARKER_CFG
+from isaaclab.markers.config import RED_ARROW_X_MARKER_CFG, BLUE_ARROW_X_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
 import isaaclab.envs.mdp as mdp
-from isaaclab.actuators import DelayedDCMotorCfg
 
-from isaaclab_assets import UNITREE_GO2_CFG
+from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG
+from rambo.actuators import make_go2_delayed_dc_motor_cfgs
+from rambo.tasks.common.camera import create_front_rgb_camera, make_front_rgb_camera_cfg
+from rambo.utils import math as rambo_math
+from rambo.utils.articulation import (
+    GO2_CALF_BODY_NAMES,
+    GO2_FOOT_BODY_NAMES,
+    GO2_THIGH_BODY_NAMES,
+    ordered_jacobians,
+    ordered_joint_pos,
+    ordered_joint_vel,
+    ordered_sensor_body_ids,
+    resolve_go2_indices,
+)
+from rambo.utils.markers import BLUE_SPHERE_MARKER_CFG, CYAN_SPHERE_MARKER_CFG, GREEN_SPHERE_MARKER_CFG, YELLOW_SPHERE_MARKER_CFG
 from .modules import ContactGenerator, JointPositionController, QPTorqueOptimizer
-from .utils.helper import to_torch
+from rambo.utils.tensor import to_torch
 
-NOMINAL_BASE_HEIGHT = 0.3
+NOMINAL_BASE_HEIGHT = 0.45
 FOOT_HEIGHT = 0.15
 FOOT_CLEARANCE = 0.0
-GAIT = "walking"  # standing, walking, pronking
+GAIT = "walking"
 
 #################
 FF_TORQUE = True
 GRAVITY_COMPENSATION = True  # only for swing legs
 
 BASE_ACTION = True
-BASE_ACTION_SCALE = 5.0
+BASE_ACTION_SCALE = 5.0  # 2.0, 5.0(l), 10.0(lr), 20.0(lrr)
 
 JOINT_ACTION = True
-JOINT_ACTION_SCALE = 0.15
+JOINT_ACTION_SCALE = 0.15  # 0.1, 0.2(l), 0.5(xlr)
 
 SAMPLE_VEL_COMMANDS = True
 SAMPLE_POS_COMMANDS = True
 SAMPLE_FORCE_COMMANDS = True
 
-POS_LIMIT_MARGIN = 0.1  # rad
+POS_LIMIT_MARGIN = 0.1
 TORQUE_LIMIT_SCALE = 0.9
 
 #################
@@ -57,25 +69,45 @@ TOR_ALPHA = ALPHA
 ADD_LINK_DR = True
 
 ACTUATOR_DELAY = True
-ACTUATOR_DELAY_STEPS = 10
 ################
 
 VEL_X = [-0.5, 0.5]
-VEL_Y = [-0.5, 0.5]
+VEL_Y = [0.0, 0.0]
 AVEL_Z = [-0.5, 0.5]
 
-# set to zero when using standing gait
-# VEL_X = [-0.0, 0.0]
-# VEL_Y = [-0.0, 0.0]
-# AVEL_Z = [-0.0, 0.0]
-
-FL_POS_X = [0.1934, 0.5]
+FL_POS_X = [0.15, 0.30]
 FL_POS_Y = [0, 0.2]
-FL_POS_Z = [0.0, 0.4]
+FL_POS_Z = [0.3, 0.9]
 
-FL_FORCE_X = [-30.0, 30.0]
-FL_FORCE_Y = [-30.0, 30.0]
-FL_FORCE_Z = [-30.0, 30.0]
+FR_POS_X = [0.15, 0.30]
+FR_POS_Y = [-0.2, 0]
+FR_POS_Z = [0.3, 0.9]
+
+FL_FORCE_X = [-20.0, 20.0]
+FL_FORCE_Y = [-20.0, 20.0]
+FL_FORCE_Z = [-20.0, 20.0]
+
+FR_FORCE_X = [-20.0, 20.0]
+FR_FORCE_Y = [-20.0, 20.0]
+FR_FORCE_Z = [-20.0, 20.0]
+
+# FL_FORCE_X = [-10.0, 10.0]
+# FL_FORCE_Y = [-10.0, 10.0]
+# FL_FORCE_Z = [-10.0, 10.0]
+#
+# FR_FORCE_X = [-10.0, 10.0]
+# FR_FORCE_Y = [-10.0, 10.0]
+# FR_FORCE_Z = [-10.0, 10.0]
+
+# FL_FORCE_X = [-0.0, 0.0]
+# FL_FORCE_Y = [-40.0, 0.0]
+# FL_FORCE_Z = [-0.0, 0.0]
+#
+# FR_FORCE_X = [-0.0, 0.0]
+# FR_FORCE_Y = [-0.0, 40.0]
+# FR_FORCE_Z = [-0.0, 0.0]
+
+SYMMETRIC = True
 
 
 @configclass
@@ -106,11 +138,11 @@ class EventCfg:
     )
 
     add_base_com_pos = EventTerm(
-        func=mdp.randomize_rigid_body_com_pos,
+        func=mdp.randomize_rigid_body_com,
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names="base"),
-            "com_pos_distribution_params": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
+            "com_range": {"x": (-0.05, 0.05), "y": (-0.05, 0.05), "z": (-0.05, 0.05)},
         },
     )
 
@@ -126,11 +158,11 @@ class EventCfg:
         )
 
         add_fl_hip_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FL_hip"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -145,11 +177,11 @@ class EventCfg:
         )
 
         add_fl_thigh_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FL_thigh"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -164,11 +196,11 @@ class EventCfg:
         )
 
         add_fl_calf_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FL_calf"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -183,11 +215,11 @@ class EventCfg:
         )
 
         add_fr_hip_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FR_hip"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -202,11 +234,11 @@ class EventCfg:
         )
 
         add_fr_thigh_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FR_thigh"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -221,11 +253,11 @@ class EventCfg:
         )
 
         add_fr_calf_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="FR_calf"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -240,11 +272,11 @@ class EventCfg:
         )
 
         add_rl_hip_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RL_hip"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -259,11 +291,11 @@ class EventCfg:
         )
 
         add_rl_thigh_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RL_thigh"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -278,11 +310,11 @@ class EventCfg:
         )
 
         add_rl_calf_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RL_calf"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -297,11 +329,11 @@ class EventCfg:
         )
 
         add_rr_hip_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RR_hip"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -316,11 +348,11 @@ class EventCfg:
         )
 
         add_rr_thigh_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RR_thigh"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -335,11 +367,11 @@ class EventCfg:
         )
 
         add_rr_calf_com_pos = EventTerm(
-            func=mdp.randomize_rigid_body_com_pos,
+            func=mdp.randomize_rigid_body_com,
             mode="startup",
             params={
                 "asset_cfg": SceneEntityCfg("robot", body_names="RR_calf"),
-                "com_pos_distribution_params": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
+                "com_range": {"x": (-0.01, 0.01), "y": (-0.01, 0.01), "z": (-0.01, 0.01)},
             },
         )
 
@@ -354,11 +386,10 @@ class EventCfg:
 
 @configclass
 class QPEnvCfg(DirectRLEnvCfg):
-    # simulation
     viewer: ViewerCfg = ViewerCfg(
         eye=(5.0, 5.0, 5.0),
     )
-
+    # simulation
     sim: SimulationCfg = SimulationCfg(
         dt=0.002,
         physics_material=sim_utils.RigidBodyMaterialCfg(
@@ -390,35 +421,10 @@ class QPEnvCfg(DirectRLEnvCfg):
     nominal_base_height = NOMINAL_BASE_HEIGHT
     robot: ArticulationCfg = UNITREE_GO2_CFG.replace(prim_path="/World/envs/env_.*/Robot")
     robot.init_state.pos = (0.0, 0.0, nominal_base_height)
-    robot.init_state.rot = (1.0, 0.0, 0.0, 0.0)
+    robot.init_state.rot = (np.sqrt(2) / 2, 0.0, -np.sqrt(2) / 2, 0.0)
 
     if ACTUATOR_DELAY:
-        robot.actuators = {
-            "calf": DelayedDCMotorCfg(
-                joint_names_expr=[".*_calf_joint"],
-                effort_limit=40.887,
-                saturation_effort=40.887,
-                velocity_limit=15.70,
-                stiffness=40.0,
-                damping=1.0,
-                friction=0.0,
-                min_num_time_lags=0,
-                max_num_time_lags=ACTUATOR_DELAY_STEPS,
-                num_time_lags=None,
-            ),
-            "hip_thigh": DelayedDCMotorCfg(
-                joint_names_expr=[".*_hip_joint", ".*_thigh_joint"],
-                effort_limit=21.33,
-                saturation_effort=21.33,
-                velocity_limit=30.1,
-                stiffness=40.0,
-                damping=1.0,
-                friction=0.0,
-                min_num_time_lags=0,
-                max_num_time_lags=ACTUATOR_DELAY_STEPS,
-                num_time_lags=None,
-            ),
-        }
+        robot.actuators = make_go2_delayed_dc_motor_cfgs()
     foot_height = FOOT_HEIGHT
     foot_clearance = 0.0
 
@@ -427,10 +433,10 @@ class QPEnvCfg(DirectRLEnvCfg):
         "RL_hip_joint": 0.0,
         "FR_hip_joint": 0.0,
         "RR_hip_joint": 0.0,
-        "FL_thigh_joint": 0.8,
-        "FR_thigh_joint": 0.8,
-        "RL_thigh_joint": 0.8,
-        "RR_thigh_joint": 0.8,
+        "FL_thigh_joint": np.pi / 2,
+        "FR_thigh_joint": np.pi / 2,
+        "RL_thigh_joint": 1.0 + np.pi / 2,
+        "RR_thigh_joint": 1.0 + np.pi / 2,
         "FL_calf_joint": -1.5,
         "FR_calf_joint": -1.5,
         "RL_calf_joint": -1.5,
@@ -440,6 +446,15 @@ class QPEnvCfg(DirectRLEnvCfg):
     contact_sensor: ContactSensorCfg = ContactSensorCfg(
         prim_path="/World/envs/env_.*/Robot/.*", history_length=3, update_period=0.005, track_air_time=True
     )
+    # The biped's Go2 base is pitched -90 degrees to stand upright.  Rotate
+    # the camera +90 degrees in its parent frame so its world-convention +X
+    # forward axis remains horizontal rather than looking into the sky.
+    enable_rgb_camera = False
+    front_camera = make_front_rgb_camera_cfg(
+        offset_rot=(np.sqrt(2) / 2, 0.0, np.sqrt(2) / 2, 0.0),
+    )
+    # Isaac Lab 2.3.2 refreshes RTX sensors this many times after a reset.
+    num_rerenders_on_reset = 1
 
     add_feedforward_torque = FF_TORQUE
 
@@ -461,7 +476,7 @@ class QPEnvCfg(DirectRLEnvCfg):
         num_actions = 1  # to avoid zero action dimension
 
     history_length = 5  # include the current state
-    num_obs_per_step = 1 + 3 + 3 + 3 + 12 + 12 + 4 + 4 + 12 + 3 + 3 + 3 + num_actions
+    num_obs_per_step = 1 + 3 + 3 + 3 + 12 + 12 + 4 + 4 + 12 + 3 + num_actions + 3 + 3 + 3 + 3
     num_observations = num_obs_per_step * history_length
 
     observation_space = num_observations
@@ -487,89 +502,50 @@ class QPEnvCfg(DirectRLEnvCfg):
 
     episode_length_s = 10.0
 
-    gait = GAIT  # standing, walking, pronking
+    gait = GAIT  # walking
     contact_sequence = {}
-    if gait == "standing":
+    if gait == "walking":
         contact_sequence = {
             "FL": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["swing", 8.0, 0.0, 0.5, 0.5],  # time in seconds, initial phase, gait duration, swing ratio
+                ["swing", 0.5, 0.0, 0.0, 0.0],
+                ["swing", 9.5, 0.0, 0.0, 0.0],
             ],
             "FR": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["stance", 8.0, 0.5, 0.5, 0.5],  # time in seconds, initial phase, gait duration, swing ratio
+                ["swing", 0.5, 0.0, 0.0, 0.0],
+                ["swing", 9.5, 0.0, 0.0, 0.0],
             ],
             "RL": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["stance", 8.0, 0.5, 0.5, 0.5],  # time in seconds, initial phase, gait duration, swing ratio
+                ["stance", 0.5, 0.0, 0.0, 0.0],
+                ["phase", 9.5, 0.5, 0.4, 0.7],
             ],
             "RR": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["stance", 8.0, 0.0, 0.5, 0.5],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-        }
-    elif gait == "pronking":
-        contact_sequence = {
-            "FL": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["swing", 8.0, 0.0, 0.0, 0.0],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "FR": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 8.0, 0.0, 0.4, 0.7],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "RL": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 8.0, 0.0, 0.4, 0.7],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "RR": [
-                ["stance", 2.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 8.0, 0.0, 0.4, 0.7],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-        }
-    elif gait == "walking":
-        contact_sequence = {
-            "FL": [
-                ["stance", 1.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["swing", 9.0, 0.0, 0.0, 0.0],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "FR": [
-                ["stance", 1.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 9.0, 0.0, 0.7, 0.8],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "RL": [
-                ["stance", 1.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 9.0, 0.33, 0.7, 0.8],  # time in seconds, initial phase, gait duration, swing ratio
-            ],
-            "RR": [
-                ["stance", 1.0, 0.0, 0.0, 0.0],  # time in seconds, (will not be used)
-                ["phase", 9.0, 0.67, 0.7, 0.8],  # time in seconds, initial phase, gait duration, swing ratio
+                ["stance", 0.5, 0.0, 0.0, 0.0],
+                ["phase", 9.5, 0.0, 0.4, 0.7],  # initial phase, duration, (0 -contact-> swing_ratio -swing-> 1)
             ],
         }
     else:
         raise ValueError("Unknown gait")
-
     contact_generator_config = {
         "contact_generator_debug_vis": False,
         "contact_sequence": contact_sequence,
     }
 
     joint_position_controller_config = {
-        "joint_position_controller_debug_vis": False,
+        "joint_position_controller_debug_vis": True,
         "desired_joint_pos_stance": np.array([
             0.0, 0.0, 0.0, 0.0,  # hip
-            0.8, 0.8, 0.8, 0.8,  # thigh
+            np.pi / 2, np.pi / 2, 1.0 + np.pi / 2, 1.0 + np.pi / 2,  # thigh
             -1.5, -1.5, -1.5, -1.5,  # calf
         ]),
         "desired_joint_pos_swing": np.array([
             0.0, 0.0, 0.0, 0.0,  # hip
-            1.1, 1.1, 1.1, 1.1,  # thigh
+            np.pi / 2, np.pi / 2, 1.0 + np.pi / 2, 1.0 + np.pi / 2,  # thigh
             -2.2, -2.2, -2.2, -2.2,  # calf
         ]),
         "desired_foot_clearance": foot_clearance,
         "desired_foot_height": foot_height,
         "hip_positions_in_body_frame": np.array([[0.1934, 0.142, 0.0],  # FL
-                                                 [0.1934, 0.0, 0.0],  # FR TODO
+                                                 [0.1934, -0.142, 0.0],  # FR
                                                  [-0.1934, 0.142, 0.0],  # RL
                                                  [-0.1934, -0.142, 0.0]]),  # RR
     }
@@ -607,24 +583,39 @@ class QPEnvCfg(DirectRLEnvCfg):
     avel_range_z = AVEL_Z
 
     enable_sampled_pos_commands = SAMPLE_POS_COMMANDS
-    pos_debug_vis = enable_sampled_velocity_commands
+    pos_debug_vis = enable_sampled_pos_commands
     fl_pos_x = FL_POS_X
     fl_pos_y = FL_POS_Y
     fl_pos_z = FL_POS_Z
+    fr_pos_x = FR_POS_X
+    fr_pos_y = FR_POS_Y
+    fr_pos_z = FR_POS_Z
 
     enable_sampled_force_commands = SAMPLE_FORCE_COMMANDS
     force_debug_vis = enable_sampled_force_commands
     fl_force_x = FL_FORCE_X
     fl_force_y = FL_FORCE_Y
     fl_force_z = FL_FORCE_Z
+    fr_force_x = FR_FORCE_X
+    fr_force_y = FR_FORCE_Y
+    fr_force_z = FR_FORCE_Z
 
     joint_pos_limit_margin = POS_LIMIT_MARGIN
     joint_torque_limit_scale = TORQUE_LIMIT_SCALE
     joint_torque_limit = [23.7, 23.7, 23.7, 23.7,
                           23.7, 23.7, 23.7, 23.7,
                           45.43, 45.43, 45.43, 45.43]
+
     # Sim2real
     randomize_initial_state = True
+    randomize_episode_progress = True
+    # A separate fixed gait offset is used only by deterministic validation.
+    # It does not consume episode budget or re-enable randomized progress.
+    contact_phase_offset_s = 0.0
+    # This target-runtime, checkpoint-validated contact-schedule phase keeps
+    # deterministic biped validation stable without re-enabling randomized
+    # episode progress.
+    validation_contact_phase_offset_s = 19.6
     events: EventCfg = EventCfg()
     obs_noise = True
 
@@ -638,15 +629,24 @@ class QPEnv(DirectRLEnv):
     def __init__(self, cfg: QPEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
 
-        self.feet_ids, _ = self._robot.find_bodies(self.cfg.feet_names)
+        self._go2_indices = resolve_go2_indices(self._robot)
+        self.feet_ids = self._go2_indices.foot_body_ids
         self.num_feet = len(self.feet_ids)
 
         # Get specific body indices
-        self._contact_base_id, _ = self._contact_sensor.find_bodies("base")
+        self._contact_base_id = ordered_sensor_body_ids(self._contact_sensor, ("base",), "base")
         self._contact_head_id, _ = self._contact_sensor.find_bodies("Head_.*")
-        self._contact_feet_ids, _ = self._contact_sensor.find_bodies(".*foot")
-        self._contact_thigh_ids, _ = self._contact_sensor.find_bodies(".*thigh")
-        self._contact_calf_ids, _ = self._contact_sensor.find_bodies(".*calf")
+        if not self._contact_head_id:
+            raise RuntimeError("Go2 contact sensor is missing Head_* bodies required for collision termination.")
+        self._contact_feet_ids = ordered_sensor_body_ids(
+            self._contact_sensor, GO2_FOOT_BODY_NAMES, "foot"
+        )
+        self._contact_thigh_ids = ordered_sensor_body_ids(
+            self._contact_sensor, GO2_THIGH_BODY_NAMES, "thigh"
+        )
+        self._contact_calf_ids = ordered_sensor_body_ids(
+            self._contact_sensor, GO2_CALF_BODY_NAMES, "calf"
+        )
 
         # some buffers
         self._time_since_reset = torch.zeros(self.num_envs, device=self.device)
@@ -656,18 +656,25 @@ class QPEnv(DirectRLEnv):
         self._last_action = torch.zeros(self.num_envs, self.cfg.num_actions, device=self.device)
         # X/Y linear velocity and yaw angular velocity commands
         self._velocity_commands = torch.zeros(self.num_envs, 3, device=self.device)
-        self._ee_pos_commands = torch.zeros(self.num_envs, 3, device=self.device)
-        self._ee_pos_commands[:, 0] = 0.1934
-        self._ee_pos_commands[:, 1] = 0.142
-        self._ee_pos_commands[:, 2] = 0.05
 
-        self._ee_force_commands = torch.zeros(self.num_envs, 3, device=self.device)
+        self._ee_pos_fl_commands = torch.zeros(self.num_envs, 3, device=self.device)  # in the projected frame
+        self._ee_pos_fl_commands[:, 0] = 0.2175
+        self._ee_pos_fl_commands[:, 1] = 0.1225
+        self._ee_pos_fl_commands[:, 2] = 0.4880
 
-        self._desired_joint_pos = torch.zeros(self.num_envs, 12, device=self.device)
+        self._ee_pos_fr_commands = torch.zeros(self.num_envs, 3, device=self.device)
+        self._ee_pos_fr_commands[:, 0] = 0.2175
+        self._ee_pos_fr_commands[:, 1] = -0.1225
+        self._ee_pos_fr_commands[:, 2] = 0.4880
+
+        self._ee_force_fl_commands = torch.zeros(self.num_envs, 3, device=self.device)
+        self._ee_force_fr_commands = torch.zeros(self.num_envs, 3, device=self.device)
+
+        self.desired_joint_pos = torch.zeros(self.num_envs, 12, device=self.device)
 
         # the ones that are used for the simulation
         self.desired_pos = torch.zeros(self.num_envs, 12, device=self.device)
-        self.desired_pos = self._robot.data.default_joint_pos
+        self.desired_pos = self.default_joint_pos
         self.desired_vel = torch.zeros(self.num_envs, 12, device=self.device)
         self.desired_tor = torch.zeros(self.num_envs, 12, device=self.device)
 
@@ -691,6 +698,9 @@ class QPEnv(DirectRLEnv):
         self.scene.articulations["robot"] = self._robot
         self._contact_sensor = ContactSensor(self.cfg.contact_sensor)
         self.scene.sensors["contact_sensor"] = self._contact_sensor
+        if self.cfg.enable_rgb_camera:
+            self.front_camera = create_front_rgb_camera(self.cfg.front_camera)
+            self.scene.sensors["front_camera"] = self.front_camera
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
@@ -701,7 +711,37 @@ class QPEnv(DirectRLEnv):
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
 
+    @property
+    def default_joint_pos(self) -> torch.Tensor:
+        """Go2 default joint positions in RAMBO's fixed logical joint order."""
+
+        return self._robot.data.default_joint_pos.index_select(1, self._go2_indices.joint_ids)
+
+    @property
+    def default_joint_pos_limits(self) -> torch.Tensor:
+        """Go2 joint limits in RAMBO's fixed logical joint order."""
+
+        return self._robot.data.default_joint_pos_limits.index_select(1, self._go2_indices.joint_ids)
+
+    def _set_logical_joint_targets(self) -> None:
+        """Scatter logical RAMBO joint targets into Isaac Sim's named joint order."""
+
+        joint_ids = self._go2_indices.joint_ids
+        position_target = self._robot.data.default_joint_pos.clone()
+        velocity_target = torch.zeros_like(self._robot.data.joint_vel)
+        effort_target = torch.zeros_like(self._robot.data.joint_pos)
+        position_target[:, joint_ids] = self.desired_pos
+        velocity_target[:, joint_ids] = self.desired_vel
+        effort_target[:, joint_ids] = self.desired_tor
+        self._robot.set_joint_position_target(position_target)
+        self._robot.set_joint_velocity_target(velocity_target)
+        self._robot.set_joint_effort_target(effort_target)
+
     def step(self, action: torch.Tensor):
+        action = action.to(self.device)
+        if self.cfg.action_noise_model:
+            action = self._action_noise_model(action)
+
         # check NaNs
         if torch.any(torch.isnan(action)):
             # replace the nan with zeros
@@ -731,9 +771,9 @@ class QPEnv(DirectRLEnv):
             self.torque_optimizer.desired_linear_acceleration = scaled_action[:, 0:3]
             self.torque_optimizer.desired_angular_acceleration = scaled_action[:, 3:6]
             if self.cfg.including_joint_action:
-                desired_motor_position = self._desired_joint_pos + scaled_action[:, 6:]
+                desired_motor_position = self.desired_joint_pos + scaled_action[:, 6:]
             else:
-                desired_motor_position = self._desired_joint_pos
+                desired_motor_position = self.desired_joint_pos
         else:
             self.torque_optimizer.desired_linear_acceleration = torch.zeros_like(
                 self.torque_optimizer.desired_linear_acceleration)
@@ -741,20 +781,20 @@ class QPEnv(DirectRLEnv):
                 self.torque_optimizer.desired_angular_acceleration)
 
             if self.cfg.including_joint_action:
-                desired_motor_position = self._desired_joint_pos + scaled_action
+                desired_motor_position = self.desired_joint_pos + scaled_action
             else:
-                desired_motor_position = self._desired_joint_pos
+                desired_motor_position = self.desired_joint_pos
 
         desired_motor_position = torch.clamp(desired_motor_position,
-                                             self._robot.data.default_joint_pos_limits[:, :,
+                                             self.default_joint_pos_limits[:, :,
                                              0] + self.cfg.joint_pos_limit_margin,
-                                             self._robot.data.default_joint_pos_limits[:, :,
+                                             self.default_joint_pos_limits[:, :,
                                              1] - self.cfg.joint_pos_limit_margin)
 
         if self.cfg.add_feedforward_torque:
             # valid only for contact legs
             grf, qp_cost, _, _ = self.torque_optimizer.get_grf()
-            stance_motor_torques = -torch.bmm(grf[:, None, :], self.all_foot_jacobian)[:, 0]  # including FL
+            stance_motor_torques = -torch.bmm(grf[:, None, :], self.all_foot_jacobian)[:, 0]  # include FL and FR
 
             if self.cfg.gravity_compensation_torque_for_swing_legs:
                 swing_motor_torques = self.get_gravity_compensation_torques()
@@ -767,15 +807,16 @@ class QPEnv(DirectRLEnv):
             else:
                 contact_state_expanded = torch.tile(self.contact_generator.desired_contact_state, (1, 3))
 
-            # override for fl
+            # override for FL and FR
             contact_state_expanded[:, 0] = 1.0
+            contact_state_expanded[:, 1] = 1.0
             contact_state_expanded[:, 4] = 1.0
+            contact_state_expanded[:, 5] = 1.0
             contact_state_expanded[:, 8] = 1.0
-
+            contact_state_expanded[:, 9] = 1.0
             desired_joint_torque = swing_motor_torques + torch.where(contact_state_expanded,
                                                                      stance_motor_torques,
                                                                      torch.zeros_like(stance_motor_torques))
-
         else:
             qp_cost = torch.zeros(self.num_envs, device=self.device)
             desired_joint_torque = torch.zeros_like(desired_motor_position)
@@ -792,43 +833,52 @@ class QPEnv(DirectRLEnv):
             self.desired_vel[reset_env_ids] = torch.zeros_like(self.joint_vel[reset_env_ids])
             self.desired_tor[reset_env_ids] = desired_joint_torque[reset_env_ids]
 
-        external_force_com = -self._ee_force_commands  # projected com frame, fl
+        external_force_com_fl = -self._ee_force_fl_commands
+        external_force_com_fr = -self._ee_force_fr_commands
 
         gravity_vec_w = torch.tensor((0.0, 0.0, -1.0), device=self.device).repeat(self.num_envs, 1)
         projected_gravity_b = math_utils.quat_rotate_inverse(self._robot.data.root_quat_w, gravity_vec_w)
-        base_rot_mat_rp_t = math_utils.rp_rotation_from_gravity_b(projected_gravity_b)
+        base_rot_mat_rp_t = rambo_math.rp_rotation_from_gravity_b(projected_gravity_b)
         base_quat_rp = math_utils.quat_from_matrix(base_rot_mat_rp_t.transpose(1, 2))
 
-        external_force_w = math_utils.quat_rotate(
-            math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)), external_force_com)
+        external_force_w_fl = math_utils.quat_rotate(
+            math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)), external_force_com_fl)
+        external_force_w_fr = math_utils.quat_rotate(
+            math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)), external_force_com_fr)
 
-        body_id = self.feet_ids[0]  # FL_foot
-        body_quat = self._robot.data.body_quat_w[:, body_id]
-        external_force_b = math_utils.quat_rotate_inverse(body_quat, external_force_w).unsqueeze(1)
-        external_torque_b = torch.zeros_like(external_force_b)
+        body_id_fl = self._go2_indices.foot_body_id("FL_foot")
+        body_id_fr = self._go2_indices.foot_body_id("FR_foot")
+        body_quat_fl = self._robot.data.body_quat_w[:, body_id_fl[0]]
+        body_quat_fr = self._robot.data.body_quat_w[:, body_id_fr[0]]
+        external_force_b_fl = math_utils.quat_rotate_inverse(body_quat_fl, external_force_w_fl).unsqueeze(1)
+        external_force_b_fr = math_utils.quat_rotate_inverse(body_quat_fr, external_force_w_fr).unsqueeze(1)
 
-        self._robot.set_external_force_and_torque(external_force_b, external_torque_b,
+        external_torque_b_fl = torch.zeros_like(external_force_b_fl)
+        external_torque_b_fr = torch.zeros_like(external_force_b_fr)
+
+        is_rendering = self.sim.has_gui() or self.sim.has_rtx_sensors()
+        self._robot.set_external_force_and_torque(external_force_b_fl, external_torque_b_fl,
                                                   env_ids=torch.arange(self.num_envs, dtype=torch.int64,
-                                                                       device=self.device), body_ids=self.feet_ids[0])
+                                                                       device=self.device), body_ids=body_id_fl)
+        self._robot.set_external_force_and_torque(external_force_b_fr, external_torque_b_fr,
+                                                  env_ids=torch.arange(self.num_envs, dtype=torch.int64,
+                                                                       device=self.device), body_ids=body_id_fr)
 
         for _ in range(self.cfg.decimation):
+            self._sim_step_counter += 1
             # set actions into buffers
-            self._robot.set_joint_position_target(self.desired_pos)
-            self._robot.set_joint_velocity_target(self.desired_vel)
-            self._robot.set_joint_effort_target(self.desired_tor)
+            self._set_logical_joint_targets()
 
             # set actions into simulator
             self.scene.write_data_to_sim()
             # simulate
             self.sim.step(render=False)
+            if self._sim_step_counter % self.cfg.sim.render_interval == 0 and is_rendering:
+                self.sim.render()
             # update buffers at sim dt
             self.scene.update(dt=self.physics_dt)
 
             self._time_since_reset += self.physics_dt
-
-            # perform rendering if gui is enabled
-        if self.sim.has_gui() or self.sim.has_rtx_sensors():
-            self.sim.render()
 
         # post-step:
         # -- update env counters (used for curriculum generation)
@@ -838,7 +888,7 @@ class QPEnv(DirectRLEnv):
 
         # -- update contact generator and joint position controller
         self.contact_generator.update()
-        self._desired_joint_pos = self.joint_position_controller.update()  # this comes from the contact scheduler
+        self.desired_joint_pos = self.joint_position_controller.update()  # this comes from the contact scheduler
 
         self.reset_terminated[:], self.reset_time_outs[:] = self._get_dones()
         self.reset_buf = self.reset_terminated | self.reset_time_outs
@@ -849,6 +899,9 @@ class QPEnv(DirectRLEnv):
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
         if len(reset_env_ids) > 0:
             self._reset_idx(reset_env_ids)
+            if self.sim.has_rtx_sensors() and self.cfg.num_rerenders_on_reset > 0:
+                for _ in range(self.cfg.num_rerenders_on_reset):
+                    self.sim.render()
 
         # post-step: step interval event
         if self.cfg.events:
@@ -861,7 +914,7 @@ class QPEnv(DirectRLEnv):
 
         # add observation noise
         if self.cfg.observation_noise_model:
-            self.obs_buf["policy"] = self._observation_noise_model.apply(self.obs_buf["policy"])
+            self.obs_buf["policy"] = self._observation_noise_model(self.obs_buf["policy"])
 
         # return observations, rewards, resets and extras
         # check NANs
@@ -894,8 +947,12 @@ class QPEnv(DirectRLEnv):
         super()._reset_idx(env_ids)
         self._time_since_reset[env_ids] = 0.0
 
-        self.episode_length_buf[env_ids] = torch.randint_like(self.episode_length_buf[env_ids],
-                                                              high=int(self.max_episode_length))
+        if self.cfg.randomize_episode_progress:
+            self.episode_length_buf[env_ids] = torch.randint_like(
+                self.episode_length_buf[env_ids], high=int(self.max_episode_length)
+            )
+        else:
+            self.episode_length_buf[env_ids] = 0
         self._time_since_reset[env_ids] = self.episode_length_buf[env_ids] * self.physics_dt * self.cfg.decimation
 
         self._obs_history[env_ids] = 0.0
@@ -917,27 +974,83 @@ class QPEnv(DirectRLEnv):
         if self.cfg.enable_sampled_pos_commands:
             # sampled in the projected com frame
             non_stance = self.contact_generator.desired_contact_mode[env_ids].sum(
-                dim=-1) < 3.9
-            self._ee_pos_commands[env_ids, 0] = torch.zeros_like(
-                self._ee_pos_commands[env_ids, 0]).uniform_(self.cfg.fl_pos_x[0], self.cfg.fl_pos_x[1]) * non_stance
-            self._ee_pos_commands[env_ids, 1] = torch.zeros_like(
-                self._ee_pos_commands[env_ids, 1]).uniform_(self.cfg.fl_pos_y[0], self.cfg.fl_pos_y[1]) * non_stance
-            self._ee_pos_commands[env_ids, 2] = torch.zeros_like(
-                self._ee_pos_commands[env_ids, 2]).uniform_(self.cfg.fl_pos_z[0], self.cfg.fl_pos_z[1]) * non_stance
+                dim=-1) < 3.9  # make sure it is not sampled when all foot in stance
+            if SYMMETRIC:
+                pos_x = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 0]).uniform_(self.cfg.fl_pos_x[0],
+                                                                   self.cfg.fl_pos_x[1]) * non_stance
+                pos_y = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 1]).uniform_(self.cfg.fl_pos_y[0],
+                                                                   self.cfg.fl_pos_y[1]) * non_stance
+                pos_z = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 2]).uniform_(self.cfg.fl_pos_z[0],
+                                                                   self.cfg.fl_pos_z[1]) * non_stance
+                self._ee_pos_fl_commands[env_ids, 0] = pos_x
+                self._ee_pos_fl_commands[env_ids, 1] = pos_y
+                self._ee_pos_fl_commands[env_ids, 2] = pos_z
+                self._ee_pos_fr_commands[env_ids, 0] = pos_x
+                self._ee_pos_fr_commands[env_ids, 1] = -pos_y
+                self._ee_pos_fr_commands[env_ids, 2] = pos_z
+            else:
+                self._ee_pos_fl_commands[env_ids, 0] = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 0]).uniform_(self.cfg.fl_pos_x[0],
+                                                                   self.cfg.fl_pos_x[1]) * non_stance
+                self._ee_pos_fl_commands[env_ids, 1] = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 1]).uniform_(self.cfg.fl_pos_y[0],
+                                                                   self.cfg.fl_pos_y[1]) * non_stance
+                self._ee_pos_fl_commands[env_ids, 2] = torch.zeros_like(
+                    self._ee_pos_fl_commands[env_ids, 2]).uniform_(self.cfg.fl_pos_z[0],
+                                                                   self.cfg.fl_pos_z[1]) * non_stance
+                self._ee_pos_fr_commands[env_ids, 0] = torch.zeros_like(
+                    self._ee_pos_fr_commands[env_ids, 0]).uniform_(self.cfg.fr_pos_x[0],
+                                                                   self.cfg.fr_pos_x[1]) * non_stance
+                self._ee_pos_fr_commands[env_ids, 1] = torch.zeros_like(
+                    self._ee_pos_fr_commands[env_ids, 1]).uniform_(self.cfg.fr_pos_y[0],
+                                                                   self.cfg.fr_pos_y[1]) * non_stance
+                self._ee_pos_fr_commands[env_ids, 2] = torch.zeros_like(
+                    self._ee_pos_fr_commands[env_ids, 2]).uniform_(self.cfg.fr_pos_z[0],
+                                                                   self.cfg.fr_pos_z[1]) * non_stance
 
         if self.cfg.enable_sampled_force_commands:
             # sampled in the projected com frame
             non_stance = self.contact_generator.desired_contact_mode[env_ids].sum(
                 dim=-1) < 3.9  # make sure it is not sampled when all foot in stance
-            self._ee_force_commands[env_ids, 0] = torch.zeros_like(
-                self._ee_force_commands[env_ids, 0]).uniform_(self.cfg.fl_force_x[0],
-                                                              self.cfg.fl_force_x[1]) * non_stance
-            self._ee_force_commands[env_ids, 1] = torch.zeros_like(
-                self._ee_force_commands[env_ids, 1]).uniform_(self.cfg.fl_force_y[0],
-                                                              self.cfg.fl_force_y[1]) * non_stance
-            self._ee_force_commands[env_ids, 2] = torch.zeros_like(
-                self._ee_force_commands[env_ids, 2]).uniform_(self.cfg.fl_force_z[0],
-                                                              self.cfg.fl_force_z[1]) * non_stance
+            if SYMMETRIC:
+                force_x = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 0]).uniform_(self.cfg.fl_force_x[0],
+                                                                     self.cfg.fl_force_x[1]) * non_stance
+                force_y = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 1]).uniform_(self.cfg.fl_force_y[0],
+                                                                     self.cfg.fl_force_y[1]) * non_stance
+                force_z = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 2]).uniform_(self.cfg.fl_force_z[0],
+                                                                     self.cfg.fl_force_z[1]) * non_stance
+
+                self._ee_force_fl_commands[env_ids, 0] = force_x
+                self._ee_force_fl_commands[env_ids, 1] = force_y
+                self._ee_force_fl_commands[env_ids, 2] = force_z
+                self._ee_force_fr_commands[env_ids, 0] = force_x
+                self._ee_force_fr_commands[env_ids, 1] = -force_y
+                self._ee_force_fr_commands[env_ids, 2] = force_z
+            else:
+                self._ee_force_fl_commands[env_ids, 0] = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 0]).uniform_(self.cfg.fl_force_x[0],
+                                                                     self.cfg.fl_force_x[1]) * non_stance
+                self._ee_force_fl_commands[env_ids, 1] = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 1]).uniform_(self.cfg.fl_force_y[0],
+                                                                     self.cfg.fl_force_y[1]) * non_stance
+                self._ee_force_fl_commands[env_ids, 2] = torch.zeros_like(
+                    self._ee_force_fl_commands[env_ids, 2]).uniform_(self.cfg.fl_force_z[0],
+                                                                     self.cfg.fl_force_z[1]) * non_stance
+                self._ee_force_fr_commands[env_ids, 0] = torch.zeros_like(
+                    self._ee_force_fr_commands[env_ids, 0]).uniform_(self.cfg.fr_force_x[0],
+                                                                     self.cfg.fr_force_x[1]) * non_stance
+                self._ee_force_fr_commands[env_ids, 1] = torch.zeros_like(
+                    self._ee_force_fr_commands[env_ids, 1]).uniform_(self.cfg.fr_force_y[0],
+                                                                     self.cfg.fr_force_y[1]) * non_stance
+                self._ee_force_fr_commands[env_ids, 2] = torch.zeros_like(
+                    self._ee_force_fr_commands[env_ids, 2]).uniform_(self.cfg.fr_force_z[0],
+                                                                     self.cfg.fr_force_z[1]) * non_stance
 
         # Reset robot state
         joint_pos = self._robot.data.default_joint_pos[env_ids]
@@ -959,10 +1072,7 @@ class QPEnv(DirectRLEnv):
         self._robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
 
         self.contact_generator.reset_idx(env_ids)
-        self._desired_joint_pos[env_ids] = self.joint_position_controller.reset_idx(env_ids)
-
-        self.contact_generator.reset_idx(env_ids)
-        self._desired_joint_pos[env_ids] = self.joint_position_controller.reset_idx(env_ids)
+        self.desired_joint_pos[env_ids] = self.joint_position_controller.reset_idx(env_ids)
 
     def _get_observations(self) -> dict:
         # states from GC and may be noisy
@@ -971,14 +1081,16 @@ class QPEnv(DirectRLEnv):
             self.projected_gravity_b,
             self.base_lin_vel_b,
             self.base_ang_vel_b,
-            self.joint_pos - self._robot.data.default_joint_pos,
+            self.joint_pos - self.default_joint_pos,
             self.joint_vel,
             self.contact_generator.desired_contact_phase,
             self.contact_generator.desired_contact_mode,
-            self._desired_joint_pos - self._robot.data.default_joint_pos,
+            self.desired_joint_pos - self.default_joint_pos,
             self._velocity_commands,
-            self._ee_pos_commands,
-            self._ee_force_commands,
+            self._ee_pos_fl_commands,
+            self._ee_pos_fr_commands,
+            self._ee_force_fl_commands,
+            self._ee_force_fr_commands,
             self._last_action,
         ), dim=-1)
 
@@ -998,7 +1110,8 @@ class QPEnv(DirectRLEnv):
                 "track_height_reward",
                 "track_lin_vel_reward",
                 "track_ang_vel_reward",
-                "track_ee_pos_reward",
+                "track_ee_pos_fl_reward",
+                "track_ee_pos_fr_reward",
 
                 "penalize_contact_mismatch",
                 "penalize_action_scale",
@@ -1012,27 +1125,41 @@ class QPEnv(DirectRLEnv):
         # task:
         gravity_vec_b = self._robot.data.projected_gravity_b.clone()
         gravity_vec_b_target = torch.zeros_like(gravity_vec_b)
-        gravity_vec_b_target[:, 2] = -1.0
+        gravity_vec_b_target[:, 0] = -1.0
         track_orientation_error = torch.norm(gravity_vec_b - gravity_vec_b_target, dim=-1)
-        track_orientation_reward = torch.exp(-torch.square(track_orientation_error) / 0.3 ** 2)
+        track_orientation_reward = torch.exp(-torch.square(track_orientation_error) / 0.6 ** 2)
 
         base_height_error = torch.abs(self._robot.data.root_pos_w[:, 2] - self.cfg.nominal_base_height)
-        track_height_reward = torch.exp(-torch.square(base_height_error) / 0.1 ** 2)
+        track_height_reward = torch.exp(-torch.square(base_height_error) / 0.2 ** 2)
 
-        track_lin_vel_error = torch.norm(self._robot.data.root_lin_vel_b[:, :2] - self._velocity_commands[:, :2],
-                                         dim=-1)
-        track_ang_vel_error = torch.abs(self._robot.data.root_ang_vel_b[:, 2] - self._velocity_commands[:, 2])
-        track_lin_vel_reward = torch.exp(-torch.square(track_lin_vel_error) / 0.2 ** 2)
-        track_ang_vel_reward = torch.exp(-torch.square(track_ang_vel_error) / 0.3 ** 2)
+        transformed_lin_vel = torch.cat(
+            [
+                -self._robot.data.root_lin_vel_b.clone()[:, 2:3],
+                self._robot.data.root_lin_vel_b.clone()[:, 1:2],
+            ], dim=-1,
+        )
+        transformed_ang_vel = self._robot.data.root_ang_vel_b.clone()[:, 0]
+
+        track_lin_vel_error = torch.norm(transformed_lin_vel - self._velocity_commands[:, :2], dim=-1)
+        track_ang_vel_error = torch.abs(transformed_ang_vel - self._velocity_commands[:, 2])
+        track_lin_vel_reward = torch.exp(-torch.square(track_lin_vel_error) / 0.3 ** 2)
+        track_ang_vel_reward = torch.exp(-torch.square(track_ang_vel_error) / 0.4 ** 2)
 
         # tracking FL pos
+        quat_yaw = math_utils.yaw_quat(self._robot.data.root_quat_w)
+
         ee_pos = self._robot.data.body_state_w[:, self.feet_ids, 0:3].clone()
         ee_pos_fl = ee_pos[:, 0]
         ee_pos_fl[:, :2] -= self._robot.data.root_pos_w[:, :2]
-        quat_yaw = math_utils.yaw_quat(self._robot.data.root_quat_w)
         ee_pos_fl_com = math_utils.quat_rotate_inverse(quat_yaw, ee_pos_fl)
-        track_ee_pos_error = torch.norm(ee_pos_fl_com - self._ee_pos_commands, dim=-1)
-        track_ee_pos_reward = torch.exp(-torch.square(track_ee_pos_error) / 0.1 ** 2)
+        track_ee_pos_fl_error = torch.norm(ee_pos_fl_com - self._ee_pos_fl_commands, dim=-1)
+        track_ee_pos_fl_reward = torch.exp(-torch.square(track_ee_pos_fl_error) / 0.1 ** 2)
+
+        ee_pos_fr = ee_pos[:, 1]
+        ee_pos_fr[:, :2] -= self._robot.data.root_pos_w[:, :2]
+        ee_pos_fr_com = math_utils.quat_rotate_inverse(quat_yaw, ee_pos_fr)
+        track_ee_pos_fr_error = torch.norm(ee_pos_fr_com - self._ee_pos_fr_commands, dim=-1)
+        track_ee_pos_fr_reward = torch.exp(-torch.square(track_ee_pos_fr_error) / 0.1 ** 2)
 
         action_rate = torch.norm(self._last_action - action, dim=-1)
         penalize_action_rate = torch.exp(-torch.square(action_rate) / 10.0 ** 2)
@@ -1045,7 +1172,7 @@ class QPEnv(DirectRLEnv):
         penalize_contact_mismatch = torch.pow(0.5, contact_unmatch)
 
         dof_acc = torch.norm(self._robot.data.joint_acc, dim=-1)
-        penalize_dof_acc = torch.exp(-torch.square(dof_acc) / 700.0 ** 2)
+        penalize_dof_acc = torch.exp(-torch.square(dof_acc) / 500.0 ** 2)
 
         dof_torque = torch.norm(self._robot.data.applied_torque, dim=-1)
         penalize_dof_torque = torch.exp(-torch.square(dof_torque) / 100.0 ** 2)
@@ -1055,7 +1182,8 @@ class QPEnv(DirectRLEnv):
             "track_height_reward": track_height_reward,
             "track_lin_vel_reward": track_lin_vel_reward,
             "track_ang_vel_reward": track_ang_vel_reward,
-            "track_ee_pos_reward": track_ee_pos_reward,
+            "track_ee_pos_fl_reward": track_ee_pos_fl_reward,
+            "track_ee_pos_fr_reward": track_ee_pos_fr_reward,
         }
         penalty_rewards = {
             "penalize_contact_mismatch": penalize_contact_mismatch,
@@ -1073,7 +1201,8 @@ class QPEnv(DirectRLEnv):
             "track_height_reward": track_height_reward,
             "track_lin_vel_reward": track_lin_vel_reward,
             "track_ang_vel_reward": track_ang_vel_reward,
-            "track_ee_pos_reward": track_ee_pos_reward,
+            "track_ee_pos_fl_reward": track_ee_pos_fl_reward,
+            "track_ee_pos_fr_reward": track_ee_pos_fr_reward,
 
             "penalize_contact_mismatch": penalize_contact_mismatch,
             "penalize_action_scale": penalize_action_scale,
@@ -1091,17 +1220,21 @@ class QPEnv(DirectRLEnv):
         time_out = self.episode_length_buf >= self.max_episode_length - 1
 
         is_unsafe = torch.zeros_like(time_out, dtype=torch.bool)
+        base_height = self._robot.data.root_pos_w[:, 2]
+        low_base_height = base_height < 0.3
+        gravity_vec_b = self._robot.data.projected_gravity_b.clone()
+        gravity_vec_b_target = torch.zeros_like(gravity_vec_b)
+        gravity_vec_b_target[:, 0] = -1.0
+        orientation_error = torch.norm(gravity_vec_b - gravity_vec_b_target, dim=-1)
+        undesired_foot_contacts = torch.zeros_like(time_out, dtype=torch.bool)
+        body_contact = torch.zeros_like(time_out, dtype=torch.bool)
+        limb_contact = torch.zeros_like(time_out, dtype=torch.bool)
 
         if self.cfg.terminate_on_low_base_height:
-            low_base_height = self._robot.data.root_pos_w[:, 2] < 0.1
             is_unsafe = torch.logical_or(is_unsafe, low_base_height)
 
         if self.cfg.terminate_on_large_orientation_error:
-            gravity_vec_b = self._robot.data.projected_gravity_b.clone()
-            gravity_vec_b_target = torch.zeros_like(gravity_vec_b)
-            gravity_vec_b_target[:, 2] = -1.0
-            orientation_error = torch.norm(gravity_vec_b - gravity_vec_b_target, dim=-1)
-            is_unsafe = torch.logical_or(is_unsafe, orientation_error > 0.75)
+            is_unsafe = torch.logical_or(is_unsafe, orientation_error > 0.8)
 
         if self.cfg.terminate_on_undesired_foot_contact:
             undesired_foot_contacts = torch.sum(torch.logical_and(self.foot_contacts,
@@ -1118,6 +1251,22 @@ class QPEnv(DirectRLEnv):
             limb_contact = torch.logical_or(self.calf_contacts, self.thigh_contacts)
             limb_contact = torch.sum(limb_contact, dim=1)
             is_unsafe = torch.logical_or(is_unsafe, limb_contact > 0)
+
+        # The validation harness enables this switch immediately before a
+        # rollout.  Keeping the snapshot here (before DirectRLEnv resets an
+        # unsafe environment) makes a failing checkpoint reproducible without
+        # changing the task's normal termination behavior or training cost.
+        if getattr(self, "_record_termination_diagnostics", False) and bool(torch.any(is_unsafe | time_out)):
+            self._last_termination_diagnostics = {
+                "base_height": base_height.detach().clone(),
+                "orientation_error": orientation_error.detach().clone(),
+                "low_base_height": low_base_height.detach().clone(),
+                "large_orientation_error": (orientation_error > 0.8).detach().clone(),
+                "undesired_foot_contact": undesired_foot_contacts.detach().clone(),
+                "body_or_head_contact": body_contact.detach().clone(),
+                "limb_contact": (limb_contact > 0).detach().clone(),
+                "time_out": time_out.detach().clone(),
+            }
 
         return is_unsafe, time_out
 
@@ -1136,6 +1285,10 @@ class QPEnv(DirectRLEnv):
         return motor_angles_from_foot_positions_fl(foot_local_positions, self.hip_offset, self.link_lengths,
                                                    device=self.device)
 
+    def get_motor_angles_from_foot_positions_fr(self, foot_local_positions):
+        return motor_angles_from_foot_positions_fr(foot_local_positions, self.hip_offset, self.link_lengths,
+                                                   device=self.device)
+
     @property
     def time_since_reset(self):
         return self._time_since_reset.clone()
@@ -1144,22 +1297,29 @@ class QPEnv(DirectRLEnv):
     def generalized_coordinates(self):
         base_pos = self._robot.data.root_pos_w.clone()  # 0:3
         base_quat = self._robot.data.root_quat_w.clone()  # 3:7
-        joint_pos = self._robot.data.joint_pos.clone()  # 7:19
+        joint_pos = ordered_joint_pos(self._robot, self._go2_indices)  # 7:19
         base_lin_vel = self._robot.data.root_lin_vel_w.clone()  # 19:22
         base_ang_vel = self._robot.data.root_ang_vel_w.clone()  # 22:25
-        joint_vel = self._robot.data.joint_vel.clone()  # 25:37
+        joint_vel = ordered_joint_vel(self._robot, self._go2_indices)  # 25:37
 
         q = torch.cat([base_pos, base_quat, joint_pos, base_lin_vel, base_ang_vel, joint_vel], dim=1)
 
         if self.cfg.obs_noise:
-            q[:, 0:2] += torch.rand_like(q[:, 0:2]) * 0.1 - 0.05  # x, y
-            q[:, 2] += torch.rand_like(q[:, 2]) * 0.04 - 0.02  # z
-            q[:, 3:7] += torch.rand_like(q[:, 3:7]) * 0.04 - 0.02  # quat
+            noise_xy = 0.05
+            noise_z = 0.05
+            noise_quat = 0.02
+            noise_qj = 0.01
+            noise_vl = 0.1
+            noise_va = 0.15
+            noise_vj = 1.5
+            q[:, 0:2] += torch.rand_like(q[:, 0:2]) * 2 * noise_xy - noise_xy  # x, y
+            q[:, 2] += torch.rand_like(q[:, 2]) * 2 * noise_z - noise_z  # z
+            q[:, 3:7] += torch.rand_like(q[:, 3:7]) * 2 * noise_quat - noise_quat  # quat
             q[:, 3:7] = math_utils.normalize(q[:, 3:7])
-            q[:, 7:19] += torch.rand_like(q[:, 7:19]) * 0.02 - 0.01  # joint pos
-            q[:, 19:22] += torch.rand_like(q[:, 19:22]) * 0.2 - 0.1  # lin vel
-            q[:, 22:25] += torch.rand_like(q[:, 22:25]) * 0.3 - 0.15  # ang vel
-            q[:, 25:37] += torch.rand_like(q[:, 25:37]) * 3.0 - 1.5  # joint vel
+            q[:, 7:19] += torch.rand_like(q[:, 7:19]) * 2 * noise_qj - noise_qj  # joint pos
+            q[:, 19:22] += torch.rand_like(q[:, 19:22]) * 2 * noise_vl - noise_vl  # lin vel
+            q[:, 22:25] += torch.rand_like(q[:, 22:25]) * 2 * noise_va - noise_va  # ang vel
+            q[:, 25:37] += torch.rand_like(q[:, 25:37]) * 2 * noise_vj - noise_vj  # joint vel
         return q
 
     @property
@@ -1198,7 +1358,7 @@ class QPEnv(DirectRLEnv):
     def base_rot_mat_rp_t(self):
         # R (base-root)
         # p_base = R * p_root
-        return math_utils.rp_rotation_from_gravity_b(self.projected_gravity_b)
+        return rambo_math.rp_rotation_from_gravity_b(self.projected_gravity_b)
 
     @property
     def projected_gravity_b(self):
@@ -1309,18 +1469,12 @@ class QPEnv(DirectRLEnv):
         num_envs = jacobian.shape[0]
         num_joints = jacobian.shape[3] - 6
 
-        limb_body_ids = [1, 2, 4, 5,  # hip
-                         6, 7, 9, 10,  # thigh
-                         11, 12, 13, 14,  # calf
-                         15, 16, 17, 18]  # foot
-
         gravity = torch.tensor([0.0, 0.0, 9.81], device=self.device)
 
         gravity_torques = torch.zeros((num_envs, num_joints), device=self.device)
-        for i in range(len(limb_body_ids)):
-            idx = limb_body_ids[i]
-            body_mass = masses[:, idx]
-            body_jacobian = jacobian[:, i, :3, 6:]
+        for logical_body_index, body_id in enumerate(self._go2_indices.body_ids[1:], start=1):
+            body_mass = masses[:, body_id]
+            body_jacobian = jacobian[:, logical_body_index, :3, 6:]
             body_gravity_torques = torch.bmm(body_jacobian.permute(0, 2, 1),
                                              (body_mass.unsqueeze(-1) * gravity.unsqueeze(0)).unsqueeze(
                                                  -1)).squeeze(-1)
@@ -1406,31 +1560,11 @@ class QPEnv(DirectRLEnv):
 
     @property
     def com_quat(self):
-        # body 0 is the base
-        return self._robot.data.body_state_w[:, 0, 3:7].clone()  # of the body frame
+        return self._robot.data.body_state_w[:, self._go2_indices.body_ids[0], 3:7].clone()
 
     @property
     def jacobian(self):
-        # from simulation, in the inertia frame
-        # #envs x #bodies x 6 x (6 + nj) / #envs x #bodies x (3lin+3ang) x (3blin+3bang+nj)
-        # body:
-        # base,
-        # FL_hip, FR_hip, RL_hip, RR_hip,
-        # FL_thigh, FR_thigh, RL_thigh, RR_thigh,
-        # FL_calf, FR_calf, RL_calf, RR_calf
-        # FL_foot, FR_foot, RL_foot, RR_foot
-        # joints:
-        # FL_hip, FR_hip, RL_hip, RR_hip,
-        # FL_thigh, FR_thigh, RL_thigh, RR_thigh,
-        # FL_calf, FR_calf, RL_calf, RR_calf
-        jacobian_sim = self._robot.root_physx_view.get_jacobians().clone().to(self.device)
-        body_ids = [0,  # base
-                    1, 2, 4, 5,  # hip
-                    6, 7, 9, 10,  # thigh
-                    11, 12, 13, 14,  # calf
-                    15, 16, 17, 18]  # foot
-        jacobian_sim_clean = jacobian_sim[:, body_ids, :, :]
-        return jacobian_sim_clean
+        return ordered_jacobians(self._robot, self._go2_indices)
 
     ###############################################################
     def set_debug_vis(self, velocity_debug_vis: bool, pos_debug_vis: bool, force_debug_vis: bool) -> bool:
@@ -1480,35 +1614,56 @@ class QPEnv(DirectRLEnv):
 
         if pos_debug_vis:
             # create markers if necessary for the first tome
-            if not hasattr(self, "ee_pos_goal_visualizer"):
+            if not hasattr(self, "ee_pos_fl_goal_visualizer"):
                 # -- goal
                 marker_cfg = GREEN_SPHERE_MARKER_CFG.copy()
-                marker_cfg.prim_path = "/Visuals/Command/position_goal"
+                marker_cfg.prim_path = "/Visuals/Command/position_goal_fl"
                 marker_cfg.markers["sphere"].radius = 0.04
-                self.ee_pos_goal_visualizer = VisualizationMarkers(marker_cfg)
+                self.ee_pos_fl_goal_visualizer = VisualizationMarkers(marker_cfg)
                 # -- current
                 marker_cfg = BLUE_SPHERE_MARKER_CFG.copy()
-                marker_cfg.prim_path = "/Visuals/Command/position_current"
+                marker_cfg.prim_path = "/Visuals/Command/position_current_fl"
                 marker_cfg.markers["sphere"].radius = 0.04
-                self.ee_pos_visualizer = VisualizationMarkers(marker_cfg)
+                self.ee_pos_fl_visualizer = VisualizationMarkers(marker_cfg)
+
+                marker_cfg = YELLOW_SPHERE_MARKER_CFG.copy()
+                marker_cfg.prim_path = "/Visuals/Command/position_goal_fr"
+                marker_cfg.markers["sphere"].radius = 0.04
+                self.ee_pos_fr_goal_visualizer = VisualizationMarkers(marker_cfg)
+                # -- current
+                marker_cfg = CYAN_SPHERE_MARKER_CFG.copy()
+                marker_cfg.prim_path = "/Visuals/Command/position_current_fr"
+                marker_cfg.markers["sphere"].radius = 0.04
+                self.ee_pos_fr_visualizer = VisualizationMarkers(marker_cfg)
+
             # set their visibility to true
-            self.ee_pos_goal_visualizer.set_visibility(True)
-            self.ee_pos_visualizer.set_visibility(True)
+            self.ee_pos_fl_goal_visualizer.set_visibility(True)
+            self.ee_pos_fr_goal_visualizer.set_visibility(True)
+            self.ee_pos_fl_visualizer.set_visibility(True)
+            self.ee_pos_fr_visualizer.set_visibility(True)
         else:
-            if hasattr(self, "ee_pos_goal_visualizer"):
-                self.ee_pos_goal_visualizer.set_visibility(False)
-                self.ee_pos_visualizer.set_visibility(False)
+            if hasattr(self, "ee_pos_fl_goal_visualizer"):
+                self.ee_pos_fl_goal_visualizer.set_visibility(False)
+                self.ee_pos_fr_goal_visualizer.set_visibility(False)
+                self.ee_pos_fl_visualizer.set_visibility(False)
+                self.ee_pos_fr_visualizer.set_visibility(False)
 
         if force_debug_vis:
-            if not hasattr(self, "desired_force_visualizer"):
+            if not hasattr(self, "desired_force_fl_visualizer"):
                 marker_cfg = RED_ARROW_X_MARKER_CFG.copy()
-                marker_cfg.prim_path = "/Visuals/Command/desired_force"
+                marker_cfg.prim_path = "/Visuals/Command/desired_force_fl"
                 marker_cfg.markers["arrow"].scale = (0.3, 0.3, 0.3)
-                self.desired_force_visualizer = VisualizationMarkers(marker_cfg)
-            self.desired_force_visualizer.set_visibility(True)
+                self.desired_force_fl_visualizer = VisualizationMarkers(marker_cfg)
+                marker_cfg = RED_ARROW_X_MARKER_CFG.copy()
+                marker_cfg.prim_path = "/Visuals/Command/desired_force_fr"
+                marker_cfg.markers["arrow"].scale = (0.3, 0.3, 0.3)
+                self.desired_force_fr_visualizer = VisualizationMarkers(marker_cfg)
+            self.desired_force_fl_visualizer.set_visibility(True)
+            self.desired_force_fr_visualizer.set_visibility(True)
         else:
-            if hasattr(self, "desired_force_visualizer"):
-                self.desired_force_visualizer.set_visibility(False)
+            if hasattr(self, "desired_force_fl_visualizer"):
+                self.desired_force_fl_visualizer.set_visibility(False)
+                self.desired_force_fr_visualizer.set_visibility(False)
 
     def _debug_vis_callback(self, event):
         if self.cfg.velocity_debug_vis:
@@ -1528,53 +1683,80 @@ class QPEnv(DirectRLEnv):
             # FL
             ee_pos = self._robot.data.body_state_w[:, self.feet_ids, 0:3].clone()
             ee_pos_FL = ee_pos[:, 0]
+            ee_pos_FR = ee_pos[:, 1]
 
             # in projected com frame
             base_pos_w = self._robot.data.root_pos_w.clone()
-            ee_pos_target_com = self._ee_pos_commands
 
             gravity_vec_w = torch.tensor((0.0, 0.0, -1.0), device=self.device).repeat(self.num_envs, 1)
             projected_gravity_b = math_utils.quat_rotate_inverse(self._robot.data.root_quat_w, gravity_vec_w)
-            base_rot_mat_rp_t = math_utils.rp_rotation_from_gravity_b(projected_gravity_b)
+            base_rot_mat_rp_t = rambo_math.rp_rotation_from_gravity_b(projected_gravity_b)
             base_quat_rp = math_utils.quat_from_matrix(base_rot_mat_rp_t.transpose(1, 2))
 
-            ee_pos_target = math_utils.quat_rotate(
-                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)), ee_pos_target_com)
-            ee_pos_target[:, :2] += base_pos_w[:, :2]
+            ee_pos_target_fl_com = self._ee_pos_fl_commands
+            ee_pos_target_fl = math_utils.quat_rotate(
+                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
+                ee_pos_target_fl_com)
+            ee_pos_target_fl[:, :2] += base_pos_w[:, :2]
+
+            ee_pos_target_fr_com = self._ee_pos_fr_commands
+            ee_pos_target_fr = math_utils.quat_rotate(
+                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
+                ee_pos_target_fr_com)
+            ee_pos_target_fr[:, :2] += base_pos_w[:, :2]
 
             # display markers
-            self.ee_pos_goal_visualizer.visualize(translations=ee_pos_target)
-            self.ee_pos_visualizer.visualize(translations=ee_pos_FL)
+            self.ee_pos_fl_goal_visualizer.visualize(translations=ee_pos_target_fl)
+            self.ee_pos_fr_goal_visualizer.visualize(translations=ee_pos_target_fr)
+            self.ee_pos_fl_visualizer.visualize(translations=ee_pos_FL)
+            self.ee_pos_fr_visualizer.visualize(translations=ee_pos_FR)
 
         if self.cfg.force_debug_vis:
-            desired_force_com = self._ee_force_commands  # projected com frame, fl
+            desired_force_com_fl = self._ee_force_fl_commands  # projected com frame
+            desired_force_com_fr = self._ee_force_fr_commands  # projected com frame
 
             gravity_vec_w = torch.tensor((0.0, 0.0, -1.0), device=self.device).repeat(self.num_envs, 1)
             projected_gravity_b = math_utils.quat_rotate_inverse(self._robot.data.root_quat_w, gravity_vec_w)
-            base_rot_mat_rp_t = math_utils.rp_rotation_from_gravity_b(projected_gravity_b)
+            base_rot_mat_rp_t = rambo_math.rp_rotation_from_gravity_b(projected_gravity_b)
             base_quat_rp = math_utils.quat_from_matrix(base_rot_mat_rp_t.transpose(1, 2))
 
-            desired_force_w = math_utils.quat_rotate(
+            desired_force_w_fl = math_utils.quat_rotate(
                 math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
-                desired_force_com)
+                desired_force_com_fl)
+            desired_force_w_fr = math_utils.quat_rotate(
+                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
+                desired_force_com_fr)
 
-            scale, quat = self._resolve_scale_and_quat_from_vector(
-                self.desired_force_visualizer.cfg.markers["arrow"].scale,
-                desired_force_w)
+            scale_fl, quat_fl = self._resolve_scale_and_quat_from_vector(
+                self.desired_force_fl_visualizer.cfg.markers["arrow"].scale,
+                desired_force_w_fl)
+            scale_fr, quat_fr = self._resolve_scale_and_quat_from_vector(
+                self.desired_force_fr_visualizer.cfg.markers["arrow"].scale,
+                desired_force_w_fr)
 
             base_pos_w = self._robot.data.root_pos_w.clone()
-            ee_pos_target_com = self._ee_pos_commands
+            ee_pos_target_com_fl = self._ee_pos_fl_commands
+            ee_pos_target_com_fr = self._ee_pos_fr_commands
 
             gravity_vec_w = torch.tensor((0.0, 0.0, -1.0), device=self.device).repeat(self.num_envs, 1)
             projected_gravity_b = math_utils.quat_rotate_inverse(self._robot.data.root_quat_w, gravity_vec_w)
-            base_rot_mat_rp_t = math_utils.rp_rotation_from_gravity_b(projected_gravity_b)
+            base_rot_mat_rp_t = rambo_math.rp_rotation_from_gravity_b(projected_gravity_b)
             base_quat_rp = math_utils.quat_from_matrix(base_rot_mat_rp_t.transpose(1, 2))
 
-            ee_pos_target_w = math_utils.quat_rotate(
-                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)), ee_pos_target_com)
-            ee_pos_target_w[:, :2] += base_pos_w[:, :2]
-            pos = ee_pos_target_w
-            self.desired_force_visualizer.visualize(pos, quat, scale)
+            ee_pos_target_w_fl = math_utils.quat_rotate(
+                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
+                ee_pos_target_com_fl)
+            ee_pos_target_w_fl[:, :2] += base_pos_w[:, :2]
+            pos_fl = ee_pos_target_w_fl
+
+            ee_pos_target_w_fr = math_utils.quat_rotate(
+                math_utils.quat_mul(self._robot.data.root_quat_w, math_utils.quat_inv(base_quat_rp)),
+                ee_pos_target_com_fr)
+            ee_pos_target_w_fr[:, :2] += base_pos_w[:, :2]
+            pos_fr = ee_pos_target_w_fr
+
+            self.desired_force_fl_visualizer.visualize(pos_fl, quat_fl, scale_fl)
+            self.desired_force_fr_visualizer.visualize(pos_fr, quat_fr, scale_fr)
 
     def _resolve_xy_velocity_to_arrow(self, xy_velocity: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         """Converts the XY base velocity command to arrow direction rotation."""
@@ -1617,6 +1799,37 @@ def motor_angles_from_foot_positions_fl(foot_local_positions,
                                         device: str = "cuda"):
     foot_positions_in_hip_frame = foot_local_positions - hip_offset[0]
     l_hip = link_lengths[0]
+    l_up = link_lengths[1]
+    l_low = link_lengths[2]
+
+    x = foot_positions_in_hip_frame[:, 0]
+    y = foot_positions_in_hip_frame[:, 1]
+    z = foot_positions_in_hip_frame[:, 2]
+
+    theta_calf = -torch.arccos(
+        torch.clip((x ** 2 + y ** 2 + z ** 2 - l_hip ** 2 - l_low ** 2 - l_up ** 2) /
+                   (2 * l_low * l_up), -1, 1))
+    l = torch.sqrt(
+        torch.clip(l_up ** 2 + l_low ** 2 + 2 * l_up * l_low * torch.cos(theta_calf),
+                   1e-7, 1))
+    theta_thigh = torch.arcsin(torch.clip(-x / l, -1, 1)) - theta_calf / 2
+    c1 = l_hip * y - l * torch.cos(theta_thigh + theta_calf / 2) * z
+    s1 = l * torch.cos(theta_thigh + theta_calf / 2) * y + l_hip * z
+    theta_hip = torch.arctan2(s1, c1)
+
+    # thetas: num_envs x 4
+    joint_angles = torch.stack([
+        theta_hip[:, None], theta_thigh[:, None], theta_calf[:, None]], dim=-1)
+    return math_utils.wrap_to_pi(joint_angles.reshape((-1, 3)))
+
+
+@torch.jit.script
+def motor_angles_from_foot_positions_fr(foot_local_positions,
+                                        hip_offset,
+                                        link_lengths,
+                                        device: str = "cuda"):
+    foot_positions_in_hip_frame = foot_local_positions - hip_offset[1]
+    l_hip = -link_lengths[0]
     l_up = link_lengths[1]
     l_low = link_lengths[2]
 

@@ -71,6 +71,19 @@ class ContactGenerator:
                                                  device=self._env.device)
 
         self._time_since_reset = torch.zeros(self._env.num_envs, device=self._env.device, dtype=torch.float32)
+        phase_offset_s = float(getattr(self._env.cfg, "contact_phase_offset_s", 0.0))
+        if not np.isfinite(phase_offset_s) or phase_offset_s < 0.0:
+            raise ValueError(
+                "contact_phase_offset_s must be a finite non-negative duration, "
+                f"got {phase_offset_s!r}"
+            )
+        # This is deliberately separate from ``episode_length_buf``.  A
+        # validator may begin the gait at a fixed trained phase while keeping
+        # its episode horizon at a full 31 seconds (and hence never treating
+        # the offset as elapsed episode time).
+        self._phase_offset_s = torch.full(
+            (self._env.num_envs,), phase_offset_s, device=self._env.device, dtype=torch.float32
+        )
 
         self.debug_vis = self._env.cfg.contact_generator_config["contact_generator_debug_vis"]
         self.contact_generator_vis_handle = None
@@ -80,7 +93,9 @@ class ContactGenerator:
         if len(env_ids) == 0:
             return
 
-        self._time_since_reset[env_ids] = self._env.time_since_reset[env_ids]
+        self._time_since_reset[env_ids] = (
+            self._env.time_since_reset[env_ids] + self._phase_offset_s[env_ids]
+        )
 
         current_mode_index = torch.sum(
             self._time_since_reset[env_ids, None, None] >= (self._contact_timing_cumsum[None, :] + 1e-4),
@@ -148,7 +163,7 @@ class ContactGenerator:
             # swing_ratio -> 1, contact
 
     def update(self):
-        self._time_since_reset = self._env.time_since_reset
+        self._time_since_reset = self._env.time_since_reset + self._phase_offset_s
 
         current_mode_index = torch.sum(
             self._time_since_reset[:, None, None] >= (self._contact_timing_cumsum[None, :] + 1e-4),
