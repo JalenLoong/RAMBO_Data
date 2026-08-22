@@ -142,7 +142,7 @@ scripts/rambo/run.sh scripts/rambo/teleop_loco_manip.py \
   --checkpoint /workspace/rambo/logs/crl2/rambo_quadruped/hf_quadruped/model_2000.pt
 ```
 
-Click the viewport before typing. Arrow keys or numpad 8/2/4/6 command base translation, `Z`/`X` command yaw, `W`/`S` move FL forward/back, `A`/`D` move FL laterally, and `R`/`F` move FL up/down. `Space` or `L` stops the base. A successful five-step press latches the green status marker; retract the foot and press `C` to clear it.
+Click the viewport before typing. Arrow keys or numpad 8/2/4/6 command base translation, `Z`/`X` command yaw, `W`/`S` move FL forward/back, `A`/`D` move FL laterally, and `R`/`F` move FL up/down. Releasing a base key removes that command, while `L` stops and resets all commands. Do not use `Space`: Isaac Sim 5.1 reserves it for timeline play/pause. A successful five-step press latches the green status marker; retract the foot and press `C` to clear it.
 
 The combined headless gate performs the complete sequence in one environment: walk to the wall, stop, raise FL, press beyond 12 mm, hold, retract, and verify spring return below 2 mm.
 

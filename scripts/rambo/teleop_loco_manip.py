@@ -18,6 +18,13 @@ EE_MAX = np.array([0.50, 0.20, 0.40], dtype=np.float32)
 EE_DEFAULT = np.array([0.1934, 0.142, 0.05], dtype=np.float32)
 
 
+def _keyboard_event_name(event: Any) -> str:
+    """Normalize Carb keyboard inputs across native and synthetic 5.1 events."""
+
+    raw_key = event.input
+    return raw_key.name if hasattr(raw_key, "name") else str(raw_key)
+
+
 def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     try:
         from isaaclab.app import AppLauncher
@@ -32,6 +39,12 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=300.0)
     parser.add_argument("--max-steps", type=int, default=0, help="0 runs until the GUI closes")
+    parser.add_argument(
+        "--telemetry-every",
+        type=int,
+        default=0,
+        help="Print interactive state every N control steps; 0 disables periodic output",
+    )
     smoke = parser.add_mutually_exclusive_group()
     smoke.add_argument("--smoke-walk", action="store_true", help="Verify a scripted walking command")
     smoke.add_argument(
@@ -65,6 +78,8 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
         parser.error("--episode-length-s must exceed the one-second FL stance phase")
     if args.max_steps < 0:
         parser.error("--max-steps must be non-negative")
+    if args.telemetry_every < 0:
+        parser.error("--telemetry-every must be non-negative")
     for name in ("vx_sensitivity", "vy_sensitivity", "wz_sensitivity"):
         value = float(getattr(args, name))
         if value <= 0.0 or value > 0.5:
@@ -196,20 +211,27 @@ def _make_keyboard(base_env: Any, args: argparse.Namespace):
             return requested
 
         def _on_keyboard_event(self, event, *callback_args, **callback_kwargs):
-            key = event.input.name
+            key = _keyboard_event_name(event)
             if key in self._LEG_KEYS:
                 if event.type == carb.input.KeyboardEventType.KEY_PRESS:
                     self._held_leg_keys.add(key)
                 elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
                     self._held_leg_keys.discard(key)
                 return True
-            if event.type == carb.input.KeyboardEventType.KEY_PRESS and key == "SPACE":
-                self._base_command.fill(0.0)
-                return True
             if event.type == carb.input.KeyboardEventType.KEY_PRESS and key == "C":
                 self._clear_success_requested = True
                 return True
-            return super()._on_keyboard_event(event, *callback_args, **callback_kwargs)
+            if event.type == carb.input.KeyboardEventType.KEY_PRESS:
+                if key == "L":
+                    self.reset()
+                elif key in self._INPUT_KEY_MAPPING:
+                    self._base_command += self._INPUT_KEY_MAPPING[key]
+                if key in self._additional_callbacks:
+                    self._additional_callbacks[key]()
+            elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
+                if key in self._INPUT_KEY_MAPPING:
+                    self._base_command -= self._INPUT_KEY_MAPPING[key]
+            return True
 
         def __str__(self) -> str:
             return (
@@ -217,7 +239,7 @@ def _make_keyboard(base_env: Any, args: argparse.Namespace):
                 + "\n\tFL forward/back: W / S"
                 + "\n\tFL lateral +/-: A / D"
                 + "\n\tFL up/down: R / F"
-                + "\n\tStop base: Space or L"
+                + "\n\tStop and reset all commands: L"
                 + "\n\tClear released-button success: C"
             )
 
@@ -285,6 +307,8 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
         teleop.reset()
         leg_target = EE_DEFAULT.copy()
         prior_success = False
+        prior_released = bool(base_env.button_released[0].item())
+        release_announced = False
         was_ready = False
         press_succeeded = False
         press_released = False
@@ -322,7 +346,10 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 was_ready = ready
 
                 if teleop.consume_clear_success_request() and bool(base_env.button_released[0].item()):
-                    base_env.clear_button_success()
+                    cleared = base_env.clear_button_success()
+                    if bool(cleared[0].item()):
+                        release_announced = False
+                        print("[BUTTON] CLEARED", flush=True)
 
                 if args.smoke_press:
                     base_command = np.zeros(3, dtype=np.float32)
@@ -377,17 +404,25 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     raise RuntimeError(f"Policy action is non-finite at step {step_count}")
                 observations, _, dones, _ = env.step(actions)
                 step_count += 1
-                if bool(torch.any(dones)) and smoke_mode:
-                    raise RuntimeError(f"Environment terminated during smoke test at step {step_count}")
+                if bool(torch.any(dones)):
+                    teleop.reset()
+                    mode = "smoke test" if smoke_mode else "teleoperation"
+                    raise RuntimeError(f"Environment terminated during {mode} at step {step_count}")
 
                 new_success = bool(base_env.button_success[0].item())
                 if new_success and not prior_success:
                     press_succeeded = press_succeeded or press_mode
+                    release_announced = False
                     print(
                         f"[BUTTON] PRESSED: travel={float(base_env.button_displacement[0].item()) * 1000.0:.1f} mm",
                         flush=True,
                     )
                 prior_success = new_success
+                new_released = bool(base_env.button_released[0].item())
+                if new_success and not release_announced and not prior_released and new_released:
+                    print("[BUTTON] RELEASED", flush=True)
+                    release_announced = True
+                prior_released = new_released
                 if (
                     press_mode
                     and press_succeeded
@@ -396,11 +431,15 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 ):
                     press_released = True
 
-                if smoke_mode and step_count % 50 == 0:
+                report_every = 50 if smoke_mode else args.telemetry_every
+                if report_every and step_count % report_every == 0:
+                    report_label = "SMOKE" if smoke_mode else "STATE"
                     print(
-                        f"[SMOKE] step={step_count} root_x={float(base_env._robot.data.root_pos_w[0, 0]):.3f} "
+                        f"[{report_label}] step={step_count} "
+                        f"root_x={float(base_env._robot.data.root_pos_w[0, 0]):.3f} "
                         f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
-                        f"button={float(base_env.button_displacement[0]) * 1000.0:.1f}mm",
+                        f"button={float(base_env.button_displacement[0]) * 1000.0:.1f}mm "
+                        f"success={int(new_success)} released={int(new_released)}",
                         flush=True,
                     )
                 if press_mode and press_succeeded and press_released and step_count >= retract_end:
@@ -430,6 +469,14 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 raise RuntimeError("Walking smoke test did not produce measurable base and joint motion")
             print("LOCO_MANIP_SMOKE_WALK_SUCCESS", flush=True)
         else:
+            print(
+                f"[FINAL] root_x={float(base_env._robot.data.root_pos_w[0, 0].item()):.3f} "
+                f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
+                f"button={float(base_env.button_displacement[0].item()) * 1000.0:.1f}mm "
+                f"success={int(bool(base_env.button_success[0].item()))} "
+                f"released={int(bool(base_env.button_released[0].item()))}",
+                flush=True,
+            )
             print(f"LOCO_MANIP_STEPS={step_count}", flush=True)
         return 0
     finally:
