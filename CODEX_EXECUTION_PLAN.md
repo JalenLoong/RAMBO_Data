@@ -23,8 +23,9 @@
   `c16e64bf1ca2dc16878c386b742cd303e65040f52e8744cd0c96c540c595b2a6`。
 - `physics_dt=0.002`、decimation=5、control=100 Hz；3000 control steps 必须对应
   15000 physics ticks 与 375 个 640×480 RGB frames。
-- 用户已在本线程明确接受 EULA。仅对需要它的运行进程以 `ACCEPT_EULA=Y` 传递，不
-  持久化到 shell、仓库或镜像。`PRIVACY_CONSENT` 未获授权，不设置。
+- 用户已在本线程明确接受 EULA。原生 pip 运行仅对需要它的进程以
+  `OMNI_KIT_ACCEPT_EULA=Y` 传递，不持久化到 shell、仓库、镜像或
+  `EULA_ACCEPTED` 文件。`PRIVACY_CONSENT` 未获授权，不设置。
 
 ## 1. 路径、日志和提交纪律
 
@@ -72,6 +73,9 @@ uv pip install "torch==2.10.0" "torchvision==0.25.0" \
 `isaaclab_physx`、`isaaclab_tasks`、`isaaclab_visualizers[kit]`。不安装
 `isaaclab_rl`、Mimic、Teleop、experimental。
 
+该 tag 的 `isaaclab_tasks` 在运行时直接 import Hydra、但最小 package metadata 未声明它；
+因此补装普通依赖 `hydra-core==1.3.2`（连带 `omegaconf==2.3.1`）。这不是 Newton extra。
+
 安装 `qpth==0.0.18 --no-deps`，以及 CRL2/RAMBO `--no-deps` 前先完成其 Python 3.12/
 NumPy 2 metadata 改造。`pip check` 仅允许 Isaac Sim metadata 与官方 Torch override、
 缺失 torchaudio、Isaac Lab base 的 `coverage==7.6.1` 与 Isaac Sim kernel `7.4.4` 差异，
@@ -81,10 +85,16 @@ NumPy 2 metadata 改造。`pip check` 仅允许 Isaac Sim metadata 与官方 Tor
 
 M2 的脚本不得 import RAMBO。依次运行 CUDA tensor、有限 Cartpole、
 `Isaac-Velocity-Flat-Unitree-Go2-v0`、RTX RGB、`--viz kit` GUI 和 clean restart。
-每次都在构造环境前设 `PhysxCfg()`，构造后写 `physics_backend.json`：requested config class、
-manager FQCN、dt、decimation、viz。GPU evidence 必须证明 Kit 使用 Vulkan GPU0 RTX 4090，
-不是 llvmpipe；成功路径 normal close 必须在 60 秒内退出，强杀/`os._exit`/`skip_cleanup`
-均为失败。
+每次都在构造环境前设 `PhysxCfg()`、明确设
+`SimulationCfg.use_newton_actuators=False`，构造后及结束前验证 config FQCN、活跃
+manager FQCN（必须为 `PhysxManager`）与该开关，并写入 summary。GPU evidence 必须证明 Kit
+使用 Vulkan GPU0 RTX 4090，而非 llvmpipe。
+
+固定 Isaac Sim 6.0.1 的默认 `fast_shutdown=True` 必须保留：其 `False` 全扩展 teardown 路径
+在本 host 上会在工作成功后崩溃。脚本须在调用 `simulation_app.close(exit_code=...)` 前写入并
+flush summary；外层 exit code 与随后独立的 restart 共同证明关闭成功。RAMBO 代码不得直接
+调用 `os._exit` 或 `skip_cleanup`。首次 RTX shader-cache 冷启动可超过 60 秒；缓存后的独立
+restart 必须在 60 秒内通过。
 
 ## 5. M3–M5：API 与 QP
 
@@ -138,7 +148,7 @@ assert。重新跑最小官方 smoke、Quadruped、Button、Biped、RGB、datase
 restart 后提交。
 
 Docker 只在 native 全通过后处理。Docker/Toolkit 缺失不否定 native 成功；交付 pinned Dockerfile
-与命令并记录 deferred。容器运行也只能 PhysX，且仅传入已授权的 `ACCEPT_EULA=Y`。
+与命令并记录 deferred。容器运行也只能 PhysX，且仅传入已授权的 `OMNI_KIT_ACCEPT_EULA=Y`。
 
 诊断层级固定：官方 smoke 失败=Isaac stack；manager/physics 失败=PhysX；headless 通过而
 renderer 失败=RTX；API 单测/实例化失败=Lab migration；独立 QP 失败=qpth；其余 strict-load/
