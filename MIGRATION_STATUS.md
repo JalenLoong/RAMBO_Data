@@ -27,7 +27,8 @@
 | P0：tag/worktree | 完成 | tag `isaac51-golden-10154c6`；worktree `/workspace/rambo60` |
 | P0：持久化计划 | 完成 | commit `eb0958ad975133188866d1f92a104c59c850707c`；push 因无 GitHub 凭证待补 |
 | M0 | 完成 | 删除已授权的损坏 venv，释放 20,005,949,440 B；证据见 `M0/20260824T100222Z-host-and-cleanup/` |
-| M1–M11 | 未开始 | 见 `CODEX_EXECUTION_PLAN.md` |
+| M1：精确栈安装 | 完成 | Isaac Sim 6.0.1.0、tag `ffff603…`、Torch 2.10.0+cu128、RTX 4090 CUDA 已通过 |
+| M2–M11 | 未开始 | 见 `CODEX_EXECUTION_PLAN.md` |
 
 ## 最近命令与结果
 
@@ -36,6 +37,10 @@
 3. 创建 annotated baseline tag 与 migration worktree：成功。
 4. `git push -u origin adapt/isaacsim60-isaaclab30b2`：失败，原因是当前环境没有 GitHub 用户名/凭证；本地 commit 保留。
 5. 删除 `/workspace/venvs/rambo51`：成功；路径为普通目录、非链接、非 mountpoint，删除前大小 19,671,114,584 B，实际释放 20,005,949,440 B。
+6. M1：clone exact Isaac Lab tag、创建 `/workspace/venvs/rambo60`、安装 `isaacsim[all,extscache]==6.0.1.0`：成功。
+7. M1：按 tag 覆盖为 `torch==2.10.0+cu128`、`torchvision==0.25.0+cu128`，移除 torchaudio：成功。
+8. M1：安装最小 editable 集合（含裸 `isaaclab_newton`，不含 optional extras/RL）：成功。CUDA tensor 测试确认 RTX 4090。
+9. M1 `pip check`：仅四项已知差异：isaacsim-core 的 torchaudio/Torch/vision metadata 和 isaacsim-kernel coverage 7.4.4 vs Isaac Lab 7.6.1。
 
 ## 当前 blocker
 
@@ -43,4 +48,4 @@
 
 ## 下一精确动作
 
-提交本次 M0 状态更新，然后执行 M1：clone 精确 Isaac Lab tag、创建 `/workspace/venvs/rambo60` 并开始精确 Isaac Sim/PyTorch 安装事务。
+提交本次 M1 状态更新，然后实现并运行 M2 的隔离官方 PhysX/CUDA/RTX/RGB/clean-restart smoke；该阶段不得 import RAMBO。

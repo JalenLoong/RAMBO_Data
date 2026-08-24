@@ -74,7 +74,8 @@ uv pip install "torch==2.10.0" "torchvision==0.25.0" \
 
 安装 `qpth==0.0.18 --no-deps`，以及 CRL2/RAMBO `--no-deps` 前先完成其 Python 3.12/
 NumPy 2 metadata 改造。`pip check` 仅允许 Isaac Sim metadata 与官方 Torch override、
-缺失 torchaudio、以及 qpth 的 NumPy/CVXPY 已知声明差异；其余冲突失败并诊断。
+缺失 torchaudio、Isaac Lab base 的 `coverage==7.6.1` 与 Isaac Sim kernel `7.4.4` 差异，
+以及 qpth 的 NumPy/CVXPY 已知声明差异；其余冲突失败并诊断。
 
 ## 4. M2：先证官方栈，再证 RAMBO
 
