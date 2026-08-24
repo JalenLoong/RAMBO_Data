@@ -1,7 +1,7 @@
 # RAMBO Isaac Sim 6 / Isaac Lab 3 最终矩阵
 
 这是 M11 native freeze 使用的**唯一 canonical final matrix**。它汇总当前
-non-GUI native scope 的 gate 状态；详尽命令、版本、工件和风险仍以
+当前 native scope 的 gate 状态；详尽命令、版本、工件和风险仍以
 [`migration-report.md`](migration-report.md) 与
 [`MIGRATION_STATUS.md`](MIGRATION_STATUS.md) 为准。任何 current-scope M11 native
 freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/sealing wrapper，
@@ -12,7 +12,7 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M0–M1 | 完成 | 精确 target checkout、venv、requirements lock 与 host/checkpoint manifests 已建立。 |
 | M2.1 CUDA | **未按原字面标准通过** | Ada CUDA runtime contract 成功，但固定 Torch wheel 不列出 `sm_89`；不可写成完整通过。 |
 | M2.2 官方 Cartpole | sealed 通过 | `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`；有限 16 env/16 step、显式 PhysX、post-close exit 0。 |
-| M2.3 Kit GUI | **已延期（执行/封存路径已就绪）** | `run_m2_cartpole_gui_gate.sh` 固定 Direct Cartpole/PhysX/Kit，并在 live runtime 要求明确 `omni.hydra.rtx`/RTX 4090 evidence；仅在 child 退出后接受真人 TTY 声明，不能以日志、合成或注入输入替代。 |
+| M2.3 Kit GUI | sealed + 人工声明通过 | `M2/20260824T235256Z-cartpole-direct-kit/` 与 `*-attestation/`：45.04 秒、1083 steps、两次 live RTX 4090/`rtx`/`omni.hydra.rtx` sample、显式 PhysX、post-close exit 0 和真人 TTY 声明。 |
 | M2.4 官方 Go2 + RGB | sealed 通过 | warm-up/restart `M2/20260824T143007Z-*`、`M2/20260824T143029Z-*`；均为 RTX RGB、PhysX FQN 与 exit 0。 |
 | M3 | 完成 | clean-source inventory `M3/20260824T142802Z-api-inventory-clean/`。 |
 | M4 | sealed 通过 | 四足/双足 space contract：`M4/20260824T143107Z-*`、`M4/20260824T143117Z-*`。 |
@@ -24,9 +24,9 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M8 GUI 真实键盘 | **已延期（执行/封存路径已就绪）** | `run_gui_keyboard_artifact.sh` 仅接受带 EULA 前缀且有 `DISPLAY` 的 `--viz kit`，并在 Kit 关闭后写入 exit sidecar、要求真人 TTY 精确声明再离线验收；仍只接受真实物理键盘操作者，禁止 xdotool、pyautogui、replay 和输入注入。 |
 | M9 | sealed clean-source 通过 | 3000-step RGB、current-source 16-env/16-step 与 FL/FR independent artifacts：`M9/20260824T143926Z-*`、`M9/20260824T151210Z-*`、`M9/20260824T144321Z-*`；RGB visibility 采用 M7 的组合证据。 |
 | M10 | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB 与 acceptance。 |
-| M11 native freeze | current-scope 完成 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 绑定干净 source、31 项 canonical inputs（含 Kit 110 live viewport RTX 证据、延后 GUI gate 的运行、post-close 人工声明与封存路径）、gpu-required installation verification 和接受 runtime artifacts；它取代旧 6-input freeze。 |
+| M11 native freeze | 先前 current-scope freeze 完成；最终刷新待 M8 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 生成于 M2.3 人工验收之前；待 M8 GUI 完成后一次性刷新并绑定两项 GUI 证据。 |
 | M11 Docker | **已延期** | 当前 host 没有 Docker Engine/NVIDIA Container Toolkit；不 build/run/push。 |
 
-因此，本迁移的完整 adaptation 仍未完成：M2.1 的字面标准、M2.3/M8 GUI、M5.2
+因此，本迁移的完整 adaptation 仍未完成：M2.1 的字面标准、M8 GUI、M5.2
 历史 snapshot 以及 Docker 都没有被重写为通过。刷新 M11 native freeze 只会绑定当前
 source-clean non-GUI evidence，绝不改变这些 gate 的状态。

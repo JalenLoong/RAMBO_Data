@@ -143,7 +143,7 @@ completion condition. The same gate supports `--scenario cartpole`, `go2`, and
 `use_newton_actuators=false`, and RTX GPU evidence. Do not infer backend use
 from installed package names.
 
-## Deferred M2.3 manual Cartpole Kit gate
+## Accepted M2.3 manual Cartpole Kit gate
 
 This is intentionally the only accepted GUI path for M2.3. Do **not** start it
 until an operator is ready to watch the visible desktop: it requires `DISPLAY`,
@@ -174,6 +174,12 @@ viewport, manual Play/Stop, absence of Vulkan swapchain errors, Kit GPU memory,
 and an RTX 4090 rather than llvmpipe. A failed or interrupted run is retained
 for diagnosis but cannot receive an attestation; use fresh runtime and sidecar
 directories for a genuine retry.
+
+The accepted run is
+`/workspace/migration-output/isaac60/M2/20260824T235256Z-cartpole-direct-kit/`
+with its sibling `*-attestation/` sidecar. It completed 45.04 seconds and 1083
+steps with two live RTX 4090 samples, exact PhysX evidence, exit status zero,
+and a checksum-bound post-close operator acknowledgement.
 
 For the separate, non-simulator CUDA/Ada compatibility record, run:
 

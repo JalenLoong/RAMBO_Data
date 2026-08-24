@@ -22,7 +22,7 @@
 | 阶段 | 状态 | 主要证据 |
 | --- | --- | --- |
 | P0、M0、M1 | 完成 | baseline 已保护；精确 venv/checkout 已安装 |
-| M2 官方 PhysX/RTX/Kit | 非 GUI sealed 门禁通过；M2 整体仍正式未完成 | M2.2 `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`（官方 Direct Cartpole、16 env/16 step）与 M2.4 warm-up/restart `M2/20260824T143007Z-*`、`143029Z-*`（官方 Go2、各 1000 ticks、RTX RGB）均为 PhysX 前后 FQN、checksum-covered `process_exit.json=0`。M2.1 仍不满足原字面 `sm_89` 断言；M2.3 GUI 按本轮范围延期，但其 Direct Cartpole/Kit/PhysX、live GPU、明确 `omni.hydra.rtx`、post-close TTY attestation 与离线审计路径已准备完成，尚未运行。 |
+| M2 官方 PhysX/RTX/Kit | M2.2/M2.3/M2.4 sealed 通过；M2 整体仍受 M2.1 原字面标准限制 | M2.2 `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`；M2.3 `M2/20260824T235256Z-cartpole-direct-kit/` + `*-attestation/` 完成 45.04 秒真人 GUI 观察、1083 steps、两次 RTX 4090/`rtx`/`omni.hydra.rtx` live sample、PhysX 前后 FQN、exit 0 与 post-close TTY 声明；M2.4 warm-up/restart `143007Z-*`、`143029Z-*` 完成官方 Go2/RTX RGB。M2.1 仍不满足原字面 `sm_89` 断言。 |
 | M3 API inventory | 完成（clean-source 扫描） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 porcelain clean，quaternion scan 仅有两处已审计的 XYZW `[0,0,0,1]` identity 候选；checksums 已复核。 |
 | M4 API/空间 contract | 完成（sealed） | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/` 均为 1-env/5-step、显式 PhysX、前后 manager FQN 与 exit 0。 |
 | M5.1 qpth contract | 通过（范围受限） | CPU/CUDA toy-qpth forward/backward、KKT、残差与确定性：`M5/20260824T105302Z-qpth-contract/`；这不是旧版 RAMBO QP snapshot 对比 |
@@ -33,7 +33,7 @@
 | M8 GUI 真实键盘 | **本轮已延期** | 仅接受真实操作者在带 EULA 前缀、非空 `DISPLAY` 的 `--viz kit` 下使用物理键盘；不使用 xdotool、pyautogui、重放或任何注入输入。专用 runner 仅在 Kit child 退出后记录 exit sidecar，随后要求真人 TTY 精确声明并离线验证；未实际运行 GUI。 |
 | M9 双足 | 完成（sealed clean-source） | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`151210Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、435/18）sealed gate；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 在 clean source 上完成 FL/FR 两步独立性。前视流/third-person RGBD 的 visibility 解释与 M7 相同；所有列出的 gate 均 PhysX 前后 FQN、checksum 与 exit 0。 |
 | M10 30 秒 Button recorder | 完成（sealed） | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button success/rebound 与 motion acceptance、382 个封存文件、exit 0 均通过。 |
-| M11 native freeze | 完成（本轮 current scope） | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 已绑定干净 commit、gpu-required verifier、242-wheel lock、无 optional Newton extras、31 项 canonical source inputs（含 Kit 110 live viewport RTX 证据，以及延期 M2.3/M8 GUI 的运行、post-close 人工声明与封存路径）与接受工件索引的 checksum。它取代旧 6-input freeze；M2.3/M8 的实际 GUI 观察、M5.2 和 Docker 不在本轮 scope。 |
+| M11 native freeze | 先前 current-scope freeze 完成；最终刷新待 M8 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 绑定了 M2.3 修复源码，但生成在 M2.3 人工验收之前。已通过的 M2.3 将与待执行 M8 GUI 在后者完成后一次性写入最终 native freeze，避免冗余刷新。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push image |
 
 ## 最终 M10 摘要
@@ -85,5 +85,5 @@ exit 0 均通过。固定 tag 的 `zero_agent.py` 被保留为非验收的上游
 ## 当前剩余项
 
 1. M2.1 仍未满足原计划的 native `sm_89` 字面断言；现有 artifact 只证明 CUDA/Ada 运行兼容，若要计为完整 M2.1，必须先正式修订该验收标准。
-2. M2.3 GUI 与 M8 真实键盘 GUI 均按当前用户范围延期，后续只能由真实操作者在 `--viz kit` 完成。其运行、post-close exit、真人 TTY 声明与离线验证路径均已准备好，但绝不以日志、合成或注入输入替代。
+2. M2.3 GUI 已由真实操作者完成并封存；M8 真实键盘 GUI 尚待同样在 `--viz kit` 下完成，绝不以日志、合成或注入输入替代。
 3. M5.2 历史 Isaac Sim 5.1 QP snapshot 比较和 M11 Docker 已批准延期；它们保留为后续工作，不写成已完成。

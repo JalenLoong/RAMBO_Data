@@ -1,11 +1,12 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-08-24T15:05:40Z",
+  "generated_at_utc": "2026-08-24T23:54:06Z",
   "repository": {
     "worktree": "/workspace/rambo60",
     "branch": "adapt/isaacsim60-isaaclab30b2",
     "runtime_validation_commit": "358daa52260841cdfa8263adeee930144379c5fe",
     "sealed_short_gate_commit": "078bfa2d14c68ef0f91f6d1224e20a7ae07a279c",
+    "m2_3_gui_gate_commit": "7e9571ca7573b10e6e50c1e1ebd6dad2d72ec39c",
     "legacy_baseline_commit": "10154c6d2f20d33f51e5e126801c507e6fe206db"
   },
   "host": {
@@ -75,13 +76,17 @@
   },
   "evidence": {
     "artifact_root": "/workspace/migration-output/isaac60",
-    "scope": "current non-GUI native validation; GUI, historical QP snapshot comparison, and Docker remain explicitly deferred",
+    "scope": "current native validation including accepted M2.3 GUI; M8 GUI, historical QP snapshot comparison, and Docker remain explicitly deferred",
     "sealed_runtime_source_commit": "358daa52260841cdfa8263adeee930144379c5fe",
     "m3_clean_inventory_artifact": "/workspace/migration-output/isaac60/M3/20260824T142802Z-api-inventory-clean",
     "accepted_runtime_artifacts": [
       {
         "milestone": "M2.2",
         "path": "/workspace/migration-output/isaac60/M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed"
+      },
+      {
+        "milestone": "M2.3 Kit GUI runtime",
+        "path": "/workspace/migration-output/isaac60/M2/20260824T235256Z-cartpole-direct-kit"
       },
       {
         "milestone": "M2.4 warm-up",
@@ -136,6 +141,15 @@
         "path": "/workspace/migration-output/isaac60/M10/20260824T144344Z-button-episode-3000-sealed"
       }
     ],
+    "final_m2_3_gui": {
+      "runtime_artifact": "/workspace/migration-output/isaac60/M2/20260824T235256Z-cartpole-direct-kit",
+      "attestation_artifact": "/workspace/migration-output/isaac60/M2/20260824T235256Z-cartpole-direct-kit-attestation",
+      "runtime_summary_sha256": "7819a797573dff460561b08c18ab7b6bc1609f2a466ab83a350c07d387bee19a",
+      "runtime_process_exit_sha256": "5b6fed7be3c8e97dd7faaaed7d643c2098321995f6627150e7ebe810467218a4",
+      "runtime_checksums_sha256": "83498879b0fc48ff6fc7137b526672fdb9ac7147e90e3eebdcc598346d4d2b66",
+      "attestation_sha256": "32ff992d01968a3c806f6bb9595c33c2b88dc058b8449fdbec9a95f9bf19c0b0",
+      "attestation_checksums_sha256": "8bb43651d6adcc09aa32b3e0f0166f029c6aa4e38cc114ebe70c0da6105f2f69"
+    },
     "final_m10_artifact": "/workspace/migration-output/isaac60/M10/20260824T144344Z-button-episode-3000-sealed",
     "final_m10_summary_sha256": "e7acf237b0d394fceb61f04ac4571f19c5355d7f85a22911cb432a845bfcdcb5",
     "final_m10_manifest_sha256": "dc8243ed06134a84cede492d2924eae05d29b48f421fb8392f61cf585cee6eb2"
