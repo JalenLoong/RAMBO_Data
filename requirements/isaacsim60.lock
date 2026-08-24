@@ -1,22 +1,19 @@
-# Fully resolved package snapshot for the validated RAMBO Isaac Sim 6 runtime.
-# Generated from /workspace/venvs/rambo60 with `python -m pip freeze --all`.
-# Isaac Lab VCS entries are intentionally pinned to v3.0.0-beta2.patch1 commit
-# ffff603eafc6b74264a5261cc0183d6a65390d78.  RAMBO/CRL2 are editable from
-# this repository checkout; the corresponding RAMBO commit is recorded in
-# host-manifest.json.  Bare Newton distributions below are transitive package
-# graph members only: RAMBO must still explicitly select and assert PhysX.
+# Fully resolved non-editable wheel lock for the validated RAMBO Isaac Sim 6
+# runtime. Generated from /workspace/venvs/rambo60 with
+# `python -m pip freeze --all`, excluding local editables. The setup script
+# first follows the official tagged installation order, then consumes this file
+# with `uv pip install --no-deps --requirements ...` to enforce every resolved
+# wheel version without a second dependency solve. The exact Isaac Lab source
+# extensions, CRL2, and RAMBO are deliberately installed separately as
+# editables; the verifier requires their direct_url provenance to resolve to
+# Isaac Lab v3.0.0-beta2.patch1 commit
+# ffff603eafc6b74264a5261cc0183d6a65390d78 and the local checkout.
+# Bare Newton distributions below are transitive graph members only: RAMBO must
+# still explicitly select and assert PhysX. This is a version lock, not a
+# hash-lock; artifact/package provenance remains part of acceptance evidence.
 
--e ./source/crl2
--e ./source/rambo
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab&subdirectory=source/isaaclab
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_assets&subdirectory=source/isaaclab_assets
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_contrib&subdirectory=source/isaaclab_contrib
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_newton&subdirectory=source/isaaclab_newton
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_ovphysx&subdirectory=source/isaaclab_ovphysx
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_physx&subdirectory=source/isaaclab_physx
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_ppisp&subdirectory=source/isaaclab_ppisp
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_tasks&subdirectory=source/isaaclab_tasks
--e git+https://github.com/isaac-sim/IsaacLab.git@ffff603eafc6b74264a5261cc0183d6a65390d78#egg=isaaclab_visualizers&subdirectory=source/isaaclab_visualizers
+--extra-index-url https://pypi.nvidia.com
+--extra-index-url https://download.pytorch.org/whl/cu128
 Farama-Notifications==0.0.6
 ImageIO==2.37.2
 Jinja2==3.1.5

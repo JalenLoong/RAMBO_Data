@@ -9,6 +9,8 @@
 ARG RAMBO_BASE_IMAGE
 FROM ${RAMBO_BASE_IMAGE}
 
+USER root
+
 ARG RAMBO_BASE_IMAGE
 ARG ISAACLAB_REPOSITORY=https://github.com/isaac-sim/IsaacLab.git
 ARG ISAACLAB_COMMIT=ffff603eafc6b74264a5261cc0183d6a65390d78
@@ -32,7 +34,10 @@ RUN case "${RAMBO_BASE_IMAGE}" in \
     esac \
     && . /etc/os-release \
     && test "${ID}" = "ubuntu" \
-    && test "${VERSION_ID}" = "24.04"
+    && test "${VERSION_ID}" = "24.04" \
+    && test "$(uname -m)" = "x86_64" \
+    && test "$(id -u)" = "0" \
+    && test -z "${PYTHONPATH:-}"
 
 # Keep system Python separate from RAMBO's venv.  No driver package, CUDA
 # driver, EULA variable, or optional Newton extra is installed in this image.
@@ -42,6 +47,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install --no-install-recommends -y \
         ca-certificates \
         git \
+        libegl1 \
+        libgl1 \
+        libvulkan1 \
         python3-pip \
         python3.12 \
         python3.12-venv \
@@ -65,12 +73,13 @@ WORKDIR /opt/rambo
 # Separate the heavyweight pinned simulator layer from later application-code
 # changes.  The setup script is the authoritative installation transaction.
 COPY requirements/isaacsim60.in requirements/isaacsim60.in
+COPY requirements/isaacsim60.lock requirements/isaacsim60.lock
 COPY scripts/setup_isaacsim60.sh scripts/setup_isaacsim60.sh
 COPY scripts/verify_isaacsim60_install.py scripts/verify_isaacsim60_install.py
 COPY source/crl2 source/crl2
 COPY source/rambo source/rambo
 RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
-    bash scripts/setup_isaacsim60.sh
+    bash scripts/setup_isaacsim60.sh --docker-build-metadata-only
 
 # The reference source is copied last.  Checkpoints, artifacts, caches, and
 # credentials remain outside the build context through .dockerignore.

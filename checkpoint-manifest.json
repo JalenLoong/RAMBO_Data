@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "policy_contract": {
+    "action_dimension": 18,
+    "base_residual_action_dimension": 6,
+    "joint_position_residual_action_dimension": 12,
+    "control_dt_s": 0.01,
+    "physics_dt_s": 0.002,
+    "control_decimation": 5,
+    "normalizer_count": 100003840
+  },
+  "checkpoints": [
+    {
+      "task": "Isaac-RAMBO-Quadruped-Go2-v0",
+      "button_task": "Isaac-RAMBO-Quadruped-Button-Go2-v0",
+      "path": "/workspace/rambo-go2-policies/quadruped/model_2000.pt",
+      "sha256": "1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706",
+      "size_bytes": 8986805,
+      "iteration": 2000,
+      "observation_dimension": 405,
+      "action_dimension": 18
+    },
+    {
+      "task": "Isaac-RAMBO-Biped-Go2-v0",
+      "path": "/workspace/rambo-go2-policies/biped/model_4000.pt",
+      "sha256": "c16e64bf1ca2dc16878c386b742cd303e65040f52e8744cd0c96c540c595b2a6",
+      "size_bytes": 9355829,
+      "iteration": 4000,
+      "observation_dimension": 435,
+      "action_dimension": 18,
+      "validation_gait_phase_offset_s": 19.6
+    }
+  ],
+  "container_policy": "Checkpoints are external read-only runtime mounts and are never copied into a Docker image."
+}

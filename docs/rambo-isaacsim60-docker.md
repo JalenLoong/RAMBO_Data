@@ -27,6 +27,11 @@ Isaac Sim / Isaac Lab 依赖图所要求的裸 Newton 相关 package 可以存�
 RAMBO config、smoke、validation、recorder 和 production execution 都必须在
 运行前后记录实际 `PhysxManager`，不能选择或执行 Newton backend。
 
+base image 还必须是 x86_64、以 root 构建、没有继承的 `PYTHONPATH`，并提供
+Ubuntu 的 `libEGL`、`libGL` 与 Vulkan loader userspace。Dockerfile 对前 3 项
+fail-closed 检查，并安装后 3 项的 loader；这不等同于把 NVIDIA driver 放进
+image。host 的 NVIDIA Container Toolkit / driver passthrough 仍是运行时前提。
+
 ## EULA boundary
 
 不要在 Dockerfile、image ENV、image label 的可执行环境变量、shell profile、
@@ -74,9 +79,13 @@ DOCKER_BUILDKIT=1 docker build \
 ```
 
 `Dockerfile.rambo60` clones only the detached exact Isaac Lab commit, then runs
-`scripts/setup_isaacsim60.sh`. 因此它会安装精确 Isaac Sim / Torch / Isaac Lab
-路径和必要的 bare transitive packages，但不会请求 Isaac Lab Newton optional
-extra。它不接受 EULA。
+`scripts/setup_isaacsim60.sh --docker-build-metadata-only`。它会安装精确 Isaac
+Sim / Torch / Isaac Lab 路径和必要的 bare transitive packages，并消费
+`requirements/isaacsim60.lock` 强制非 editable wheel 版本，但不会请求 Isaac
+Lab Newton optional extra。该 build mode 只核验 Python、包、lock、Isaac Lab
+editable provenance 与 `pip check` allowlist：Docker build 本身通常没有 GPU，
+所以它**不能**成为 CUDA、RTX renderer 或 PhysX runtime 通过的证据。它不接受
+EULA。
 
 Build 后先执行不启动 Kit 的 metadata 检查，再决定是否进行 GPU runtime
 验收：
@@ -84,7 +93,12 @@ Build 后先执行不启动 Kit 的 metadata 检查，再决定是否进行 GPU 
 ```bash
 docker run --rm --entrypoint /bin/bash rambo-isaac60-physx:deferred -lc '
   python --version
-  python -c "import importlib.metadata as m, torch; print(m.version(\"isaacsim\")); print(torch.__version__)"
+  python scripts/verify_isaacsim60_install.py \
+    --isaaclab-source /opt/IsaacLab-3.0.0-beta2.patch1 \
+    --requirements-input requirements/isaacsim60.in \
+    --requirements-lock requirements/isaacsim60.lock \
+    --installer-script scripts/setup_isaacsim60.sh \
+    --metadata-only
   python -c "import crl2, rambo; print(\"RAMBO_IMPORT_OK\")"
 '
 ```
@@ -95,8 +109,9 @@ dependency metadata 与固定 contract 不一致，应将该 image 标记为失�
 
 ## Deferred GPU/PhysX validation
 
-完成 metadata gate 后，使用只读 checkpoint mount 和可写 artifact mount 运行最小
-官方 gate。下面也是未来操作者的命令，当前主机没有执行：
+完成 metadata gate 后，先在有 GPU 的容器中运行默认 verifier；它必须看见 CUDA
+设备才会成功。随后使用只读 checkpoint mount 和可写 artifact mount 运行最小官方
+gate。下面也是未来操作者的命令，当前主机没有执行：
 
 ```bash
 mkdir -p /workspace/container-artifacts
@@ -108,6 +123,11 @@ docker run --rm --gpus all \
   --entrypoint /bin/bash \
   rambo-isaac60-physx:deferred -lc '
     cd /opt/rambo
+    python scripts/verify_isaacsim60_install.py \
+      --isaaclab-source /opt/IsaacLab-3.0.0-beta2.patch1 \
+      --requirements-input requirements/isaacsim60.in \
+      --requirements-lock requirements/isaacsim60.lock \
+      --installer-script scripts/setup_isaacsim60.sh
     scripts/rambo/run60.sh scripts/rambo/official_physx_smoke.py \
       --scenario cartpole --steps 16 \
       --output-dir /artifacts/official-cartpole \

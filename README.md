@@ -98,15 +98,20 @@ source /workspace/venvs/rambo60/bin/activate
 `scripts/setup_isaacsim60.sh` installs only the pinned official path:
 
 - `isaacsim[all,extscache]==6.0.1.0`;
-- `torch==2.10.0+cu128` and `torchvision==0.25.0+cu128`;
+- `torch==2.10.0+cu128`, `torchvision==0.25.0+cu128`, and `numpy==2.3.1`;
 - the Isaac Lab extensions from the exact checkout, with bare transitive graph
   nodes only and no Newton optional extras;
 - `qpth==0.0.18`, `cvxpy==1.6.7`, `clarabel==0.11.1`, and `scs==3.2.11`.
 
 The direct dependency intent is recorded in
-[requirements/isaacsim60.in](requirements/isaacsim60.in). Never replace it
-with a floating or nightly package transaction. The setup script does not
-accept the EULA and does not persist it.
+[requirements/isaacsim60.in](requirements/isaacsim60.in). The installer then
+consumes [requirements/isaacsim60.lock](requirements/isaacsim60.lock) with
+`--no-deps` after the official staged transaction, pinning all 242
+non-editable resolved wheels without a second solver decision. Isaac Lab,
+CRL2, and RAMBO remain explicit editables: the verifier checks the selected
+Isaac Lab extensions' `direct_url` paths against the exact checkout and checks
+every lock pin. Never replace either file with a floating or nightly package
+transaction. The setup script does not accept the EULA and does not persist it.
 
 `scripts/rambo/run60.sh` is the supported wrapper for simulator launches. It
 keeps the pinned PyTorch CUDA shared libraries visible while delegating

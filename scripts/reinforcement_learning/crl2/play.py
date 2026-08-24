@@ -23,7 +23,7 @@ def _reject_rambo_task_from_legacy_launcher() -> None:
     pre_args, _ = pre_parser.parse_known_args()
     if isinstance(pre_args.task, str) and pre_args.task.startswith("Isaac-RAMBO-"):
         pre_parser.error(
-            "Isaac-RAMBO-* must use scripts/rambo/{play,validate,teleop_loco_manip}.py "
+            "Isaac-RAMBO-* must use a dedicated scripts/rambo/ launcher "
             "through scripts/rambo/run60.sh with an explicit --viz none or --viz kit; "
             "the legacy CRL2 launcher refuses to start Kit for RAMBO."
         )

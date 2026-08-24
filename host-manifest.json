@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-24T12:32:00Z",
+  "repository": {
+    "worktree": "/workspace/rambo60",
+    "branch": "adapt/isaacsim60-isaaclab30b2",
+    "runtime_validation_commit": "b0bc68eb32c99ba326bde9a447a898951e774b71",
+    "legacy_baseline_commit": "10154c6d2f20d33f51e5e126801c507e6fe206db"
+  },
+  "host": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "kernel": "6.8.0-124-generic",
+    "architecture": "x86_64",
+    "gpu": {
+      "name": "NVIDIA GeForce RTX 4090",
+      "driver_version": "595.71.05",
+      "memory_mib": 24564,
+      "compute_capability": "8.9"
+    }
+  },
+  "runtime": {
+    "python": "3.12.3",
+    "isaac_sim": "6.0.1.0",
+    "isaac_lab": {
+      "tag": "v3.0.0-beta2.patch1",
+      "commit": "ffff603eafc6b74264a5261cc0183d6a65390d78"
+    },
+    "torch": "2.10.0+cu128",
+    "torchvision": "0.25.0+cu128",
+    "torch_cuda": "12.8",
+    "numpy": "2.3.1",
+    "qpth": "0.0.18",
+    "physics": {
+      "required_backend": "PhysX",
+      "required_manager": "isaaclab_physx.physics.physx_manager.PhysxManager",
+      "use_newton_actuators": false,
+      "actual_newton_runtime_is_a_failure": true,
+      "bare_transitive_newton_packages_allowed": true,
+      "optional_isaaclab_newton_extras_requested": false
+    }
+  },
+  "installation": {
+    "requirements_input_sha256": "5d62db777cb58ab2c6e4d07a72cc158c4871f86094274c276848a0d17693ef32",
+    "requirements_lock_sha256": "de17461aa8084af3dae5e4217f37350fc819907cc22a4169fead37ab07aa3f97",
+    "requirements_lock_noneditable_wheel_pins": 242,
+    "direct_input_pins_verified": 10,
+    "setup_script_sha256": "55fbe57d80e1ba9fa54ea099127925c003c6e3fb790dfc23a367d791d6e27d15",
+    "verifier_sha256": "113b263ec4107966ad8ff3fbf7b48f983cf6290a5085ccf9c2794a477a961afe",
+    "verified_editable_source": "/workspace/IsaacLab-3.0.0-beta2.patch1",
+    "pip_check": {
+      "status": "only the reviewed eight findings are present",
+      "allowlist_size": 8
+    }
+  },
+  "eula": {
+    "user_consent": "explicitly accepted for this migration",
+    "delivery": "OMNI_KIT_ACCEPT_EULA=Y only on each required Isaac Sim process",
+    "persistent_marker_or_image_env": false
+  },
+  "evidence": {
+    "artifact_root": "/workspace/migration-output/isaac60",
+    "final_m10_artifact": "/workspace/migration-output/isaac60/M10/20260824T122000Z-button-episode-3000-provenance-v2",
+    "final_m10_summary_sha256": "5305be4b3a6e0038b8381d80eb49c33503fa4d1535253715b96025d852e8d2fd",
+    "final_m10_manifest_sha256": "74317adadc99bacfe8e6ccfa83b1f8dd55b890c4be7ea1098be02aadf9e9ca00"
+  },
+  "container_status": {
+    "docker_engine_or_nvidia_container_toolkit_available_on_validation_host": false,
+    "docker_build_or_runtime_validated": false,
+    "dockerfile_sha256": "d70aacc58656772578e552a2773a31b4313385eb3fa73e40172885d1f41abcbf"
+  }
+}
