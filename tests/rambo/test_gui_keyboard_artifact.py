@@ -5,7 +5,9 @@ from __future__ import annotations
 import ast
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -54,6 +56,12 @@ def _manifest(*, max_steps: int) -> dict[str, object]:
             "events": schema.EVENTS_FILENAME,
             "states": schema.STATES_FILENAME,
             "attestation": schema.ATTESTATION_FILENAME,
+            "process_exit": schema.PROCESS_EXIT_FILENAME,
+        },
+        "post_close_exit": {
+            "required": True,
+            "file": schema.PROCESS_EXIT_FILENAME,
+            "captured_by": schema.POST_CLOSE_RUNNER,
         },
         "input_capture": {
             "source": "carb_keyboard_callback",
@@ -83,7 +91,21 @@ def _attestation() -> dict[str, object]:
     }
 
 
-def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3) -> Path:
+def _load_gui_finalizer():
+    script = Path(__file__).resolve().parents[2] / "scripts/rambo/finalize_gui_keyboard_artifact.py"
+    spec = importlib.util.spec_from_file_location("rambo_gui_keyboard_artifact_finalizer", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _seal_post_close(output_dir: Path, *, exit_status: int = 0) -> dict[str, object]:
+    finalizer = _load_gui_finalizer()
+    return finalizer.finalize_gui_keyboard_artifact(output_dir, exit_status=exit_status)
+
+
+def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3, seal_post_close: bool = True) -> Path:
     if max_steps < 3:
         raise ValueError("The complete M8 fixture needs at least three states")
     writer = schema.GuiKeyboardArtifactWriter(
@@ -210,10 +232,15 @@ def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3) -> Path:
             "operator_attestation_required": True,
             "physical_keyboard_independently_proven": False,
             "limitation": schema.PHYSICALITY_LIMITATION,
+            "post_close_exit_required": True,
+            "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
+            "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
             "finished_at_utc": "2026-08-24T12:00:01Z",
             "finished_monotonic_ns": 100,
         }
     )
+    if seal_post_close:
+        _seal_post_close(output_dir)
     return output_dir
 
 
@@ -224,12 +251,45 @@ def test_offline_validator_accepts_complete_callback_and_state_evidence(tmp_path
 
     assert result["event_count"] == 3
     assert result["state_count"] == 3
-    assert result["checksum_count"] == 5
+    assert result["checksum_count"] == 6
+    assert result["process_exit_status"] == 0
     assert result["m8_evidence"]["unhandled_space_press_count"] == 1
     assert result["m8_evidence"]["button_rebound_after_success_seen"] is True
     assert result["operator_attestation_required"] is True
     assert result["physical_keyboard_independently_proven"] is False
     assert "cannot independently prove" in result["limitation"]
+
+
+def test_offline_validator_requires_dedicated_post_close_zero_exit(tmp_path: Path) -> None:
+    artifact = _write_valid_artifact(tmp_path / "artifact", seal_post_close=False)
+
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="process_exit.json"):
+        schema.validate_gui_keyboard_artifact(artifact)
+
+    record = _seal_post_close(artifact)["process_exit"]
+    assert record["captured_by"] == schema.POST_CLOSE_RUNNER
+    assert record["captured_after_child_exit"] is True
+    assert record["workload_summary_completed_before_exit"] is True
+    assert record["acceptance_passed"] is True
+    assert schema.validate_gui_keyboard_artifact(artifact)["process_exit_status"] == 0
+
+
+def test_offline_validator_rejects_nonzero_or_precompletion_post_close_exit(tmp_path: Path) -> None:
+    artifact = _write_valid_artifact(tmp_path / "nonzero", seal_post_close=False)
+    record = _seal_post_close(artifact, exit_status=139)["process_exit"]
+    assert record["acceptance_passed"] is False
+    assert record["signal_hint"] == 11
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="GUI process exit status is not zero"):
+        schema.validate_gui_keyboard_artifact(artifact)
+
+    artifact = _write_valid_artifact(tmp_path / "precompletion")
+    exit_path = artifact / schema.PROCESS_EXIT_FILENAME
+    process_exit = json.loads(exit_path.read_text(encoding="utf-8"))
+    process_exit["workload_summary_completed_before_exit"] = False
+    schema.write_json(exit_path, process_exit)
+    schema.write_checksums(artifact)
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="not completed before process exit"):
+        schema.validate_gui_keyboard_artifact(artifact)
 
 
 def test_offline_validator_rejects_synthetic_or_independent_physicality_claim(tmp_path: Path) -> None:
@@ -359,10 +419,14 @@ def test_offline_validator_rejects_no_callback_or_no_keyboard_driven_state(tmp_p
             "operator_attestation_required": True,
             "physical_keyboard_independently_proven": False,
             "limitation": schema.PHYSICALITY_LIMITATION,
+            "post_close_exit_required": True,
+            "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
+            "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
             "finished_at_utc": "2026-08-24T12:00:01Z",
             "finished_monotonic_ns": 100,
         }
     )
+    _seal_post_close(artifact)
 
     with pytest.raises(schema.GuiKeyboardArtifactError, match="did not record a keyboard callback"):
         schema.validate_gui_keyboard_artifact(artifact)
@@ -463,3 +527,31 @@ def test_gui_recorder_observes_existing_callback_without_input_injection_api() -
     assert '"source": "carb_keyboard_callback"' in source
     assert "configure_physx(env_cfg)" in source
     assert source.count("assert_physx_environment(env)") >= 2
+
+
+def test_dedicated_m8_runner_rejects_non_gui_visualizer_before_python(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[2]
+    runner = root / "scripts/rambo/run_gui_keyboard_artifact.sh"
+    artifact = tmp_path / "artifact"
+    result = subprocess.run(
+        [str(runner), "--gui-artifact-dir", str(artifact), "--viz", "none"],
+        cwd=root,
+        env=os.environ.copy(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "require explicit --viz kit" in result.stderr
+    assert not artifact.exists()
+
+
+def test_dedicated_m8_runner_uses_run60_and_post_close_finalizer() -> None:
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "scripts/rambo/run_gui_keyboard_artifact.sh").read_text(encoding="utf-8")
+    assert 'rambo_validate_launch_contract "$@"' in source
+    assert '"${SCRIPT_DIR}/run60.sh" "${TELEOP_SCRIPT}" "$@"' in source
+    assert '"${VENV_DIR}/bin/python" "${FINALIZER}"' in source
+    assert "--process-exit-status" in source
+    assert "unset OMNI_KIT_ACCEPT_EULA" in source

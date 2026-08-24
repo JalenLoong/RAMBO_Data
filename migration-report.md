@@ -37,7 +37,7 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M0–M1 | 完成 | legacy baseline 已保护；目标 venv、固定 Isaac Sim/Isaac Lab checkout、host/checkpoint manifests 均已建立。 |
 | M2.1 CUDA | **未按原计划通过** | `M2/20260824T135749Z-cuda-ada-compatible-contract/` 成功证明 Torch CUDA 12.8 可在 RTX 4090 `(8,9)` 做同步 CUDA 算术；但该 fixed wheel 的 `torch.cuda.get_arch_list()` 没有 `sm_89`（有 `sm_86`），故原计划的字面 `assert "sm_89" ...` 未满足。它只能称运行兼容性证据，除非正式修改验收标准。 |
 | M2.2 官方 Cartpole | sealed 通过 | `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX、前后 `PhysxManager` 与 post-close exit 0。literal `zero_agent.py --viz none` 仍无有限退出路径，不能伪称 literal 命令通过。 |
-| M2.3 Kit GUI | **本轮已延期** | 后续必须在同一 Direct Cartpole task 上由真实操作者观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090；不得以日志或自动化替代。 |
+| M2.3 Kit GUI | **本轮已延期（路径已就绪）** | `run_m2_cartpole_gui_gate.sh` 固定同一 Direct Cartpole/PhysX/Kit，并记录 live RTX/GPU evidence；真实操作者仍须观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090，并在 child post-close 后以 TTY 声明。不得以日志或自动化替代。 |
 | M2.4 官方 Go2 + RGB | sealed 通过 | warm-up `M2/20260824T143007Z-official-go2-rgb-1000-warmup-sealed/` 与 clean restart `M2/20260824T143029Z-official-go2-rgb-1000-restart-sealed/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、PhysX 前后 manager、checksums 与 exit 0。 |
 | M3 API inventory | 完成（clean-source） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 clean、checksums 已复核；扫描仅保留两处已审计 XYZW `[0,0,0,1]` identity 候选。 |
 | M4 API/空间合同 | sealed 通过 | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/`：各 1 env/5 step，PhysX 前后 FQN 与 exit 0。 |
@@ -46,10 +46,10 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M6 四足 | sealed 通过 | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000-step production policy→QP rollout 和 first transition；`M6/20260824T151140Z-quadruped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（405/18、256 env-steps、PhysX 前后 FQN、exit 0）；独立 `143407Z-*`/`143422Z-*` 100/1000-step 全支撑零动作诊断也通过，但不替代 production schedule。 |
 | M7 四足 RGB | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：3000 policy step、15,000 physics tick、375 base-mounted 前视 RGB、终态独立 RGBD、PhysX 前后 FQN、checksum 与 exit 0。前视流证明生产 sensor/cadence/scene；绑定同一 final state 的 third-person RGBD 证明 robot + scene，不伪称机器人在每个前视像素帧中可见。 |
 | M8 Button 非交互 | sealed 通过 | M10 current artifact 覆盖 deterministic Button press/hold/release 且满足 30 秒数据合同。 |
-| M8 GUI 真实键盘 | **本轮已延期** | 只接受真实操作者在 `--viz kit` 使用物理键盘；合成输入、重放与注入不计通过。 |
+| M8 GUI 真实键盘 | **本轮已延期（路径已就绪）** | `run_gui_keyboard_artifact.sh` 仅接受 `--viz kit`，并在 Kit child post-close 后封存 exit sidecar；仍只接受真实操作者使用物理键盘，合成输入、重放与注入不计通过。 |
 | M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`M9/20260824T151210Z-biped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（435/18、256 env-steps、PhysX 前后 FQN、exit 0）；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。RGB visibility 的前视流 + 同 rollout third-person 解释与 M7 相同。 |
 | M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
-| M11 native freeze | current-scope 完成 | `M11/20260824T151639Z-native-freeze-final-current-scope-v3/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、20 项 canonical source inputs、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T152908Z-native-freeze-gui-gate-ready-v4/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、30 项 canonical source inputs（含延期 GUI gate 的运行/封存链）、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明
@@ -93,7 +93,8 @@ RAMBO 的生产 RGB 是单个挂在 Go2 base 前方的前视相机；因此 cont
 1. M2.1 的原字面 `sm_89` 断言仍未满足；当前只有 Ada runtime compatibility evidence，
    需先正式决定是否修订验收标准。
 2. M2.3 GUI 与 M8 physical-keyboard GUI 已按本轮范围延期；后续由真实操作者在
-   `--viz kit` 完成，绝不允许 xdotool、pyautogui、重放或事件注入。
+   `--viz kit` 完成。二者现均有 post-close exit/人工证据的可审计路径，但绝不允许
+   xdotool、pyautogui、重放或事件注入。
 3. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
    具备输入/主机条件时恢复。
 

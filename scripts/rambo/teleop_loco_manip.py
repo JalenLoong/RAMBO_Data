@@ -522,6 +522,9 @@ def _gui_artifact_summary(
         "operator_attestation_required": True,
         "physical_keyboard_independently_proven": False,
         "limitation": schema.PHYSICALITY_LIMITATION,
+        "post_close_exit_required": True,
+        "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
+        "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
         "finished_at_utc": _utc_now(),
         "finished_monotonic_ns": time.monotonic_ns(),
     }
@@ -645,6 +648,12 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     "events": gui_artifact_schema.EVENTS_FILENAME,
                     "states": gui_artifact_schema.STATES_FILENAME,
                     "attestation": gui_artifact_schema.ATTESTATION_FILENAME,
+                    "process_exit": gui_artifact_schema.PROCESS_EXIT_FILENAME,
+                },
+                "post_close_exit": {
+                    "required": True,
+                    "file": gui_artifact_schema.PROCESS_EXIT_FILENAME,
+                    "captured_by": gui_artifact_schema.POST_CLOSE_RUNNER,
                 },
                 "input_capture": {
                     "source": "carb_keyboard_callback",
@@ -992,6 +1001,11 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     runtime=gui_runtime,
                     m8_evidence=gui_evidence,
                 )
+            )
+            print(
+                "[GUI-ARTIFACT] Pre-close evidence written; acceptance requires the dedicated "
+                f"post-close runner {gui_artifact_schema.POST_CLOSE_RUNNER}.",
+                flush=True,
             )
             gui_artifact = None
         return 0

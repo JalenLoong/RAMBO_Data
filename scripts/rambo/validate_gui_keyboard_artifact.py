@@ -4,8 +4,9 @@
 The validator reads the immutable evidence directory only.  A successful
 result verifies callback/state provenance, explicit PhysX evidence, base/FL
 commands, an unhandled SPACE callback, button press/success/rebound evidence,
-checksums, and the operator declaration.  It does not independently prove that
-the callback originated from a physical keyboard.
+exact checksums, the operator declaration, and the dedicated parent-observed
+zero exit written after Kit closed.  It does not independently prove that the
+callback originated from a physical keyboard.
 """
 
 from __future__ import annotations

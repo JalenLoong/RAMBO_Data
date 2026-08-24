@@ -108,6 +108,18 @@ def test_canonical_freeze_inputs_cover_wrappers_and_migration_records() -> None:
         "MIGRATION_FINAL_MATRIX.md",
     } <= paths
     assert module.FREEZE_INPUT_GROUPS["migration_records"][-1] == "MIGRATION_FINAL_MATRIX.md"
+    assert set(module.FREEZE_INPUT_GROUPS["deferred_gui_gate_contracts"]) == {
+        "README.md",
+        "scripts/rambo/official_physx_smoke.py",
+        "scripts/rambo/m2_cartpole_gui_artifact.py",
+        "scripts/rambo/run_m2_cartpole_gui_gate.sh",
+        "scripts/rambo/record_m2_cartpole_gui_attestation.py",
+        "scripts/rambo/validate_m2_cartpole_gui_gate.py",
+        "scripts/rambo/teleop_loco_manip.py",
+        "scripts/rambo/run_gui_keyboard_artifact.sh",
+        "scripts/rambo/finalize_gui_keyboard_artifact.py",
+        "source/rambo/rambo/validation/gui_keyboard_artifact.py",
+    }
 
 
 def test_create_and_verify_native_freeze_binds_every_canonical_input(tmp_path: Path) -> None:

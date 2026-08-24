@@ -12,10 +12,22 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import time
 import traceback
 from typing import Any
 
 from isaaclab.app import AppLauncher
+
+from m2_cartpole_gui_artifact import (
+    GUI_OBSERVATION_MODE,
+    MAX_OBSERVATION_SECONDS,
+    MIN_OBSERVATION_SECONDS,
+    collect_gui_gpu_sample,
+)
+
+
+GUI_OBSERVATION_FRAME_PACING_S = 1.0 / 30.0
+GUI_OBSERVATION_MAX_EXECUTED_STEPS = 10_000
 
 
 def _has_option(name: str) -> bool:
@@ -27,6 +39,15 @@ parser.add_argument("--scenario", choices=("cartpole", "cartpole-direct", "go2",
 parser.add_argument("--steps", type=int, default=16)
 parser.add_argument("--num-envs", type=int, default=1)
 parser.add_argument("--output-dir", type=Path, required=True)
+parser.add_argument(
+    "--gui-observation-seconds",
+    type=float,
+    default=None,
+    help=(
+        "Required only for the bounded M2.3 Direct Cartpole --viz kit gate. "
+        "Keeps the visible task live for a finite manual-observation interval."
+    ),
+)
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 
@@ -57,6 +78,19 @@ if args_cli.livestream not in (-1, 0):
 if args_cli.scenario == "camera":
     args_cli.enable_cameras = True
 
+if visualizer_selection == ["kit"]:
+    if args_cli.scenario != "cartpole-direct" or args_cli.num_envs != 1:
+        parser.error("--viz kit is reserved for the one-environment Direct Cartpole M2.3 GUI gate")
+    if args_cli.gui_observation_seconds is None:
+        parser.error("--viz kit requires --gui-observation-seconds for a bounded manual M2.3 observation")
+    if not MIN_OBSERVATION_SECONDS <= args_cli.gui_observation_seconds <= MAX_OBSERVATION_SECONDS:
+        parser.error(
+            "--gui-observation-seconds must be within "
+            f"[{MIN_OBSERVATION_SECONDS:g}, {MAX_OBSERVATION_SECONDS:g}]"
+        )
+elif args_cli.gui_observation_seconds is not None:
+    parser.error("--gui-observation-seconds requires the dedicated --scenario cartpole-direct --viz kit gate")
+
 # Use the vendor default shutdown path.  In this pinned Kit build, disabling
 # fast shutdown takes the known full-extension teardown path that can segfault
 # after successful work; all evidence is therefore written before close(), and
@@ -72,6 +106,64 @@ output_dir.mkdir(parents=True)
 # AppLauncher must be constructed before importing Kit-dependent Isaac Lab APIs.
 app_launcher = AppLauncher(args_cli)
 simulation_app = app_launcher.app
+
+
+def _active_gpu_index() -> int:
+    """Resolve the Kit-selected CUDA device instead of trusting host defaults."""
+
+    device = str(app_launcher.device)
+    if not device.startswith("cuda:"):
+        raise RuntimeError(f"M2.3 GUI requires a CUDA renderer device, got {device!r}")
+    try:
+        index = int(device.split(":", 1)[1])
+    except ValueError as error:
+        raise RuntimeError(f"Cannot parse Kit CUDA device: {device!r}") from error
+    if index < 0:
+        raise RuntimeError(f"Kit selected an invalid GPU index: {index}")
+    return index
+
+
+def _renderer_evidence() -> dict[str, Any]:
+    """Read live Kit renderer state without changing any renderer setting."""
+
+    import carb
+    import omni.kit.app
+
+    settings = carb.settings.get_settings()
+    active_gpu = settings.get("/renderer/activeGpu")
+    active_renderer = settings.get("/renderer/active")
+    if isinstance(active_gpu, bool):
+        raise RuntimeError("Kit renderer active GPU setting is not an integer")
+    try:
+        active_gpu_index = int(active_gpu)
+    except (TypeError, ValueError) as error:
+        raise RuntimeError(f"Kit renderer did not expose /renderer/activeGpu: {active_gpu!r}") from error
+    if not isinstance(active_renderer, str) or not active_renderer.strip():
+        raise RuntimeError(f"Kit renderer did not expose /renderer/active: {active_renderer!r}")
+
+    extension_manager = omni.kit.app.get_app().get_extension_manager()
+    candidates = ("omni.hydra.rtx", "omni.rtx.window", "omni.kit.renderer.core")
+    enabled_rtx_extensions = [
+        extension for extension in candidates if extension_manager.is_extension_enabled(extension)
+    ]
+    if not enabled_rtx_extensions:
+        raise RuntimeError("No RTX renderer extension is enabled during the Kit GUI gate")
+    return {
+        "active_gpu_setting": active_gpu_index,
+        "active_renderer_setting": active_renderer,
+        "enabled_rtx_extensions": enabled_rtx_extensions,
+    }
+
+
+def _collect_gui_gpu_sample() -> dict[str, Any]:
+    expected_gpu = _active_gpu_index()
+    renderer = _renderer_evidence()
+    if renderer["active_gpu_setting"] != expected_gpu:
+        raise RuntimeError(
+            "Kit renderer active GPU differs from the AppLauncher CUDA device: "
+            f"{renderer['active_gpu_setting']} != {expected_gpu}"
+        )
+    return collect_gui_gpu_sample(active_gpu_index=expected_gpu, renderer=renderer)
 
 
 def _jsonable(value: Any) -> Any:
@@ -178,19 +270,58 @@ def _run_task(task: str) -> dict[str, Any]:
         backend_before = _assert_physx(env.unwrapped.sim)
         observations, _ = env.reset(seed=42)
         _finite_tree(observations, "reset_observations")
-        for step in range(args_cli.steps):
+        gui_observation_seconds = args_cli.gui_observation_seconds if visualizer_selection == ["kit"] else None
+        gui_started = time.monotonic() if gui_observation_seconds is not None else None
+        gui_deadline = (
+            gui_started + gui_observation_seconds
+            if gui_started is not None and gui_observation_seconds is not None
+            else None
+        )
+        gpu_samples: list[dict[str, Any]] = []
+        if gui_observation_seconds is not None:
+            # The first sample is collected while the task/viewport are live,
+            # never from a post-close host check.
+            gpu_samples.append(_collect_gui_gpu_sample())
+        executed_steps = 0
+        while executed_steps < args_cli.steps or (
+            gui_deadline is not None and time.monotonic() < gui_deadline
+        ):
+            if gui_observation_seconds is not None and executed_steps >= GUI_OBSERVATION_MAX_EXECUTED_STEPS:
+                raise RuntimeError("M2.3 GUI observation exceeded its finite execution-step limit")
             actions = torch.zeros(env.action_space.shape, device=env.unwrapped.device, dtype=torch.float32)
             transition = env.step(actions)
-            _finite_tree(transition, f"transition_{step}")
+            _finite_tree(transition, f"transition_{executed_steps}")
+            executed_steps += 1
+            if gui_deadline is not None:
+                remaining = gui_deadline - time.monotonic()
+                if remaining > 0.0:
+                    time.sleep(min(GUI_OBSERVATION_FRAME_PACING_S, remaining))
         backend_after_steps = _assert_physx(env.unwrapped.sim)
-        return {
+        result: dict[str, Any] = {
             "task": task,
             "steps": args_cli.steps,
+            "executed_steps": executed_steps,
             "num_envs": args_cli.num_envs,
             "action_shape": list(env.action_space.shape),
             "backend_before": backend_before,
             "backend_after": backend_after_steps,
         }
+        if gui_observation_seconds is not None and gui_started is not None:
+            # The second sample makes the GPU-memory claim temporal: both
+            # samples occur while Kit, the official task, and the viewport live.
+            gpu_samples.append(_collect_gui_gpu_sample())
+            result["gui_observation"] = {
+                "mode": GUI_OBSERVATION_MODE,
+                "requested_wall_time_s": gui_observation_seconds,
+                "actual_wall_time_s": time.monotonic() - gui_started,
+                "frame_pacing_s": GUI_OBSERVATION_FRAME_PACING_S,
+                "maximum_executed_steps": GUI_OBSERVATION_MAX_EXECUTED_STEPS,
+                "expected_active_gpu_index": _active_gpu_index(),
+                "gpu_samples": gpu_samples,
+                "operator_attestation_required_after_close": True,
+                "automatic_visual_observation_claimed": False,
+            }
+        return result
     finally:
         env.close()
 

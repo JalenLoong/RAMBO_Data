@@ -53,6 +53,18 @@ FREEZE_INPUT_GROUPS: dict[str, tuple[str, ...]] = {
         "scripts/rambo/validate_button_physx_episode.py",
         "scripts/rambo/validate_gui_keyboard_artifact.py",
     ),
+    "deferred_gui_gate_contracts": (
+        "README.md",
+        "scripts/rambo/official_physx_smoke.py",
+        "scripts/rambo/m2_cartpole_gui_artifact.py",
+        "scripts/rambo/run_m2_cartpole_gui_gate.sh",
+        "scripts/rambo/record_m2_cartpole_gui_attestation.py",
+        "scripts/rambo/validate_m2_cartpole_gui_gate.py",
+        "scripts/rambo/teleop_loco_manip.py",
+        "scripts/rambo/run_gui_keyboard_artifact.sh",
+        "scripts/rambo/finalize_gui_keyboard_artifact.py",
+        "source/rambo/rambo/validation/gui_keyboard_artifact.py",
+    ),
     "manifests": (
         "checkpoint-manifest.json",
         "host-manifest.json",

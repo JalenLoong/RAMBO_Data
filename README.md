@@ -143,6 +143,38 @@ completion condition. The same gate supports `--scenario cartpole`, `go2`, and
 `use_newton_actuators=false`, and RTX GPU evidence. Do not infer backend use
 from installed package names.
 
+## Deferred M2.3 manual Cartpole Kit gate
+
+This is intentionally the only accepted GUI path for M2.3. Do **not** start it
+until an operator is ready to watch the visible desktop: it requires `DISPLAY`,
+uses the exact official `Isaac-Cartpole-Direct-v0` task with one environment,
+and fixes `--viz kit`, explicit PhysX, and a finite 15–300-second dwell. It
+does not use xdotool, pyautogui, replayed input, or a synthetic UI substitute.
+
+```bash
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+M2_GUI_OUT="/workspace/migration-output/isaac60/M2/${STAMP}-cartpole-direct-kit"
+M2_GUI_ATTEST="/workspace/migration-output/isaac60/M2/${STAMP}-cartpole-direct-kit-attestation"
+
+# Run from the visible desktop session (for example DISPLAY=:20). During the
+# 45-second window, personally observe the viewport and exercise Play/Stop.
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_m2_cartpole_gui_gate.sh \
+  --output-dir "$M2_GUI_OUT" --attestation-dir "$M2_GUI_ATTEST" \
+  --operator-name "<your-name>" --gui-observation-seconds 45
+```
+
+Before Kit closes, the runtime records two read-only `nvidia-smi` samples for
+the live Kit PID, its nonzero GPU memory, the selected RTX 4090, and the live
+Carb renderer active-GPU/RTX-extension state. It still does not claim that
+those records prove the visual observation. After the real child exit is
+sealed, the wrapper requires the named operator at an interactive TTY to type
+an exact acknowledgement, then validates the sidecar's checksum binding to the
+sealed runtime. The attestation statement covers the GUI window, normal
+viewport, manual Play/Stop, absence of Vulkan swapchain errors, Kit GPU memory,
+and an RTX 4090 rather than llvmpipe. A failed or interrupted run is retained
+for diagnosis but cannot receive an attestation; use fresh runtime and sidecar
+directories for a genuine retry.
+
 For the separate, non-simulator CUDA/Ada compatibility record, run:
 
 ```bash
@@ -294,8 +326,7 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
 # the button to at least 12 mm, then retract until it reports released.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 M8_GUI_OUT="/workspace/migration-output/isaac60/M8/${STAMP}-gui-keyboard"
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
-  scripts/rambo/teleop_loco_manip.py \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_gui_keyboard_artifact.sh \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --seed 42 --max-steps 3000 --viz kit \
   --gui-artifact-dir "$M8_GUI_OUT" \
@@ -323,11 +354,14 @@ PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
 
 The audited GUI mode refuses scripted smoke flags and records native Carb
 callback observations, every control-step state, explicit PhysX evidence before
-and after the run, named-operator attestation, and checksums. A passing offline
-validator proves internal consistency but intentionally does not independently
-prove the physical origin of keyboard events. Never use xdotool, pyautogui,
-replayed events, or any injected input source. Retain a failed artifact for
-diagnosis and use a new output directory for the next genuine attempt.
+and after the run, named-operator attestation, and checksums. The dedicated
+runner adds the zero exit sidecar only after Kit has closed; without it the
+offline validator deliberately rejects the pre-close evidence. A passing
+offline validator proves internal consistency but intentionally does not
+independently prove the physical origin of keyboard events. Never use xdotool,
+pyautogui, replayed events, or any injected input source. Retain a failed
+artifact for diagnosis and use a new output directory for the next genuine
+attempt.
 
 The recorder writes actions, observations, post-step state, 375 RGB frames,
 timestamps, runtime/checkpoint/PhysX evidence, memory samples, and a checksum

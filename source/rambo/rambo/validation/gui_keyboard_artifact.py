@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 ARTIFACT_KIND = "rambo_gui_keyboard_teleop"
 TASK_ID = "Isaac-RAMBO-Quadruped-Button-Go2-v0"
 MODE = "explicit_gui_keyboard_callback"
@@ -34,6 +34,9 @@ EVENTS_FILENAME = "events.jsonl"
 STATES_FILENAME = "states.jsonl"
 ATTESTATION_FILENAME = "attestation.json"
 CHECKSUMS_FILENAME = "checksums.sha256"
+PROCESS_EXIT_FILENAME = "process_exit.json"
+POST_CLOSE_RUNNER = "scripts/rambo/run_gui_keyboard_artifact.sh"
+PROCESS_EXIT_SCHEMA_VERSION = 1
 
 OPERATOR_ATTESTATION_STATEMENT = (
     "I personally focused the Isaac Sim GUI viewport and operated a physical keyboard to issue "
@@ -90,7 +93,7 @@ def write_json(path: str | Path, value: Any) -> Path:
 
 
 def write_checksums(output_dir: str | Path) -> Path:
-    """Write SHA-256 entries for every evidence file except the manifest itself."""
+    """Write SHA-256 entries for every evidence file except the checksum manifest."""
 
     root = Path(output_dir)
     checksum_path = root / CHECKSUMS_FILENAME
@@ -103,11 +106,13 @@ def write_checksums(output_dir: str | Path) -> Path:
 
 
 class GuiKeyboardArtifactWriter:
-    """Append callback/state records and finish an immutable evidence directory.
+    """Append callback/state records and finish pre-close runtime evidence.
 
     The caller owns all semantics of each record.  This class only gives each
     stream a contiguous sequence number, flushes each line promptly, and writes
-    a checksum manifest once the run has ended.
+    a checksum manifest once the in-process workload has ended.  The dedicated
+    parent runner must subsequently record the real child exit after Kit has
+    closed; until then this directory is deliberately not an accepted artifact.
     """
 
     def __init__(self, output_dir: str | Path, *, manifest: dict[str, Any], attestation: dict[str, Any]) -> None:
@@ -152,7 +157,11 @@ class GuiKeyboardArtifactWriter:
         self._append(self._states, record, sequence=self._state_count)
 
     def finalize(self, summary: dict[str, Any]) -> Path:
-        """Close trace streams, write the summary, then seal all files with SHA-256."""
+        """Close trace streams, write the summary, then checksum pre-close files.
+
+        ``process_exit.json`` is intentionally absent at this point: it can
+        only be written by the parent process after the Isaac Sim child exits.
+        """
 
         if self._finalized:
             raise GuiKeyboardArtifactError("Artifact has already been finalized")
@@ -287,9 +296,15 @@ def _validate_manifest(manifest: dict[str, Any]) -> tuple[int, list[float]]:
             "events": EVENTS_FILENAME,
             "states": STATES_FILENAME,
             "attestation": ATTESTATION_FILENAME,
+            "process_exit": PROCESS_EXIT_FILENAME,
         },
         "Manifest file names are invalid",
     )
+    post_close_exit = manifest.get("post_close_exit")
+    _require(isinstance(post_close_exit, dict), "manifest.post_close_exit is required")
+    _require(post_close_exit.get("required") is True, "Manifest must require a post-close exit record")
+    _require(post_close_exit.get("file") == PROCESS_EXIT_FILENAME, "Manifest post-close exit file is invalid")
+    _require(post_close_exit.get("captured_by") == POST_CLOSE_RUNNER, "Manifest post-close runner is invalid")
     input_capture = manifest.get("input_capture")
     _require(isinstance(input_capture, dict), "manifest.input_capture is required")
     _require(input_capture.get("source") == "carb_keyboard_callback", "Input source is not the Carb callback")
@@ -328,6 +343,30 @@ def _validate_attestation(attestation: dict[str, Any]) -> None:
         "Attestation must not claim independent physical-keyboard proof",
     )
     _require(isinstance(attestation.get("recorded_at_utc"), str) and attestation["recorded_at_utc"], "Attestation time is required")
+
+
+def _validate_post_close_exit(process_exit: dict[str, Any]) -> None:
+    """Require the parent-observed successful exit that follows Kit shutdown."""
+
+    _require(
+        process_exit.get("schema_version") == PROCESS_EXIT_SCHEMA_VERSION,
+        "Post-close exit schema version is invalid",
+    )
+    _require(process_exit.get("captured_by") == POST_CLOSE_RUNNER, "Post-close exit runner is invalid")
+    _require(process_exit.get("captured_after_child_exit") is True, "Post-close exit was not captured after child exit")
+    _require(
+        process_exit.get("workload_summary_completed_before_exit") is True,
+        "Workload summary was not completed before process exit",
+    )
+    _require(process_exit.get("summary_outcome_before_exit") == "completed", "Post-close summary outcome is invalid")
+    _require(process_exit.get("shell_exit_status") == 0, "GUI process exit status is not zero")
+    _require(process_exit.get("exit_status_zero") is True, "GUI process exit is not marked zero")
+    _require(process_exit.get("signal_hint") is None, "Successful GUI process exit has a signal hint")
+    _require(process_exit.get("acceptance_passed") is True, "GUI artifact is not accepted after process exit")
+    _require(
+        isinstance(process_exit.get("captured_at_utc"), str) and process_exit["captured_at_utc"],
+        "Post-close exit capture time is required",
+    )
 
 
 def _validate_events(root: Path, *, started_monotonic_ns: int, finished_monotonic_ns: int) -> dict[str, int]:
@@ -555,6 +594,7 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
         EVENTS_FILENAME,
         STATES_FILENAME,
         ATTESTATION_FILENAME,
+        PROCESS_EXIT_FILENAME,
         CHECKSUMS_FILENAME,
     }
     missing = sorted(name for name in required if not (root / name).is_file())
@@ -564,6 +604,7 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
     manifest = _read_json(root / MANIFEST_FILENAME, "manifest")
     summary = _read_json(root / SUMMARY_FILENAME, "summary")
     attestation = _read_json(root / ATTESTATION_FILENAME, "attestation")
+    process_exit = _read_json(root / PROCESS_EXIT_FILENAME, "post-close process exit")
     max_steps, initial_leg_target = _validate_manifest(manifest)
     _validate_attestation(attestation)
     _require(summary.get("schema_version") == SCHEMA_VERSION, "Summary schema version is invalid")
@@ -585,6 +626,10 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
         "Summary must not claim independent physical-keyboard proof",
     )
     _require(summary.get("limitation") == PHYSICALITY_LIMITATION, "Summary limitation is invalid")
+    _require(summary.get("post_close_exit_required") is True, "Summary must require a post-close exit record")
+    _require(summary.get("post_close_exit_file") == PROCESS_EXIT_FILENAME, "Summary post-close exit file is invalid")
+    _require(summary.get("post_close_exit_runner") == POST_CLOSE_RUNNER, "Summary post-close runner is invalid")
+    _validate_post_close_exit(process_exit)
     _validate_physx_evidence(summary.get("backend_before"), "summary.backend_before")
     _validate_physx_evidence(summary.get("backend_after"), "summary.backend_after")
     checkpoint = summary.get("checkpoint")
@@ -631,6 +676,7 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
         "event_count": event_evidence["event_count"],
         "state_count": state_evidence["state_count"],
         "checksum_count": checksum_count,
+        "process_exit_status": process_exit["shell_exit_status"],
         "m8_evidence": state_evidence | {"unhandled_space_press_count": event_evidence["unhandled_space_press_count"]},
         "operator_attestation_required": True,
         "physical_keyboard_independently_proven": False,
@@ -655,6 +701,9 @@ __all__ = [
     "PHYSICALITY_LIMITATION",
     "PHYSX_CFG_FQN",
     "PHYSX_MANAGER_FQN",
+    "POST_CLOSE_RUNNER",
+    "PROCESS_EXIT_FILENAME",
+    "PROCESS_EXIT_SCHEMA_VERSION",
     "QUADRUPED_CHECKPOINT_SHA256",
     "SCHEMA_VERSION",
     "STATES_FILENAME",
