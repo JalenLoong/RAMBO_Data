@@ -124,13 +124,16 @@ determinism；再验证 RAMBO QP shape、ordering、friction/torque constraints�
 - M6 Quadruped：hash + strict load、405/18、1-env 16-step、16-env smoke、1-env 3000-step
   camera-off。无 NaN/done/reset/torque violation；height ≥0.1，orientation error ≤0.75。
 - M7 RGB：1-env 3000-step，375 连续 frames，640×480，timestamps `0.08…30.00`，每 40
-  physics ticks 一帧；非黑、变化、camera projection 与 contact sheet 均证明 scene/robot 可见。
+  physics ticks 一帧。base-mounted 生产前视流与 contact sheet 证明 scene、非黑、变化和
+  cadence；同一次 sealed rollout 终态的独立 third-person RGBD（不改变前视 camera tick/state）
+  证明 robot 与 scene 可见。不得把 robot 伪称为每帧前视像素均可见。
 - M8 Button：暴露 `set_loco_manip_commands(base_velocity, fl_position, fl_force, env_ids=None)`；
   使用固定 seed 42 步序（110–269 前进、300–549 FL z、550–809 FL x、810–909 retract）。
   要求 12 mm 连续 5 steps、回弹 ≤2 mm、步行与关节变化均 ≥0.05。GUI 只接受真实操作者
   的物理键盘；禁止 xdotool/wmctrl、pyautogui、重放或任何输入注入，并在非 GUI 门禁后延期。
 - M9 Biped：435/18、strict load、FL/FR 与 contact override 独立性、phase offset 19.6s、
-  16-step/16-env/3000-step/RGB；height ≥0.3，orientation error ≤0.8。
+  16-step/16-env/3000-step/RGB；height ≥0.3，orientation error ≤0.8。RGB visibility 采用与
+  M7 相同的 production-front-stream + 同 rollout final third-person RGBD 组合证据。
 - M10：新 recorder 生成 Button task 的 30s episode，3000 observation/action/post-state、375
   RGB 和 terminal record；保存 prompt、seed、versions、GPU/driver、checkpoint hashes、PhysX
   evidence、schema version、timestamps 和 checksums。button success/rebound、无缺样本、时间

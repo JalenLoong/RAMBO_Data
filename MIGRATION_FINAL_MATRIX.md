@@ -18,13 +18,13 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M4 | sealed 通过 | 四足/双足 space contract：`M4/20260824T143107Z-*`、`M4/20260824T143117Z-*`。 |
 | M5.1 | 通过（范围受限） | qpth contract 仅证明 toy qpth，不等于历史 RAMBO QP 数值对比。 |
 | M5.2 | **已延期** | Isaac Sim 5.1 历史 QP snapshot 缺失；不以新端数据伪造比较。 |
-| M6 | sealed 通过 | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/`；零动作诊断仅补充，不能替代 production walking。 |
-| M7 | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`。 |
+| M6 | sealed 通过 | 3000-step/first-transition `M6/20260824T143140Z-*` 与 current-source 16-env/16-step `M6/20260824T151140Z-*`；零动作诊断仅补充，不能替代 production walking。 |
+| M7 | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：生产前视流证明 sensor/cadence/scene，绑定同 rollout final third-person RGBD 证明 robot + scene。 |
 | M8 non-interactive | sealed 通过 | M10 Button recorder 覆盖 30 秒 deterministic episode。 |
 | M8 GUI 真实键盘 | **已延期** | 只接受 `--viz kit` 下真实物理键盘操作者；禁止 xdotool、pyautogui、replay 和输入注入。 |
-| M9 | sealed clean-source 通过 | 3000-step RGB 与 FL/FR independent artifacts：`M9/20260824T143926Z-*`、`M9/20260824T144321Z-*`。 |
+| M9 | sealed clean-source 通过 | 3000-step RGB、current-source 16-env/16-step 与 FL/FR independent artifacts：`M9/20260824T143926Z-*`、`M9/20260824T151210Z-*`、`M9/20260824T144321Z-*`；RGB visibility 采用 M7 的组合证据。 |
 | M10 | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB 与 acceptance。 |
-| M11 native freeze | **待按本 canonical input list 刷新封存** | 旧 `M11/20260824T145221Z-native-freeze-final-current-scope/` 的 6 项输入未覆盖 wrapper/report/status/final matrix，不能作为该完整输入集的 closure evidence。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T151345Z-native-freeze-final-current-scope-v2/` 将绑定干净 source、20 项 canonical inputs、gpu-required installation verification 和接受 runtime artifacts；它取代旧 6-input freeze。 |
 | M11 Docker | **已延期** | 当前 host 没有 Docker Engine/NVIDIA Container Toolkit；不 build/run/push。 |
 
 因此，本迁移的完整 adaptation 仍未完成：M2.1 的字面标准、M2.3/M8 GUI、M5.2

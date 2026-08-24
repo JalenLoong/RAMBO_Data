@@ -5,6 +5,7 @@
     "worktree": "/workspace/rambo60",
     "branch": "adapt/isaacsim60-isaaclab30b2",
     "runtime_validation_commit": "358daa52260841cdfa8263adeee930144379c5fe",
+    "sealed_short_gate_commit": "078bfa2d14c68ef0f91f6d1224e20a7ae07a279c",
     "legacy_baseline_commit": "10154c6d2f20d33f51e5e126801c507e6fe206db"
   },
   "host": {
@@ -60,7 +61,7 @@
     "requirements_lock_noneditable_wheel_pins": 242,
     "direct_input_pins_verified": 10,
     "setup_script_sha256": "fa11c29a05a2571919e0bf34aa5fbc142958655942cb9edf77a0be059123c40e",
-    "verifier_sha256": "2872da93be668614303ae8c6b752cd320afef61004a77f813c5ea393d66a95d7",
+    "verifier_sha256": "1859240950cf0e464375cd46c20e93ac293e67276595a65d2459265c9544b7fc",
     "verified_editable_source": "/workspace/IsaacLab-3.0.0-beta2.patch1",
     "pip_check": {
       "status": "only the reviewed eight findings are present",
@@ -103,6 +104,10 @@
         "path": "/workspace/migration-output/isaac60/M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed"
       },
       {
+        "milestone": "M6 16-env 16-step",
+        "path": "/workspace/migration-output/isaac60/M6/20260824T151140Z-quadruped-policy-16env-16step-sealed"
+      },
+      {
         "milestone": "M6 zero action 100",
         "path": "/workspace/migration-output/isaac60/M6/20260824T143407Z-quadruped-zero-action-all-stance-100-sealed"
       },
@@ -117,6 +122,10 @@
       {
         "milestone": "M9 final RGB",
         "path": "/workspace/migration-output/isaac60/M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed"
+      },
+      {
+        "milestone": "M9 16-env 16-step",
+        "path": "/workspace/migration-output/isaac60/M9/20260824T151210Z-biped-policy-16env-16step-sealed"
       },
       {
         "milestone": "M9 front-leg independence schema v2",

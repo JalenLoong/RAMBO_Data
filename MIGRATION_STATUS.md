@@ -27,13 +27,13 @@
 | M4 API/空间 contract | 完成（sealed） | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/` 均为 1-env/5-step、显式 PhysX、前后 manager FQN 与 exit 0。 |
 | M5.1 qpth contract | 通过（范围受限） | CPU/CUDA toy-qpth forward/backward、KKT、残差与确定性：`M5/20260824T105302Z-qpth-contract/`；这不是旧版 RAMBO QP snapshot 对比 |
 | M5.2 RAMBO 5.1 QP 数值对比 | **已批准延期** | 计划要求的旧 baseline mass/Jacobian/contact/desired-force/constraint 及 solution/torque/contact/residual snapshot 未保存，当前主机不能诚实重建或以新端数据代替；按当前用户范围，它不阻断本轮后续自动化工作。 |
-| M6 四足 | 完成（sealed） | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000 步真实 policy→QP rollout 与首转换；`143407Z-*`/`143422Z-*` 是额外 100/1000-step 全支撑零动作诊断，明确不替代 production walking。三者均 exit 0/PhysX 前后 FQN。 |
-| M7 四足 RGB 3000 steps | 完成（sealed clean-source） | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/` 绑定 clean source `358daa5`：3000 policy steps、15,000 physics ticks、375 前视 RGB、终态独立 RGBD、checksum 与 exit 0 均通过。 |
+| M6 四足 | 完成（sealed） | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000 步真实 policy→QP rollout 与首转换；`151140Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、405/18）sealed gate；`143407Z-*`/`143422Z-*` 是额外 100/1000-step 全支撑零动作诊断，明确不替代 production walking。所有列出的 gate 均 exit 0/PhysX 前后 FQN。 |
+| M7 四足 RGB 3000 steps | 完成（sealed clean-source） | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/` 绑定 clean source `358daa5`：3000 policy steps、15,000 physics ticks、375 base-mounted 前视 RGB、终态独立 RGBD、checksum 与 exit 0 均通过。前视流证明 cadence/scene；同一封存 rollout 的 third-person RGBD 证明 robot + scene，绝不伪称机器人在每张前视帧内可见。 |
 | M8 Button non-interactive | 完成（由 M10 sealed recorder 覆盖） | 30 秒 deterministic Button 运行在 `M10/20260824T144344Z-button-episode-3000-sealed/` 中完成并通过 acceptance。 |
 | M8 GUI 真实键盘 | **本轮已延期** | 仅接受真实操作者在 `--viz kit` 下的物理键盘；不使用 xdotool、pyautogui、重放或任何注入输入。 |
-| M9 双足 | 完成（sealed clean-source） | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 在 clean source 上完成 FL/FR 两步独立性。两者均 PhysX 前后 FQN、checksum 与 exit 0。 |
+| M9 双足 | 完成（sealed clean-source） | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`151210Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、435/18）sealed gate；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 在 clean source 上完成 FL/FR 两步独立性。前视流/third-person RGBD 的 visibility 解释与 M7 相同；所有列出的 gate 均 PhysX 前后 FQN、checksum 与 exit 0。 |
 | M10 30 秒 Button recorder | 完成（sealed） | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button success/rebound 与 motion acceptance、382 个封存文件、exit 0 均通过。 |
-| M11 native freeze | 完成（本轮 current scope） | `M11/20260824T145221Z-native-freeze-final-current-scope/` 绑定干净 commit `a349de9`；gpu-required verifier、242-wheel lock、无 optional Newton extras、输入与工件索引 checksum 均通过。M2.3/M8 GUI、M5.2 和 Docker 不在本轮 scope。 |
+| M11 native freeze | 完成（本轮 current scope） | `M11/20260824T151345Z-native-freeze-final-current-scope-v2/` 将绑定干净 commit、gpu-required verifier、242-wheel lock、无 optional Newton extras、20 项 canonical source inputs 与接受工件索引的 checksum。它取代旧 6-input freeze；M2.3/M8 GUI、M5.2 和 Docker 不在本轮 scope。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push image |
 
 ## 最终 M10 摘要

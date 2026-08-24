@@ -115,8 +115,10 @@ every lock pin. Never replace either file with a floating or nightly package
 transaction. The setup script does not accept the EULA and does not persist it.
 
 `scripts/rambo/run60.sh` is the supported wrapper for simulator launches. It
-keeps the pinned PyTorch CUDA shared libraries visible while delegating
-fail-closed visualizer and PhysX checks to the launchers.
+keeps the pinned PyTorch CUDA shared libraries visible, requires exactly one
+`--viz none|kit`, and rejects visualizer/Kit/physics/Newton override arguments
+before Python starts. The audited launchers then assert the actual PhysX
+manager before and after the runtime.
 
 ## Verify the host and official PhysX gate
 
