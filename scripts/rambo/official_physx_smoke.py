@@ -130,18 +130,30 @@ def _renderer_evidence() -> dict[str, Any]:
 
     import carb
     import omni.kit.app
+    import omni.kit.viewport.utility
 
     settings = carb.settings.get_settings()
     active_gpu = settings.get("/renderer/activeGpu")
-    active_renderer = settings.get("/renderer/active")
+    legacy_active_renderer = settings.get("/renderer/active")
     if isinstance(active_gpu, bool):
         raise RuntimeError("Kit renderer active GPU setting is not an integer")
     try:
         active_gpu_index = int(active_gpu)
     except (TypeError, ValueError) as error:
         raise RuntimeError(f"Kit renderer did not expose /renderer/activeGpu: {active_gpu!r}") from error
+
+    # Kit 110 treats /renderer/active as a legacy compatibility setting and
+    # may leave it unset until an operator changes renderer from the viewport
+    # menu.  Query the live viewport instead: this is the renderer actually
+    # backing the visible GUI, and reading it does not alter Kit state.
+    viewport = omni.kit.viewport.utility.get_active_viewport()
+    if viewport is None:
+        raise RuntimeError("Kit GUI did not expose an active viewport")
+    active_renderer = viewport.hydra_engine
     if not isinstance(active_renderer, str) or not active_renderer.strip():
-        raise RuntimeError(f"Kit renderer did not expose /renderer/active: {active_renderer!r}")
+        raise RuntimeError(f"Kit viewport did not expose its Hydra engine: {active_renderer!r}")
+    if active_renderer.strip().lower() != "rtx":
+        raise RuntimeError(f"Kit viewport is not using the RTX Hydra engine: {active_renderer!r}")
 
     extension_manager = omni.kit.app.get_app().get_extension_manager()
     # Only a direct RTX render-delegate extension is accepted as renderer
@@ -156,6 +168,8 @@ def _renderer_evidence() -> dict[str, Any]:
     return {
         "active_gpu_setting": active_gpu_index,
         "active_renderer_setting": active_renderer,
+        "active_renderer_source": "omni.kit.viewport.utility.get_active_viewport().hydra_engine",
+        "legacy_active_renderer_setting": legacy_active_renderer,
         "enabled_rtx_extensions": enabled_rtx_extensions,
     }
 

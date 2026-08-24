@@ -24,7 +24,7 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M8 GUI 真实键盘 | **已延期（执行/封存路径已就绪）** | `run_gui_keyboard_artifact.sh` 仅接受带 EULA 前缀且有 `DISPLAY` 的 `--viz kit`，并在 Kit 关闭后写入 exit sidecar、要求真人 TTY 精确声明再离线验收；仍只接受真实物理键盘操作者，禁止 xdotool、pyautogui、replay 和输入注入。 |
 | M9 | sealed clean-source 通过 | 3000-step RGB、current-source 16-env/16-step 与 FL/FR independent artifacts：`M9/20260824T143926Z-*`、`M9/20260824T151210Z-*`、`M9/20260824T144321Z-*`；RGB visibility 采用 M7 的组合证据。 |
 | M10 | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB 与 acceptance。 |
-| M11 native freeze | current-scope 完成 | `M11/20260824T154619Z-native-freeze-gui-attestation-v5/` 绑定干净 source、31 项 canonical inputs（含延后 GUI gate 的运行、post-close 人工声明与封存路径）、gpu-required installation verification 和接受 runtime artifacts；它取代旧 6-input freeze。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 绑定干净 source、31 项 canonical inputs（含 Kit 110 live viewport RTX 证据、延后 GUI gate 的运行、post-close 人工声明与封存路径）、gpu-required installation verification 和接受 runtime artifacts；它取代旧 6-input freeze。 |
 | M11 Docker | **已延期** | 当前 host 没有 Docker Engine/NVIDIA Container Toolkit；不 build/run/push。 |
 
 因此，本迁移的完整 adaptation 仍未完成：M2.1 的字面标准、M2.3/M8 GUI、M5.2

@@ -56,6 +56,8 @@ def _gpu_sample(*, timestamp: int) -> dict[str, object]:
         "renderer": {
             "active_gpu_setting": 0,
             "active_renderer_setting": "rtx",
+            "active_renderer_source": "omni.kit.viewport.utility.get_active_viewport().hydra_engine",
+            "legacy_active_renderer_setting": None,
             "enabled_rtx_extensions": ["omni.hydra.rtx"],
         },
     }
@@ -191,6 +193,8 @@ def test_live_gpu_sampler_requires_the_running_process_and_rtx_gpu() -> None:
         renderer={
             "active_gpu_setting": 0,
             "active_renderer_setting": "rtx",
+            "active_renderer_source": "omni.kit.viewport.utility.get_active_viewport().hydra_engine",
+            "legacy_active_renderer_setting": None,
             "enabled_rtx_extensions": ["omni.hydra.rtx"],
         },
         command_runner=fake_nvidia_smi,
@@ -220,3 +224,5 @@ def test_m2_gui_runner_is_dedicated_post_close_and_interactive() -> None:
     assert "--viz kit requires --gui-observation-seconds" in smoke
     assert "collect_gui_gpu_sample" in smoke
     assert "automatic_visual_observation_claimed" in smoke
+    assert "get_active_viewport().hydra_engine" in smoke
+    assert 'settings.set("/renderer/active"' not in smoke

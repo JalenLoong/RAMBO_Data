@@ -49,7 +49,7 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M8 GUI 真实键盘 | **本轮已延期（路径已就绪）** | `run_gui_keyboard_artifact.sh` 仅接受带 EULA 前缀、非空 `DISPLAY` 的 `--viz kit`，并在 Kit child post-close 后封存 exit sidecar、要求真人 TTY 精确声明再离线验证；仍只接受真实操作者使用物理键盘，合成输入、重放与注入不计通过。 |
 | M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`M9/20260824T151210Z-biped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（435/18、256 env-steps、PhysX 前后 FQN、exit 0）；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。RGB visibility 的前视流 + 同 rollout third-person 解释与 M7 相同。 |
 | M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
-| M11 native freeze | current-scope 完成 | `M11/20260824T154619Z-native-freeze-gui-attestation-v5/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、31 项 canonical source inputs（含延期 GUI gate 的运行、post-close 人工声明与封存链）、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、31 项 canonical source inputs（含 Kit 110 live viewport RTX 证据与延期 GUI gate 的运行、post-close 人工声明及封存链）、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明

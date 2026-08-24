@@ -233,9 +233,23 @@ def _validate_gpu_sample(sample: Any, *, expected_gpu_index: int, label: str) ->
     active_renderer = renderer.get("active_renderer_setting")
     _require(
         isinstance(active_renderer, str) and active_renderer.strip(),
-        f"{label} does not record the active renderer setting",
+        f"{label} does not record the active viewport Hydra engine",
     )
-    _require("llvmpipe" not in active_renderer.lower(), f"{label} records llvmpipe as the active renderer")
+    _require(active_renderer.strip().lower() == "rtx", f"{label} viewport Hydra engine is not RTX")
+    _require(
+        renderer.get("active_renderer_source")
+        == "omni.kit.viewport.utility.get_active_viewport().hydra_engine",
+        f"{label} active renderer source is not the live Kit viewport",
+    )
+    legacy_active_renderer = renderer.get("legacy_active_renderer_setting")
+    _require(
+        legacy_active_renderer is None or isinstance(legacy_active_renderer, str),
+        f"{label} legacy active renderer setting has an invalid type",
+    )
+    _require(
+        not isinstance(legacy_active_renderer, str) or "llvmpipe" not in legacy_active_renderer.lower(),
+        f"{label} legacy active renderer setting records llvmpipe",
+    )
     rtx_extensions = renderer.get("enabled_rtx_extensions")
     _require(
         isinstance(rtx_extensions, list) and all(isinstance(item, str) and item for item in rtx_extensions) and rtx_extensions,

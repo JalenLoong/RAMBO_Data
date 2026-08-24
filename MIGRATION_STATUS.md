@@ -33,7 +33,7 @@
 | M8 GUI 真实键盘 | **本轮已延期** | 仅接受真实操作者在带 EULA 前缀、非空 `DISPLAY` 的 `--viz kit` 下使用物理键盘；不使用 xdotool、pyautogui、重放或任何注入输入。专用 runner 仅在 Kit child 退出后记录 exit sidecar，随后要求真人 TTY 精确声明并离线验证；未实际运行 GUI。 |
 | M9 双足 | 完成（sealed clean-source） | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`151210Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、435/18）sealed gate；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 在 clean source 上完成 FL/FR 两步独立性。前视流/third-person RGBD 的 visibility 解释与 M7 相同；所有列出的 gate 均 PhysX 前后 FQN、checksum 与 exit 0。 |
 | M10 30 秒 Button recorder | 完成（sealed） | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button success/rebound 与 motion acceptance、382 个封存文件、exit 0 均通过。 |
-| M11 native freeze | 完成（本轮 current scope） | `M11/20260824T154619Z-native-freeze-gui-attestation-v5/` 已绑定干净 commit、gpu-required verifier、242-wheel lock、无 optional Newton extras、31 项 canonical source inputs（含延期 M2.3/M8 GUI 的运行、post-close 人工声明与封存路径）与接受工件索引的 checksum。它取代旧 6-input freeze；M2.3/M8 的实际 GUI 观察、M5.2 和 Docker 不在本轮 scope。 |
+| M11 native freeze | 完成（本轮 current scope） | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 已绑定干净 commit、gpu-required verifier、242-wheel lock、无 optional Newton extras、31 项 canonical source inputs（含 Kit 110 live viewport RTX 证据，以及延期 M2.3/M8 GUI 的运行、post-close 人工声明与封存路径）与接受工件索引的 checksum。它取代旧 6-input freeze；M2.3/M8 的实际 GUI 观察、M5.2 和 Docker 不在本轮 scope。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push image |
 
 ## 最终 M10 摘要
