@@ -21,14 +21,14 @@ setup(
     description=_METADATA["package"]["description"],
     keywords=_METADATA["package"]["keywords"],
     license="BSD-3-Clause",
-    python_requires=">=3.11,<3.12",
-    install_requires=["numpy<2", "gymnasium==1.2.0", "qpth==0.0.18"],
+    python_requires=">=3.12,<3.13",
+    install_requires=["numpy==2.3.1", "gymnasium==1.2.0", "qpth==0.0.18"],
     packages=find_packages(include=["rambo", "rambo.*"]),
     package_data={"rambo": ["tasks/direct/*/agents/*.yaml"]},
     include_package_data=True,
     classifiers=[
-        "Programming Language :: Python :: 3.11",
-        "Isaac Sim :: 5.1.0",
+        "Programming Language :: Python :: 3.12",
+        "Isaac Sim :: 6.0.1",
     ],
     zip_safe=False,
 )

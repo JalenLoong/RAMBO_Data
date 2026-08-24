@@ -17,6 +17,8 @@ import inspect
 import os
 from typing import Any
 
+from .physx import configure_physx
+
 
 def _task_spec(task_name: str) -> Any:
     """Resolve a Gym task spec while accepting an optional namespace prefix."""
@@ -115,7 +117,7 @@ def parse_env_cfg(
         raise RuntimeError(
             f"Configuration for the task {task_name!r} is not an Isaac Lab environment config."
         ) from error
-    return cfg
+    return configure_physx(cfg)
 
 
 __all__ = ("load_cfg_from_registry", "parse_env_cfg")

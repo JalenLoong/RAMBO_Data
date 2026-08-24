@@ -11,6 +11,7 @@ keywords = ["isaaclab", "rambo", "quadruped", "biped", "robotics"]
 [dependencies]
 "isaaclab" = {}
 "isaaclab_assets" = {}
+"isaaclab_physx" = {}
 
 [[python.module]]
 name = "rambo"

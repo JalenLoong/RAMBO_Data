@@ -353,7 +353,7 @@ class ContactGenerator:
                 self.orientation_visualizer.set_visibility(False)
 
     def _contact_generator_vis_callback(self, event):
-        arrow_pos_w = self._env._robot.data.root_pos_w.clone()
+        arrow_pos_w = self._env._robot.data.root_link_pos_w.torch.clone()
         arrow_pos_w[:, 2] += 1.0
         offset_mode = np.array([[0.2, 0.2, 0.0],  # FL
                                 [0.2, -0.2, 0.0],  # FR

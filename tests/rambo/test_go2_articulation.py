@@ -13,6 +13,9 @@ from rambo.utils.articulation import (  # noqa: E402
     GO2_FOOT_BODY_NAMES,
     GO2_JOINT_ORDER,
     ordered_sensor_body_ids,
+    ordered_body_coms,
+    ordered_body_inertias,
+    ordered_body_masses,
     ordered_jacobians,
     ordered_joint_pos,
     ordered_joint_vel,
@@ -20,12 +23,11 @@ from rambo.utils.articulation import (  # noqa: E402
 )
 
 
-class _FakePhysxView:
-    def __init__(self, jacobians: torch.Tensor) -> None:
-        self._jacobians = jacobians
+class _Proxy:
+    """Minimal Isaac Lab 3 ProxyArray stand-in exposing explicit Torch access."""
 
-    def get_jacobians(self) -> torch.Tensor:
-        return self._jacobians
+    def __init__(self, value: torch.Tensor) -> None:
+        self.torch = value
 
 
 def _fake_robot(*, root_row_included: bool) -> SimpleNamespace:
@@ -44,10 +46,16 @@ def _fake_robot(*, root_row_included: bool) -> SimpleNamespace:
     data = SimpleNamespace(
         body_names=body_names,
         joint_names=joint_names,
-        joint_pos=torch.arange(len(joint_names), dtype=torch.float64).reshape(1, -1),
-        joint_vel=(100 + torch.arange(len(joint_names), dtype=torch.float64)).reshape(1, -1),
+        body_com_jacobian_w=_Proxy(jacobians),
+        body_mass=_Proxy(torch.arange(body_count, dtype=torch.float64).reshape(1, -1)),
+        body_inertia=_Proxy(torch.arange(body_count * 9, dtype=torch.float64).reshape(1, body_count, 9)),
+        body_com_pose_b=_Proxy(torch.arange(body_count * 7, dtype=torch.float64).reshape(1, body_count, 7)),
+        body_link_pose_w=_Proxy(torch.arange(body_count * 7, dtype=torch.float64).reshape(1, body_count, 7)),
+        body_link_vel_w=_Proxy((1000 + torch.arange(body_count * 6, dtype=torch.float64)).reshape(1, body_count, 6)),
+        joint_pos=_Proxy(torch.arange(len(joint_names), dtype=torch.float64).reshape(1, -1)),
+        joint_vel=_Proxy((100 + torch.arange(len(joint_names), dtype=torch.float64)).reshape(1, -1)),
     )
-    return SimpleNamespace(data=data, device=torch.device("cpu"), root_physx_view=_FakePhysxView(jacobians))
+    return SimpleNamespace(data=data, device=torch.device("cpu"))
 
 
 @pytest.mark.parametrize("root_row_included", (False, True))
@@ -70,10 +78,20 @@ def test_go2_mapping_orders_joints_and_jacobians_by_name(root_row_included: bool
     assert torch.equal(jacobians[0, :, 0, 0], expected_rows)
 
     assert torch.equal(
-        ordered_joint_pos(robot, indices), robot.data.joint_pos[:, expected_joint_ids]
+        ordered_joint_pos(robot, indices), robot.data.joint_pos.torch[:, expected_joint_ids]
     )
     assert torch.equal(
-        ordered_joint_vel(robot, indices), robot.data.joint_vel[:, expected_joint_ids]
+        ordered_joint_vel(robot, indices), robot.data.joint_vel.torch[:, expected_joint_ids]
+    )
+
+    assert torch.equal(
+        ordered_body_masses(robot, indices), robot.data.body_mass.torch[:, expected_body_ids]
+    )
+    assert torch.equal(
+        ordered_body_inertias(robot, indices), robot.data.body_inertia.torch[:, expected_body_ids]
+    )
+    assert torch.equal(
+        ordered_body_coms(robot, indices), robot.data.body_com_pose_b.torch[:, expected_body_ids]
     )
 
 
@@ -86,7 +104,7 @@ def test_go2_mapping_rejects_missing_required_names() -> None:
 
 def test_contact_sensor_mapping_requests_the_declared_logical_name_order() -> None:
     class FakeContactSensor:
-        def find_bodies(self, names, preserve_order=False):
+        def find_sensors(self, names, preserve_order=False):
             assert names == list(GO2_FOOT_BODY_NAMES)
             assert preserve_order is True
             return [13, 7, 11, 5], list(GO2_FOOT_BODY_NAMES)
@@ -96,7 +114,7 @@ def test_contact_sensor_mapping_requests_the_declared_logical_name_order() -> No
 
 def test_contact_sensor_mapping_rejects_a_wrong_return_order() -> None:
     class FakeContactSensor:
-        def find_bodies(self, _names, preserve_order=False):
+        def find_sensors(self, _names, preserve_order=False):
             assert preserve_order is True
             return [13, 7, 11, 5], list(reversed(GO2_FOOT_BODY_NAMES))
 

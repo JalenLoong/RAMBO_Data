@@ -287,7 +287,7 @@ def main() -> int:
         print("OFFICIAL_PHYSX_SMOKE_FAILURE", flush=True)
     # With ``fast_shutdown=True``, close() normally does not return.  Its
     # ``exit_code`` parameter preserves workload failure status without this
-    # script ever using skip_cleanup or os._exit directly.
+    # script ever bypassing normal cleanup or directly terminating the process.
     simulation_app.close(exit_code=exit_code)
     return exit_code
 

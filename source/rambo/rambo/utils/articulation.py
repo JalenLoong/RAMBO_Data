@@ -95,7 +95,10 @@ def ordered_jacobians(robot: Any, indices: Go2Indices) -> torch.Tensor:
     remaining links by their resolved body IDs.
     """
 
-    jacobians = robot.root_physx_view.get_jacobians().clone().to(robot.device)
+    # Isaac Lab 3 exposes this through the public articulation data contract.
+    # The PhysX implementation still omits the floating-base root row, so the
+    # legacy RAMBO synthesis below remains required.
+    jacobians = robot.data.body_com_jacobian_w.torch.clone().to(robot.device)
     body_count = len(robot.data.body_names)
     if jacobians.ndim != 4:
         raise RuntimeError(f"Expected Jacobian rank 4, received shape {tuple(jacobians.shape)}.")
@@ -112,33 +115,38 @@ def ordered_jacobians(robot: Any, indices: Go2Indices) -> torch.Tensor:
 
 
 def ordered_body_masses(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.root_physx_view.get_masses().clone().to(robot.device).index_select(1, indices.body_ids)
+    return robot.data.body_mass.torch.clone().to(robot.device).index_select(1, indices.body_ids)
 
 
 def ordered_body_inertias(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.root_physx_view.get_inertias().clone().to(robot.device).index_select(1, indices.body_ids)
+    return robot.data.body_inertia.torch.clone().to(robot.device).index_select(1, indices.body_ids)
 
 
 def ordered_body_coms(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.root_physx_view.get_coms().clone().to(robot.device).index_select(1, indices.body_ids)
+    # Keep the old ``get_coms`` convention: local link-to-COM pose in
+    # ``[x, y, z, qx, qy, qz, qw]`` order.
+    return robot.data.body_com_pose_b.torch.clone().to(robot.device).index_select(1, indices.body_ids)
 
 
 def ordered_body_state(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.data.body_state_w.index_select(1, indices.body_ids)
+    # ``body_state_w`` was a deprecated concatenation in Isaac Lab 2.x.  Build
+    # the same link-frame state from the explicit public Isaac Lab 3 fields.
+    state_w = torch.cat((robot.data.body_link_pose_w.torch, robot.data.body_link_vel_w.torch), dim=-1)
+    return state_w.index_select(1, indices.body_ids)
 
 
 def ordered_joint_pos(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.data.joint_pos.index_select(1, indices.joint_ids)
+    return robot.data.joint_pos.torch.index_select(1, indices.joint_ids)
 
 
 def ordered_joint_vel(robot: Any, indices: Go2Indices) -> torch.Tensor:
-    return robot.data.joint_vel.index_select(1, indices.joint_ids)
+    return robot.data.joint_vel.torch.index_select(1, indices.joint_ids)
 
 
 def ordered_sensor_body_ids(sensor: Any, body_names: tuple[str, ...], label: str) -> list[int]:
     """Resolve contact-sensor bodies in an explicit RAMBO logical name order."""
 
-    body_ids, resolved_names = sensor.find_bodies(list(body_names), preserve_order=True)
+    body_ids, resolved_names = sensor.find_sensors(list(body_names), preserve_order=True)
     if tuple(resolved_names) != body_names:
         raise RuntimeError(
             f"Go2 contact sensor {label} name mismatch; expected {list(body_names)}, "

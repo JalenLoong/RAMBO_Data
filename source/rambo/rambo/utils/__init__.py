@@ -19,8 +19,9 @@ from .articulation import (
     ordered_sensor_body_ids,
     resolve_go2_indices,
 )
-from .math import quat_error, rp_rotation_from_gravity_b
+from .math import quat_error, rp_rotation_from_gravity_b, wxyz_to_xyzw, xyzw_to_wxyz
 from .registry import load_cfg_from_registry, parse_env_cfg
+from .physx import assert_physx_environment, assert_physx_runtime, configure_physx
 from .tensor import to_torch
 
 __all__ = [
@@ -42,8 +43,13 @@ __all__ = [
     "ordered_sensor_body_ids",
     "load_cfg_from_registry",
     "parse_env_cfg",
+    "assert_physx_environment",
+    "assert_physx_runtime",
+    "configure_physx",
     "quat_error",
     "resolve_go2_indices",
     "rp_rotation_from_gravity_b",
+    "wxyz_to_xyzw",
+    "xyzw_to_wxyz",
     "to_torch",
 ]

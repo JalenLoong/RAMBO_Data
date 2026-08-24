@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a RAMBO checkpoint with a finite RGB-enabled Isaac Lab rollout."""
+"""Validate a RAMBO checkpoint with a finite RGB-enabled PhysX rollout."""
 
 from __future__ import annotations
 
@@ -66,6 +66,7 @@ def _runtime_imports() -> dict[str, Any]:
     import rambo
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
+    from rambo.utils.physx import assert_physx_environment
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
     from rambo.validation.checkpoints import (
         contract_for_task,
@@ -91,6 +92,7 @@ def _runtime_imports() -> dict[str, Any]:
         "Crl2VecEnvWrapper": Crl2VecEnvWrapper,
         "RgbFrameRecorder": RgbFrameRecorder,
         "RolloutValidationError": RolloutValidationError,
+        "assert_physx_environment": assert_physx_environment,
         "configure_validation_cfg": configure_validation_cfg,
         "contract_for_task": contract_for_task,
         "load_cfg_from_registry": load_cfg_from_registry,
@@ -117,6 +119,11 @@ def _print_failure(prefix: str, error: BaseException) -> None:
 def main() -> int:
     parser, app_launcher_type = _build_parser()
     args_cli = parser.parse_args()
+    # The helper is simulator-safe and rejects every unaudited visualizer
+    # before AppLauncher can create a Kit experience.
+    from rambo.utils.physx import validate_rambo_visualizer_args
+
+    visualizer_selection = validate_rambo_visualizer_args(parser, args_cli, sys.argv[1:])
     if args_cli.steps <= 0:
         parser.error("--steps must be positive")
     # The RAMBO camera contract is 0.08 s, i.e. one fresh RGB frame per eight
@@ -139,6 +146,8 @@ def main() -> int:
         "task": args_cli.task,
         "seed": args_cli.seed,
         "requested_steps": args_cli.steps,
+        "viz": visualizer_selection,
+        "eula_acceptance": "explicit_user_consent",
     }
     captured_error: BaseException | None = None
     secondary_errors: list[tuple[str, BaseException]] = []
@@ -190,6 +199,7 @@ def main() -> int:
         agent_cfg["general"]["num_envs"] = 1
 
         env = runtime["Crl2VecEnvWrapper"](runtime["gym"].make(args_cli.task, cfg=env_cfg))
+        summary["backend_before"] = runtime["assert_physx_environment"](env)
         runtime["seed_everything"](args_cli.seed, env)
         env.reset()
         runtime["validate_environment_contract"](env, contract)
@@ -223,6 +233,7 @@ def main() -> int:
             raise runtime["RolloutValidationError"](
                 "RGB validation failed: " + "; ".join(rgb_metrics["failures"])
             )
+        summary["backend_after"] = runtime["assert_physx_environment"](env)
     except BaseException as exc:
         captured_error = exc
     finally:
@@ -276,33 +287,19 @@ def main() -> int:
                     secondary_errors.append(("summary write", summary_exc))
 
     if captured_error is not None:
-        # ``skip_cleanup=True`` terminates the Kit process immediately.  Do
-        # not call it on failure, or it can swallow the validation error
-        # before the traceback and non-zero exit status are visible.
         _print_failure("RAMBO validation failed:", captured_error)
         for stage, error in secondary_errors:
             _print_failure(f"Additional {stage} failure:", error)
-        return 1
+        exit_code = 1
+    else:
+        print("VALIDATION_SUCCESS", flush=True)
+        exit_code = 0
 
-    # Keep the machine-readable success marker before immediate Kit shutdown.
-    # RGB frames, summary.json, and the environment have all been finalized.
-    print("VALIDATION_SUCCESS", flush=True)
-    # In Isaac Sim 5.1, the no-wait close still invokes Replicator's
-    # synchronous stop path and can hang on a live camera render product.
-    # Use its documented immediate-exit path only on the fully successful
-    # path, after all evidence has been flushed.
-    simulation_app.close(skip_cleanup=True)
-    return 0
+    # All artifacts and the environment have been finalized.  Use the normal
+    # Isaac Sim lifecycle on both success and failure; never bypass cleanup.
+    simulation_app.close(exit_code=exit_code)
+    return exit_code
 
 
 if __name__ == "__main__":
-    _exit_code = main()
-    if _exit_code:
-        # A live Kit application keeps native worker threads alive after a
-        # normal Python ``SystemExit``.  summary.json and the traceback were
-        # flushed before returning this status, so terminate the one-shot CLI
-        # without entering the known-hanging graceful shutdown path.
-        import os
-
-        os._exit(_exit_code)
-    raise SystemExit(_exit_code)
+    raise SystemExit(main())

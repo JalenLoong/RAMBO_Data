@@ -220,20 +220,20 @@ class JointPositionController:
                                                            i + 1) / self._bezier_num_points,
                                                    self._phase_switch_foot_positions))
                 temp = self._bezier_trajectories[:, :, i, :].clone()
-                temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_quat_w)),
+                temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_link_quat_w.torch)),
                                     temp.transpose(1, 2)).transpose(1, 2)
                 self._bezier_trajectories_w[:, :, i, :] = temp
-                self._bezier_trajectories_w[:, :, i, :2] += self._env._robot.data.root_pos_w[:, :2].unsqueeze(1)
+                self._bezier_trajectories_w[:, :, i, :2] += self._env._robot.data.root_link_pos_w.torch[:, :2].unsqueeze(1)
             temp = self._phase_switch_foot_positions.clone()
-            temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_quat_w)),
+            temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_link_quat_w.torch)),
                                 temp.transpose(1, 2)).transpose(1, 2)
             self._phase_switch_foot_positions_w = temp
-            self._phase_switch_foot_positions_w[:, :, :2] += self._env._robot.data.root_pos_w[:, :2].unsqueeze(1)
+            self._phase_switch_foot_positions_w[:, :, :2] += self._env._robot.data.root_link_pos_w.torch[:, :2].unsqueeze(1)
             temp = self._desired_foot_positions.clone()
-            temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_quat_w)),
+            temp = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_link_quat_w.torch)),
                                 temp.transpose(1, 2)).transpose(1, 2)
             self._desired_foot_positions_w = temp
-            self._desired_foot_positions_w[:, :, :2] += self._env._robot.data.root_pos_w[:, :2].unsqueeze(1)
+            self._desired_foot_positions_w[:, :, :2] += self._env._robot.data.root_link_pos_w.torch[:, :2].unsqueeze(1)
 
         return self._desired_joint_positions
 

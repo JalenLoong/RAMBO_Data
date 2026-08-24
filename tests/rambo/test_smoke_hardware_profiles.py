@@ -1,83 +1,47 @@
-"""CPU-side contracts for the RAMBO smoke hardware profiles."""
+"""Static contracts for migrated, PhysX-only smoke launchers."""
 
 from __future__ import annotations
 
-import argparse
-import importlib.util
 from pathlib import Path
 
-import pytest
+
+def test_legacy_smoke_aliases_the_audited_physx_gate() -> None:
+    root = Path(__file__).resolve().parents[2]
+    contents = (root / "scripts" / "rambo" / "smoke.py").read_text(encoding="utf-8")
+    assert "official_physx_smoke.py" in contents
+    assert "Isaac Sim 5.1" not in contents
+    assert "skip_cleanup" not in contents
 
 
-_SMOKE_PATH = Path(__file__).resolve().parents[2] / "scripts" / "rambo" / "smoke.py"
-_SPEC = importlib.util.spec_from_file_location("rambo_smoke_hardware_profiles", _SMOKE_PATH)
-assert _SPEC is not None and _SPEC.loader is not None
-_SMOKE = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(_SMOKE)
-
-
-def _profile_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser()
-    _SMOKE._add_hardware_profile_argument(parser)
-    return parser
-
-
-def test_blackwell_accepts_cc_12_0_with_sm_120() -> None:
-    assert _SMOKE._validate_hardware_profile("blackwell", (12, 0), ("sm_89", "sm_120")) == "sm_120"
-
-
-def test_blackwell_rejects_ada_capability() -> None:
-    with pytest.raises(
-        RuntimeError,
-        match=(
-            r"hardware_profile=blackwell: expected capability=\(12, 0\); "
-            r"actual capability=\(8, 9\)"
-        ),
-    ):
-        _SMOKE._validate_hardware_profile("blackwell", (8, 9), ("sm_89", "sm_120"))
-
-
-def test_ada_accepts_cc_8_9_with_sm_89() -> None:
-    assert _SMOKE._validate_hardware_profile("ada", (8, 9), ("sm_89", "sm_120")) == "sm_89"
-
-
-def test_ada_rejects_blackwell_capability() -> None:
-    with pytest.raises(
-        RuntimeError,
-        match=r"hardware_profile=ada: expected capability=\(8, 9\); actual capability=\(12, 0\)",
-    ):
-        _SMOKE._validate_hardware_profile("ada", (12, 0), ("sm_89", "sm_120"))
-
-
-@pytest.mark.parametrize(
-    ("capability", "required_architecture"),
-    (((8, 9), "sm_89"), ((12, 0), "sm_120")),
-)
-def test_compatible_accepts_matching_compiled_architecture(
-    capability: tuple[int, int], required_architecture: str
-) -> None:
-    assert (
-        _SMOKE._validate_hardware_profile(
-            "compatible", capability, ("sm_89", "sm_120")
-        )
-        == required_architecture
+def test_physx_smoke_launchers_fail_closed_before_starting_kit() -> None:
+    root = Path(__file__).resolve().parents[2]
+    for name in ("official_physx_smoke.py", "physx_task_smoke.py"):
+        contents = (root / "scripts" / "rambo" / name).read_text(encoding="utf-8")
+        assert "use_newton_actuators" in contents
+        assert "--viz none" in contents
+        assert "--experience" in contents
+        assert "--kit_args" in contents
+        assert "skip_cleanup" not in contents
+        assert "os._exit" not in contents
+    assert "PhysxCfg" in (root / "scripts" / "rambo" / "official_physx_smoke.py").read_text(encoding="utf-8")
+    assert "assert_physx_environment" in (root / "scripts" / "rambo" / "physx_task_smoke.py").read_text(
+        encoding="utf-8"
     )
 
 
-def test_compatible_rejects_missing_compiled_architecture() -> None:
-    with pytest.raises(RuntimeError, match=r"required architecture=sm_89"):
-        _SMOKE._validate_hardware_profile("compatible", (8, 9), ("sm_120",))
+def test_isaacsim60_compatibility_entry_points_delegate_to_audited_launchers() -> None:
+    root = Path(__file__).resolve().parents[2]
+    run60 = (root / "scripts" / "rambo" / "run60.sh").read_text(encoding="utf-8")
+    smoke60 = (root / "scripts" / "rambo" / "smoke60.py").read_text(encoding="utf-8")
+    assert '"${SCRIPT_DIR}/run.sh"' in run60
+    assert "physx_task_smoke.py" in smoke60
 
 
-def test_compatible_rejects_unconvertible_capability() -> None:
-    with pytest.raises(RuntimeError, match="Cannot reliably convert CUDA compute capability"):
-        _SMOKE._validate_hardware_profile("compatible", (12, 10), ("sm_1210",))
-
-
-def test_invalid_hardware_profile_is_rejected_by_argparse() -> None:
-    with pytest.raises(SystemExit):
-        _profile_parser().parse_args(("--hardware-profile", "hopper"))
-
-
-def test_default_hardware_profile_remains_blackwell() -> None:
-    assert _profile_parser().parse_args(()).hardware_profile == "blackwell"
+def test_checkpoint_entry_points_use_the_shared_physx_launcher_gate() -> None:
+    root = Path(__file__).resolve().parents[2]
+    for name in ("play.py", "validate.py"):
+        contents = (root / "scripts" / "rambo" / name).read_text(encoding="utf-8")
+        assert "validate_rambo_visualizer_args" in contents
+        assert "assert_physx_environment" in contents
+        assert "skip_cleanup" not in contents
+        assert "os._exit" not in contents

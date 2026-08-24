@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Replay a verified RAMBO CRL2 checkpoint in Isaac Sim 5 / Isaac Lab 2.3."""
+"""Replay a verified RAMBO CRL2 checkpoint in Isaac Sim 6 / Isaac Lab 3 PhysX."""
 
 from __future__ import annotations
 
@@ -71,6 +71,7 @@ def _runtime_imports():
     import torch
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
+    from rambo.utils.physx import assert_physx_environment
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
     from rambo.validation.checkpoints import (
         contract_for_task,
@@ -91,6 +92,7 @@ def _runtime_imports():
         "PPO": PPO,
         "Crl2VecEnvWrapper": Crl2VecEnvWrapper,
         "RolloutValidationError": RolloutValidationError,
+        "assert_physx_environment": assert_physx_environment,
         "configure_validation_cfg": configure_validation_cfg,
         "contract_for_task": contract_for_task,
         "load_cfg_from_registry": load_cfg_from_registry,
@@ -113,6 +115,9 @@ def _print_failure(error: BaseException) -> None:
 def main() -> int:
     parser, app_launcher_type = _build_parser()
     args_cli = parser.parse_args()
+    from rambo.utils.physx import validate_rambo_visualizer_args
+
+    visualizer_selection = validate_rambo_visualizer_args(parser, args_cli, sys.argv[1:])
     if args_cli.num_envs <= 0:
         parser.error("--num-envs must be positive")
     if args_cli.steps < 0:
@@ -125,6 +130,7 @@ def main() -> int:
 
     app_launcher = app_launcher_type(args_cli)
     simulation_app = app_launcher.app
+    print(f"RAMBO_PHYSX_VIZ={visualizer_selection}", flush=True)
     env = None
     captured_error: BaseException | None = None
     try:
@@ -164,6 +170,7 @@ def main() -> int:
         agent_cfg["general"]["num_envs"] = args_cli.num_envs
 
         env = runtime["Crl2VecEnvWrapper"](runtime["gym"].make(args_cli.task, cfg=env_cfg))
+        print(f"PHYSX_BACKEND_BEFORE={runtime['assert_physx_environment'](env)}", flush=True)
         runtime["seed_everything"](args_cli.seed, env)
         observations, _ = env.reset()
         runtime["validate_environment_contract"](env, contract)
@@ -204,6 +211,7 @@ def main() -> int:
                     )
             completed_steps += 1
         print(f"PLAYBACK_STEPS={completed_steps}", flush=True)
+        print(f"PHYSX_BACKEND_AFTER={runtime['assert_physx_environment'](env)}", flush=True)
     except BaseException as exc:
         captured_error = exc
     finally:
@@ -228,27 +236,15 @@ def main() -> int:
                     sys.stderr.flush()
 
     if captured_error is not None:
-        # ``skip_cleanup=True`` terminates the Kit process immediately.  Do
-        # not call it on failure: report the original Python traceback and
-        # let the interpreter return a non-zero status instead.
         _print_failure(captured_error)
-        return 1
+        exit_code = 1
+    else:
+        exit_code = 0
 
-    # Camera-enabled playback owns no Replicator writer.  Isaac Sim 5.1's
-    # no-wait close still enters Replicator's synchronous stop path, which
-    # can stall on an open render product.  The documented immediate exit is
-    # safe only after successful playback and environment cleanup.
-    simulation_app.close(skip_cleanup=True)
-    return 0
+    # Normal cleanup is required for every production replay path.
+    simulation_app.close(exit_code=exit_code)
+    return exit_code
 
 
 if __name__ == "__main__":
-    _exit_code = main()
-    if _exit_code:
-        # A live Kit application keeps native worker threads alive after a
-        # normal Python ``SystemExit``.  The failure traceback above has been
-        # flushed already, so end this one-shot CLI with the correct status.
-        import os
-
-        os._exit(_exit_code)
-    raise SystemExit(_exit_code)
+    raise SystemExit(main())

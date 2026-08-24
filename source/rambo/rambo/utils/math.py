@@ -53,3 +53,22 @@ def quat_error(q1: torch.Tensor, q2: torch.Tensor) -> torch.Tensor:
 
     q2_conjugate = torch.cat((q2[..., :1], -q2[..., 1:]), dim=-1)
     return _axis_angle_from_quat(_quat_mul(q1, q2_conjugate))
+
+
+@torch.jit.script
+def xyzw_to_wxyz(quat: torch.Tensor) -> torch.Tensor:
+    """Bridge simulator XYZW quaternions into RAMBO's legacy WXYZ QP math.
+
+    This is intentionally a conversion boundary rather than a rewrite of
+    :func:`quat_error`: checkpoints and the QP formulation retain their
+    historical scalar-first convention while Isaac Lab 3 public data is XYZW.
+    """
+
+    return torch.cat((quat[..., 3:4], quat[..., :3]), dim=-1)
+
+
+@torch.jit.script
+def wxyz_to_xyzw(quat: torch.Tensor) -> torch.Tensor:
+    """Bridge RAMBO's legacy WXYZ quaternions into simulator XYZW data."""
+
+    return torch.cat((quat[..., 1:], quat[..., :1]), dim=-1)

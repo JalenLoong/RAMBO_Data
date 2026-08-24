@@ -8,7 +8,7 @@ from isaaclab.markers.config import GREEN_ARROW_X_MARKER_CFG, BLUE_ARROW_X_MARKE
 
 from qpth.qp import QPFunction, QPSolvers
 
-from rambo.utils.math import quat_error as rambo_quat_error
+from rambo.utils.math import quat_error as rambo_quat_error, xyzw_to_wxyz
 from rambo.utils.tensor import to_torch
 
 
@@ -60,7 +60,7 @@ class QPTorqueOptimizer:
         # for debug visualization purpose
         self.grf = torch.zeros((self._num_envs, self._env.num_feet * 3), device=self._device)
         self.desired_acc = torch.zeros((self._num_envs, 6), device=self._device)
-        self.debug_vis = self._env.cfg.qp_torque_optimizer_config["qp_debug_vis"]
+        self.debug_vis = bool(self._env.cfg.qp_torque_optimizer_config["qp_debug_vis"] and self._env.sim.has_gui)
         self.grf_vis_handle = None
         self._set_grf_vis(self.debug_vis)
 
@@ -226,9 +226,9 @@ class QPTorqueOptimizer:
 
     def _vis_callback(self, event):
         grf_w = self.grf.reshape((-1, 4, 3)).clone()
-        grf_w = torch.matmul(math_utils.matrix_from_quat(self._env._robot.data.root_quat_w),
+        grf_w = torch.matmul(math_utils.matrix_from_quat(self._env._robot.data.root_link_quat_w.torch),
                              grf_w.transpose(1, 2)).transpose(1, 2)
-        ee_pos_w = self._env._robot.data.body_state_w[:, self._env.feet_ids, 0:3].clone()
+        ee_pos_w = self._env._robot.data.body_link_pos_w.torch[:, self._env.feet_ids].clone()
         for i in range(4):
             pos_w = ee_pos_w[:, i].clone()
             scale, quat = self._resolve_scale_and_quat_from_vector(
@@ -238,17 +238,17 @@ class QPTorqueOptimizer:
             # scale *= contact_state.unsqueeze(-1)
             self.grf_visualizer[i].visualize(pos_w, quat, scale)
 
-        pos_acc = self._env._robot.data.root_pos_w.clone()
+        pos_acc = self._env._robot.data.root_link_pos_w.torch.clone()
         # pos_acc[:, 2] += 0.5
         lin_acc_w = self.desired_acc[:, :3]
-        lin_acc_w = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_quat_w)),
+        lin_acc_w = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_link_quat_w.torch)),
                                  lin_acc_w.unsqueeze(-1)).squeeze(-1)
         scale, quat = self._resolve_scale_and_quat_from_vector(
             self.desired_lin_acc_visualizer.cfg.markers["arrow"].scale,
             lin_acc_w)
         self.desired_lin_acc_visualizer.visualize(pos_acc, quat, scale)
         ang_acc_w = self.desired_acc[:, 3:]
-        ang_acc_w = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_quat_w)),
+        ang_acc_w = torch.matmul(math_utils.matrix_from_quat(math_utils.yaw_quat(self._env._robot.data.root_link_quat_w.torch)),
                                  ang_acc_w.unsqueeze(-1)).squeeze(-1)
         scale, quat = self._resolve_scale_and_quat_from_vector(
             self.desired_ang_acc_visualizer.cfg.markers["arrow"].scale,
@@ -297,7 +297,11 @@ def compute_desired_acc(
                        base_position_kd * lin_vel_error +
                        desired_linear_acceleration)
 
-    ang_pos_error = rambo_quat_error(desired_base_orientation_quat, base_orientation_quat)
+    # Preserve the legacy RAMBO QP/checkpoint WXYZ error only at this
+    # conversion boundary; Isaac Lab 3 state and math remain XYZW.
+    ang_pos_error = rambo_quat_error(
+        xyzw_to_wxyz(desired_base_orientation_quat), xyzw_to_wxyz(base_orientation_quat)
+    )
     ang_vel_error = desired_angular_velocity - base_angular_velocity
     desired_ang_acc = (base_orientation_kp * ang_pos_error +
                        base_orientation_kd * ang_vel_error +

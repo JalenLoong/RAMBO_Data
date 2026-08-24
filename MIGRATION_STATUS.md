@@ -32,7 +32,14 @@
 | M1：精确栈安装 | 完成 | Isaac Sim 6.0.1.0、tag `ffff603…`、Torch 2.10.0+cu128、RTX 4090 CUDA 已通过 |
 | M2：官方 PhysX 门禁 | 完成 | Cartpole、Go2、RTX RGB、Kit GUI 与独立 clean restart 均通过；脚本 `scripts/rambo/official_physx_smoke.py` |
 | M3：API inventory | 完成 | `MIGRATION_API_INVENTORY.md`；覆盖 PhysX、ProxyArray、XYZW、view/writer、Camera、Button、teleop 与 lifecycle |
-| M4–M11 | 未开始 | M4 共享 PhysX contract 与核心 Isaac Lab 3 API 迁移是下一阶段 |
+| M4：核心 API / PhysX contract | 完成 | 共享 fail-closed PhysX contract、XYZW↔WXYZ 明确桥接、ProxyArray `.torch`、公开 writer/ContactSensor/composer API、Python 3.12 runtime 入口均已迁移；22 个静态/契约测试通过，四足与双足各完成真实 5-step PhysX smoke。 |
+| M5：qpth / QP contract | 完成 | `qpth==0.0.18` 的 CPU/CUDA forward/backward、CPU gradcheck、KKT、残差和五次确定性均通过；未运行任何物理后端。 |
+| M6：四足 checkpoint / 长 rollout | 待开始 | 等待以 `model_2000.pt` 做严格加载、16-env smoke、3000-step 无相机验收。 |
+| M7：RGB camera | 进行中 | 正在并行替换旧 SensorBase 私有 cadence/旧 WXYZ camera offset，并准备独立 RGBD PhysX smoke。 |
+| M8：Button / keyboard | 待开始 | 依赖 M6/M7 通过。 |
+| M9：双足 checkpoint / 长 rollout | 待开始 | 依赖四足、RGB、Button 通过。 |
+| M10：LingBot 数据合成 | 待开始 | 依赖 M8/M9 通过。 |
+| M11：冻结 / Docker | 待开始 | native 运行全部通过后执行；Docker/Toolkit 缺失可延后记录。 |
 
 ## 最近命令与结果
 
@@ -49,11 +56,15 @@
 11. M2：以进程级 `OMNI_KIT_ACCEPT_EULA=Y` 启动隔离官方 gate。Cartpole 16-step、Go2 16-step、RTX RGB 640×480、Kit GUI Cartpole 8-step 与热缓存相机 clean restart 均通过，五个成功 artifact 的 exit code 均为 0。
 12. M2：每个成功 summary 都同时记录 `PhysxCfg`、`PhysxManager`、`use_newton_actuators=false` 与 `cuda:0`。Kit GUI experience 按固定官方依赖图加载了 `isaaclab_newton` 扩展，但活跃 manager 仍是 `PhysxManager`，未选择或执行 Newton physics backend。首次 RTX 冷启动为 shader cache 初始化耗时约 156 秒；独立热缓存重启为 8 秒，满足 60 秒关闭/重启门槛。
 13. M3：完成对所有 RAMBO 配置、入口、资产/传感器数据、QP、相机、Button、teleop、生命周期和打包 metadata 的只读 API inventory。确认现有 RAMBO 源码没有主动执行 Newton，但除官方 gate 外的运行路径仍需在 M4 显式选择并实际断言 PhysX。
+14. M4：新增共享 `rambo.utils.physx`，每个 RAMBO config 均以 `PhysxCfg()` 覆盖 physics、设定 `use_newton_actuators=False`，并在环境构造后与 rollout 后核验实际 `PhysxManager` FQCN；生产/验证入口只允许显式 `--viz none|kit`。
+15. M4：迁移四足、双足 QP 环境至 Isaac Lab 3 的 XYZW、ProxyArray `.torch`、公开 articulation data、indexed writers、`find_sensors` 与永久 wrench composer。双足 FL/FR 力现在以一次合并 composer 调用写入，避免后一足覆盖前一足。
+16. M4：修复 DirectRLEnv 已弃用的 `num_actions`/`num_observations` aliases 后，真实最终证据为四足 `M4/20260824T111439Z-quadruped-space-contract-r2` 与双足 `M4/20260824T111439Z-biped-space-contract-r2`：各 5 control steps / 25 physics ticks、405/18 或 435/18、`dt=0.002`、decimation=5、运行前后均为 `PhysxManager`、Newton actuators=false；两个 `summary.json` SHA256 分别为 `fe43f0e3346fd192136459eb8d25e0147d55980ee631fa53b5b70d2f4e70bec9` 与 `2aef9f13f5dbd441d0600f22e16242afad040bfc6f147e011999c6858ef35c1c`。
+17. M5：`/workspace/migration-output/isaac60/M5/20260824T105302Z-qpth-contract/results.json` 记录 qpth 0.0.18 在 Torch 2.10.0+cu128 / CUDA 12.8 上的 CPU/CUDA 解、梯度、gradcheck、KKT、约束残差与确定性均成功；CUDA 仅预加载 PyTorch 自带 `libtorch_cuda_linalg.so`，未改变 solver 算法或安装 Newton optional extras。
 
 ## 当前 blocker
 
-无技术 blocker。GitHub push 需要凭证但不阻止本地迁移；Docker/Toolkit 不存在是 M11 的可延后事项。
+无技术 blocker。GitHub push 需要凭证但不阻止本地迁移；Docker/Toolkit 不存在是 M11 的可延后事项。M7 camera 代码正在并行迁移，完成前不启动依赖 RGB 的 checkpoint 验收。
 
 ## 下一精确动作
 
-M4：实现共享 PhysX contract，并迁移最先阻断 RAMBO 实例化的 Isaac Lab 3 API（Python 3.12 metadata、显式 physics、XYZW 与 ProxyArray/view/writer）。
+完成 M7 camera 后，从 M6 开始以四足 `model_2000.pt` 的 SHA256 allow-list 和严格 state-dict 加载，依次执行 1-env/16-env/3000-step PhysX 验收。
