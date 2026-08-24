@@ -8,14 +8,18 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 readonly VENV_DIR="${RAMBO_VENV:-/workspace/venvs/rambo51}"
 readonly REQUIREMENTS_FILE="${REPO_ROOT}/requirements/isaacsim51.in"
+readonly SKIP_LOCAL_EDITABLE="${RAMBO_SKIP_LOCAL_EDITABLE:-0}"
 
 usage() {
     cat <<'EOF'
 Usage: bash scripts/setup_isaacsim51.sh
 
 Environment:
-  RAMBO_VENV  Override the default virtual environment path
-              (/workspace/venvs/rambo51).
+  RAMBO_VENV                 Override the default virtual environment path
+                             (/workspace/venvs/rambo51).
+  RAMBO_SKIP_LOCAL_EDITABLE  Set to 1 to install only pinned third-party
+                             dependencies (default: 0). This is intended for
+                             a cacheable Docker dependency layer.
 
 The script reuses an existing Python 3.11 venv and reapplies pinned dependencies.
 It does not modify the legacy Isaac Sim 4.5/Python 3.10 environment.
@@ -30,6 +34,11 @@ fi
 if [[ ! -f "${REQUIREMENTS_FILE}" ]]; then
     echo "Missing requirements file: ${REQUIREMENTS_FILE}" >&2
     exit 1
+fi
+
+if [[ "${SKIP_LOCAL_EDITABLE}" != "0" && "${SKIP_LOCAL_EDITABLE}" != "1" ]]; then
+    echo "RAMBO_SKIP_LOCAL_EDITABLE must be 0 or 1, got: ${SKIP_LOCAL_EDITABLE}" >&2
+    exit 2
 fi
 
 if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
@@ -59,9 +68,11 @@ unset PYTHONPATH || true
 
 echo "Upgrading pip and applying pre-Isaac-Lab compatibility pins"
 "${PIP[@]}" install --upgrade pip
-# setuptools 81 removes pkg_resources; flatdict is installed before Isaac Lab so its
-# dependency graph is complete before Isaac Sim extensions are resolved.
-"${PIP[@]}" install --upgrade "setuptools<81" "flatdict==4.0.1" "wheel==0.45.1"
+# setuptools 81 removes pkg_resources. Install the compatible build tooling
+# before building flatdict's source distribution, and do not let pip create an
+# isolated environment that can pull setuptools 81+ behind this pin.
+"${PIP[@]}" install --upgrade "setuptools<81" "wheel==0.45.1"
+"${PIP[@]}" install --upgrade --no-build-isolation "flatdict==4.0.1"
 
 echo "Installing pinned CUDA 12.8 PyTorch first"
 # Keep this as a separate transaction.  Isaac Sim's extension-cache wheels are
@@ -108,19 +119,23 @@ echo "Installing the pinned QP solver"
     "packaging==23.0" "wheel==0.45.1" "osqp==0.6.7.post3" \
     "cvxpy==1.5.4" "ecos==2.0.14" "qpth==0.0.18"
 
-if [[ ! -d "${REPO_ROOT}/source/crl2" ]]; then
-    echo "Missing local CRL2 package: ${REPO_ROOT}/source/crl2" >&2
-    exit 1
-fi
-if [[ ! -d "${REPO_ROOT}/source/rambo" ]]; then
-    echo "Missing RAMBO external extension: ${REPO_ROOT}/source/rambo" >&2
-    echo "Check out the adaptation implementation before running this installer." >&2
-    exit 1
-fi
+if [[ "${SKIP_LOCAL_EDITABLE}" == "1" ]]; then
+    echo "Skipping local RAMBO editable packages (RAMBO_SKIP_LOCAL_EDITABLE=1)"
+else
+    if [[ ! -d "${REPO_ROOT}/source/crl2" ]]; then
+        echo "Missing local CRL2 package: ${REPO_ROOT}/source/crl2" >&2
+        exit 1
+    fi
+    if [[ ! -d "${REPO_ROOT}/source/rambo" ]]; then
+        echo "Missing RAMBO external extension: ${REPO_ROOT}/source/rambo" >&2
+        echo "Check out the adaptation implementation before running this installer." >&2
+        exit 1
+    fi
 
-echo "Installing local RAMBO packages in editable mode"
-"${PIP[@]}" install --editable "${REPO_ROOT}/source/crl2"
-"${PIP[@]}" install --editable "${REPO_ROOT}/source/rambo"
+    echo "Installing local RAMBO packages in editable mode"
+    "${PIP[@]}" install --editable "${REPO_ROOT}/source/crl2"
+    "${PIP[@]}" install --editable "${REPO_ROOT}/source/rambo"
+fi
 
 "${PIP[@]}" check
 

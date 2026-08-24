@@ -1,0 +1,66 @@
+# syntax=docker/dockerfile:1
+
+FROM vastai/linux-desktop:cuda-12.1-ubuntu-22.04
+
+LABEL org.opencontainers.image.title="RAMBO Isaac Sim 5.1 Blackwell runtime" \
+      org.opencontainers.image.description="RAMBO reference runtime with Isaac Sim 5.1, Isaac Lab 2.3.2, and PyTorch 2.7 cu128" \
+      org.opencontainers.image.source="https://github.com/JalenLoong/rambo"
+
+# Ubuntu 22.04 provides Python 3.10 by default. Keep the Vast.ai desktop stack's
+# system Python intact and add the required Python 3.11 interpreter separately.
+# The base currently enables both stable and nightly deadsnakes PPAs; disable
+# nightly explicitly so Python cannot drift to a development-channel package.
+# Apt metadata/downloads live only in BuildKit cache mounts, not in the image.
+RUN --mount=type=cache,id=rambo51-apt-cache-v1,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=rambo51-apt-lists-stable-v1,target=/var/lib/apt/lists,sharing=locked \
+    if [ -f /etc/apt/sources.list.d/deadsnakes-ubuntu-nightly-jammy.list ]; then \
+        mv /etc/apt/sources.list.d/deadsnakes-ubuntu-nightly-jammy.list \
+            /etc/apt/sources.list.d/deadsnakes-ubuntu-nightly-jammy.list.disabled; \
+    fi \
+    && apt-get update \
+    && apt-get install --no-install-recommends -y \
+        ca-certificates \
+        software-properties-common \
+    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install --no-install-recommends -y \
+        python3.11 \
+        python3.11-dev \
+        python3.11-venv \
+    && test ! -e /etc/apt/sources.list.d/deadsnakes-ubuntu-nightly-jammy.list \
+    && python3.11 -c 'import sys; assert sys.version_info[:2] == (3, 11), sys.version'
+
+ENV RAMBO_VENV=/opt/venvs/rambo51 \
+    PATH=/opt/venvs/rambo51/bin:${PATH}
+
+# This layer changes only when the installer or dependency manifests change.
+# RAMBO_SKIP_LOCAL_EDITABLE deliberately keeps application source out of the
+# multi-gigabyte Torch/Isaac dependency layer. The pip cache is not baked in.
+WORKDIR /opt/rambo
+COPY requirements/isaacsim51.in requirements/isaacsim51.lock requirements/
+COPY scripts/setup_isaacsim51.sh scripts/setup_isaacsim51.sh
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    RAMBO_SKIP_LOCAL_EDITABLE=1 \
+    bash scripts/setup_isaacsim51.sh
+
+# Reconcile the installed third-party distributions with the complete freeze
+# captured on the validated RTX 5080 host. The installer remains the authority
+# for transaction order and bundled assets; the lock closes transitive drift.
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python -m pip install --upgrade --requirement requirements/isaacsim51.lock \
+    && python -m pip check
+
+# Keep a smoke-testable reference checkout in the image. Code-only edits
+# invalidate this lightweight layer, not the dependency installation above.
+COPY . /opt/rambo
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python -m pip install --no-deps --no-build-isolation --editable /opt/rambo/source/crl2 \
+    && python -m pip install --no-deps --no-build-isolation --editable /opt/rambo/source/rambo \
+    && python -m pip check \
+    && python -c 'import importlib.util; assert importlib.util.find_spec("isaaclab_assets") is not None' \
+    && python -c 'import crl2, qpth, rambo'
+
+# Vast.ai mounts user data here. Nothing required by the baked runtime lives
+# under /workspace, so a persistent-volume mount cannot hide the venv or the
+# reference checkout. Inherit the base image's Selkies entrypoint and command.
+WORKDIR /workspace
