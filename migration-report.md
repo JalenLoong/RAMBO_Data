@@ -1,6 +1,6 @@
 # RAMBO Isaac Sim 6 / Isaac Lab 3 迁移报告
 
-生成时间：2026-08-24（UTC）  
+生成时间：2026-08-24（UTC）
 运行验收代码：`b0bc68eb32c99ba326bde9a447a898951e774b71`
 
 ## 结论
