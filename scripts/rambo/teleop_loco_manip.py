@@ -75,18 +75,13 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
         default=None,
         help=(
             "Explicitly opt in to a fresh, bounded M8 GUI keyboard artifact. "
-            "This mode requires --viz kit, a named operator, and an attestation."
+            "This mode requires --viz kit and a named operator for the post-close TTY attestation."
         ),
     )
     parser.add_argument(
         "--operator-name",
         default=None,
-        help="Named operator for --gui-artifact-dir; this is a self-attestation, not independent proof.",
-    )
-    parser.add_argument(
-        "--operator-attestation",
-        action="store_true",
-        help="Acknowledge that the named operator used a physical keyboard without injected input.",
+        help="Named operator for the required post-close GUI attestation; this is not the declaration itself.",
     )
     parser.add_argument(
         "--gui-arm-timeout-s",
@@ -149,10 +144,9 @@ def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.
 
     artifact_dir = getattr(args, "gui_artifact_dir", None)
     operator_name = getattr(args, "operator_name", None)
-    operator_attestation = bool(getattr(args, "operator_attestation", False))
     if artifact_dir is None:
-        if operator_name is not None or operator_attestation:
-            parser.error("--operator-name and --operator-attestation require --gui-artifact-dir")
+        if operator_name is not None:
+            parser.error("--operator-name requires --gui-artifact-dir")
         return
     if getattr(args, "rambo_visualizer", None) != ["kit"]:
         parser.error("--gui-artifact-dir requires explicit --viz kit")
@@ -169,8 +163,6 @@ def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.
         parser.error("--gui-artifact-dir requires a non-empty --operator-name")
     if len(operator_name.strip()) > 160:
         parser.error("--operator-name must be at most 160 characters")
-    if not operator_attestation:
-        parser.error("--gui-artifact-dir requires explicit --operator-attestation")
     gui_arm_timeout_s = float(getattr(args, "gui_arm_timeout_s", 120.0))
     if gui_arm_timeout_s <= 0.0 or gui_arm_timeout_s > 300.0:
         parser.error("--gui-artifact-dir requires --gui-arm-timeout-s in (0, 300]")
@@ -525,6 +517,9 @@ def _gui_artifact_summary(
         "post_close_exit_required": True,
         "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
         "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
+        "post_close_attestation_required": True,
+        "post_close_attestation_file": schema.ATTESTATION_FILENAME,
+        "post_close_attestation_confirmation_method": schema.ATTESTATION_CONFIRMATION_METHOD,
         "finished_at_utc": _utc_now(),
         "finished_monotonic_ns": time.monotonic_ns(),
     }
@@ -655,6 +650,11 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     "file": gui_artifact_schema.PROCESS_EXIT_FILENAME,
                     "captured_by": gui_artifact_schema.POST_CLOSE_RUNNER,
                 },
+                "post_close_attestation": {
+                    "required": True,
+                    "file": gui_artifact_schema.ATTESTATION_FILENAME,
+                    "confirmation_method": gui_artifact_schema.ATTESTATION_CONFIRMATION_METHOD,
+                },
                 "input_capture": {
                     "source": "carb_keyboard_callback",
                     "observed_only": True,
@@ -671,20 +671,9 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 "started_at_utc": gui_started_at_utc,
                 "started_monotonic_ns": gui_started_monotonic_ns,
             }
-            gui_attestation = {
-                "schema_version": gui_artifact_schema.SCHEMA_VERSION,
-                "kind": "operator_attestation",
-                "operator_name": args.operator_name.strip(),
-                "operator_acknowledged": True,
-                "statement": gui_artifact_schema.OPERATOR_ATTESTATION_STATEMENT,
-                "limitation": gui_artifact_schema.PHYSICALITY_LIMITATION,
-                "physical_keyboard_independently_proven": False,
-                "recorded_at_utc": gui_started_at_utc,
-            }
             gui_artifact = GuiKeyboardArtifactWriter(
                 args.gui_artifact_dir,
                 manifest=gui_manifest,
-                attestation=gui_attestation,
             )
 
         def observe_gui_keyboard_event(record: dict[str, Any]) -> None:

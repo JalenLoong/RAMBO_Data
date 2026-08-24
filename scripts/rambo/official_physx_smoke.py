@@ -22,7 +22,9 @@ from m2_cartpole_gui_artifact import (
     GUI_OBSERVATION_MODE,
     MAX_OBSERVATION_SECONDS,
     MIN_OBSERVATION_SECONDS,
+    RTX_RENDERER_EXTENSION_IDS,
     collect_gui_gpu_sample,
+    is_explicit_rtx_renderer_extension,
 )
 
 
@@ -142,12 +144,15 @@ def _renderer_evidence() -> dict[str, Any]:
         raise RuntimeError(f"Kit renderer did not expose /renderer/active: {active_renderer!r}")
 
     extension_manager = omni.kit.app.get_app().get_extension_manager()
-    candidates = ("omni.hydra.rtx", "omni.rtx.window", "omni.kit.renderer.core")
+    # Only a direct RTX render-delegate extension is accepted as renderer
+    # evidence.  Generic renderer-core plumbing can be enabled even when RTX
+    # is not the active renderer and must never satisfy this gate.
+    candidates = RTX_RENDERER_EXTENSION_IDS
     enabled_rtx_extensions = [
         extension for extension in candidates if extension_manager.is_extension_enabled(extension)
     ]
-    if not enabled_rtx_extensions:
-        raise RuntimeError("No RTX renderer extension is enabled during the Kit GUI gate")
+    if not any(is_explicit_rtx_renderer_extension(extension) for extension in enabled_rtx_extensions):
+        raise RuntimeError("No explicitly RTX-labelled renderer extension is enabled during the Kit GUI gate")
     return {
         "active_gpu_setting": active_gpu_index,
         "active_renderer_setting": active_renderer,

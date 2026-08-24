@@ -315,14 +315,16 @@ recorded as the GUI/timeline conflict during the audited run. Do not claim a
 GUI keyboard check from a synthetic input trace.
 
 ```bash
-# Interactive operator check; this is deliberately not --headless.
+# Exploratory teleoperation only; it does not create M8 acceptance evidence.
+# Use the dedicated audited command below for the actual GUI gate.
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   scripts/rambo/teleop_loco_manip.py \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --seed 42 --viz kit
 
-# Auditable M8 GUI evidence. A named operator must focus the viewport and use
-# a physical keyboard: issue a base command, move FL, press SPACE once, press
+# The only accepted M8 GUI path. Run from the visible desktop session (for
+# example DISPLAY=:20). A named operator must focus the viewport and use a
+# physical keyboard: issue a base command, move FL, press SPACE once, press
 # the button to at least 12 mm, then retract until it reports released.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 M8_GUI_OUT="/workspace/migration-output/isaac60/M8/${STAMP}-gui-keyboard"
@@ -330,10 +332,12 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_gui_keyboard_artifact.sh \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --seed 42 --max-steps 3000 --viz kit \
   --gui-artifact-dir "$M8_GUI_OUT" \
-  --operator-name "<your-name>" --operator-attestation \
+  --operator-name "<your-name>" \
   --gui-arm-timeout-s 120
 
-# Offline-only validator: reads the immutable artifact and never launches Kit.
+# The dedicated runner has already run this offline-only validator after the
+# post-close TTY acknowledgement. It reads immutable evidence only and never
+# launches Kit, so it is safe to repeat separately when reviewing an artifact.
 PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
   scripts/rambo/validate_gui_keyboard_artifact.py --artifact-dir "$M8_GUI_OUT"
 
@@ -352,16 +356,18 @@ PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
   --artifact-dir "$M10_OUT"
 ```
 
-The audited GUI mode refuses scripted smoke flags and records native Carb
-callback observations, every control-step state, explicit PhysX evidence before
-and after the run, named-operator attestation, and checksums. The dedicated
-runner adds the zero exit sidecar only after Kit has closed; without it the
-offline validator deliberately rejects the pre-close evidence. A passing
-offline validator proves internal consistency but intentionally does not
-independently prove the physical origin of keyboard events. Never use xdotool,
-pyautogui, replayed events, or any injected input source. Retain a failed
-artifact for diagnosis and use a new output directory for the next genuine
-attempt.
+The audited GUI mode refuses scripted smoke flags and requires the process-scoped
+EULA prefix plus a non-empty `DISPLAY` before Kit can start. It records native
+Carb callback observations, every control-step state, and explicit PhysX
+evidence before and after the run. Only after the Kit child has exited with
+status zero does the dedicated runner seal `process_exit.json`, require the
+named operator at an interactive TTY to type an exact acknowledgement, then run
+the offline validator. Missing, redirected, interrupted, or mismatched
+attestations leave the artifact unaccepted. A passing offline validator proves
+internal consistency but intentionally does not independently prove the
+physical origin of keyboard events. Never use xdotool, pyautogui, replayed
+events, or any injected input source. Retain a failed artifact for diagnosis
+and use a new output directory for the next genuine attempt.
 
 The recorder writes actions, observations, post-step state, 375 RGB frames,
 timestamps, runtime/checkpoint/PhysX evidence, memory samples, and a checksum

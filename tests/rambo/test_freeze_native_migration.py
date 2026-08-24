@@ -118,6 +118,7 @@ def test_canonical_freeze_inputs_cover_wrappers_and_migration_records() -> None:
         "scripts/rambo/teleop_loco_manip.py",
         "scripts/rambo/run_gui_keyboard_artifact.sh",
         "scripts/rambo/finalize_gui_keyboard_artifact.py",
+        "scripts/rambo/record_gui_keyboard_attestation.py",
         "source/rambo/rambo/validation/gui_keyboard_artifact.py",
     }
 

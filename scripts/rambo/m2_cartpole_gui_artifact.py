@@ -34,6 +34,11 @@ MAX_OBSERVATION_SECONDS = 300.0
 MIN_GPU_SAMPLES = 2
 TARGET_GPU_NAME_FRAGMENT = "RTX 4090"
 
+# The pinned Isaac Sim 6.0.1 base experience enables this RTX Hydra render
+# delegate.  ``omni.kit.renderer.core`` is plumbing shared by non-RTX render
+# paths, so it is deliberately not evidence for this GUI gate.
+RTX_RENDERER_EXTENSION_IDS = ("omni.hydra.rtx",)
+
 ATTESTATION_FILENAME = "attestation.json"
 CHECKSUMS_FILENAME = "checksums.sha256"
 
@@ -169,6 +174,18 @@ def _validate_physx_evidence(value: Any, label: str) -> None:
     _require(value.get("use_newton_actuators") is False, f"{label}.use_newton_actuators must be false")
 
 
+def is_explicit_rtx_renderer_extension(value: Any) -> bool:
+    """Return whether an extension ID is accepted as direct RTX evidence.
+
+    The runtime writes only IDs queried from Kit's extension manager.  The
+    offline validator repeats this narrow check so a generic renderer-core
+    entry cannot be substituted for an RTX render delegate in a sealed
+    artifact.
+    """
+
+    return isinstance(value, str) and value.strip().lower() in RTX_RENDERER_EXTENSION_IDS
+
+
 def _validate_gpu_sample(sample: Any, *, expected_gpu_index: int, label: str) -> None:
     _require(isinstance(sample, dict), f"{label} must be an object")
     _require(_as_int(sample.get("active_gpu_index"), f"{label}.active_gpu_index") == expected_gpu_index, f"{label} active GPU changed")
@@ -223,6 +240,10 @@ def _validate_gpu_sample(sample: Any, *, expected_gpu_index: int, label: str) ->
     _require(
         isinstance(rtx_extensions, list) and all(isinstance(item, str) and item for item in rtx_extensions) and rtx_extensions,
         f"{label} does not record an enabled RTX renderer extension",
+    )
+    _require(
+        any(is_explicit_rtx_renderer_extension(item) for item in rtx_extensions),
+        f"{label} does not record an enabled explicitly RTX-labelled renderer extension",
     )
 
 

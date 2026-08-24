@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -29,7 +30,7 @@ def test_offline_schema_imports_only_standard_library_modules() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.ImportFrom) and node.module and node.level == 0
     }
-    assert imports | from_imports <= {"__future__", "hashlib", "json", "math", "pathlib", "typing"}
+    assert imports | from_imports <= {"__future__", "datetime", "hashlib", "json", "math", "pathlib", "typing"}
 
 
 def _backend_evidence() -> dict[str, object]:
@@ -63,6 +64,11 @@ def _manifest(*, max_steps: int) -> dict[str, object]:
             "file": schema.PROCESS_EXIT_FILENAME,
             "captured_by": schema.POST_CLOSE_RUNNER,
         },
+        "post_close_attestation": {
+            "required": True,
+            "file": schema.ATTESTATION_FILENAME,
+            "confirmation_method": schema.ATTESTATION_CONFIRMATION_METHOD,
+        },
         "input_capture": {
             "source": "carb_keyboard_callback",
             "observed_only": True,
@@ -75,19 +81,6 @@ def _manifest(*, max_steps: int) -> dict[str, object]:
         "backend_before": _backend_evidence(),
         "started_at_utc": "2026-08-24T12:00:00Z",
         "started_monotonic_ns": 1,
-    }
-
-
-def _attestation() -> dict[str, object]:
-    return {
-        "schema_version": schema.SCHEMA_VERSION,
-        "kind": "operator_attestation",
-        "operator_name": "test-operator",
-        "operator_acknowledged": True,
-        "statement": schema.OPERATOR_ATTESTATION_STATEMENT,
-        "limitation": schema.PHYSICALITY_LIMITATION,
-        "physical_keyboard_independently_proven": False,
-        "recorded_at_utc": "2026-08-24T12:00:00Z",
     }
 
 
@@ -111,7 +104,6 @@ def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3, seal_post_clo
     writer = schema.GuiKeyboardArtifactWriter(
         output_dir,
         manifest=_manifest(max_steps=max_steps),
-        attestation=_attestation(),
     )
     writer.record_event(
         {
@@ -235,12 +227,20 @@ def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3, seal_post_clo
             "post_close_exit_required": True,
             "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
             "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
+            "post_close_attestation_required": True,
+            "post_close_attestation_file": schema.ATTESTATION_FILENAME,
+            "post_close_attestation_confirmation_method": schema.ATTESTATION_CONFIRMATION_METHOD,
             "finished_at_utc": "2026-08-24T12:00:01Z",
             "finished_monotonic_ns": 100,
         }
     )
     if seal_post_close:
         _seal_post_close(output_dir)
+        schema.write_post_close_operator_attestation(
+            output_dir,
+            operator_name="test-operator",
+            confirmation_phrase=schema.TERMINAL_CONFIRMATION_PHRASE,
+        )
     return output_dir
 
 
@@ -256,6 +256,7 @@ def test_offline_validator_accepts_complete_callback_and_state_evidence(tmp_path
     assert result["m8_evidence"]["unhandled_space_press_count"] == 1
     assert result["m8_evidence"]["button_rebound_after_success_seen"] is True
     assert result["operator_attestation_required"] is True
+    assert result["operator_name"] == "test-operator"
     assert result["physical_keyboard_independently_proven"] is False
     assert "cannot independently prove" in result["limitation"]
 
@@ -271,7 +272,47 @@ def test_offline_validator_requires_dedicated_post_close_zero_exit(tmp_path: Pat
     assert record["captured_after_child_exit"] is True
     assert record["workload_summary_completed_before_exit"] is True
     assert record["acceptance_passed"] is True
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="attestation.json"):
+        schema.validate_gui_keyboard_artifact(artifact)
+    attestation = schema.write_post_close_operator_attestation(
+        artifact,
+        operator_name="test-operator",
+        confirmation_phrase=schema.TERMINAL_CONFIRMATION_PHRASE,
+    )
+    assert attestation["process_exit_status"] == 0
     assert schema.validate_gui_keyboard_artifact(artifact)["process_exit_status"] == 0
+
+
+def test_post_close_attestation_refuses_unsealed_or_failed_evidence(tmp_path: Path) -> None:
+    artifact = _write_valid_artifact(tmp_path / "unsealed", seal_post_close=False)
+
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="pre-attestation files"):
+        schema.write_post_close_operator_attestation(
+            artifact,
+            operator_name="test-operator",
+            confirmation_phrase=schema.TERMINAL_CONFIRMATION_PHRASE,
+        )
+    assert not (artifact / schema.ATTESTATION_FILENAME).exists()
+
+    artifact = _write_valid_artifact(tmp_path / "nonzero", seal_post_close=False)
+    _seal_post_close(artifact, exit_status=139)
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="GUI process exit status is not zero"):
+        schema.write_post_close_operator_attestation(
+            artifact,
+            operator_name="test-operator",
+            confirmation_phrase=schema.TERMINAL_CONFIRMATION_PHRASE,
+        )
+    assert not (artifact / schema.ATTESTATION_FILENAME).exists()
+
+    artifact = _write_valid_artifact(tmp_path / "bad-phrase", seal_post_close=False)
+    _seal_post_close(artifact)
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="phrase did not match"):
+        schema.write_post_close_operator_attestation(
+            artifact,
+            operator_name="test-operator",
+            confirmation_phrase="I did not enter the required acknowledgement",
+        )
+    assert not (artifact / schema.ATTESTATION_FILENAME).exists()
 
 
 def test_offline_validator_rejects_nonzero_or_precompletion_post_close_exit(tmp_path: Path) -> None:
@@ -378,7 +419,6 @@ def test_offline_validator_rejects_no_callback_or_no_keyboard_driven_state(tmp_p
     writer = schema.GuiKeyboardArtifactWriter(
         artifact,
         manifest=_manifest(max_steps=1),
-        attestation=_attestation(),
     )
     writer.record_state(
         {
@@ -422,6 +462,9 @@ def test_offline_validator_rejects_no_callback_or_no_keyboard_driven_state(tmp_p
             "post_close_exit_required": True,
             "post_close_exit_file": schema.PROCESS_EXIT_FILENAME,
             "post_close_exit_runner": schema.POST_CLOSE_RUNNER,
+            "post_close_attestation_required": True,
+            "post_close_attestation_file": schema.ATTESTATION_FILENAME,
+            "post_close_attestation_confirmation_method": schema.ATTESTATION_CONFIRMATION_METHOD,
             "finished_at_utc": "2026-08-24T12:00:01Z",
             "finished_monotonic_ns": 100,
         }
@@ -438,6 +481,16 @@ def test_offline_validator_detects_tampering_after_checksums_are_written(tmp_pat
     states.write_text(states.read_text(encoding="utf-8") + "{}\n", encoding="utf-8")
 
     with pytest.raises(schema.GuiKeyboardArtifactError, match="Checksum mismatch"):
+        schema.validate_gui_keyboard_artifact(artifact)
+
+
+def test_offline_validator_rejects_unchecksummed_nested_checksum_named_file(tmp_path: Path) -> None:
+    artifact = _write_valid_artifact(tmp_path / "artifact")
+    nested = artifact / "nested" / schema.CHECKSUMS_FILENAME
+    nested.parent.mkdir()
+    nested.write_text("unchecksummed evidence\n", encoding="utf-8")
+
+    with pytest.raises(schema.GuiKeyboardArtifactError, match="does not cover exactly all evidence files"):
         schema.validate_gui_keyboard_artifact(artifact)
 
 
@@ -459,7 +512,6 @@ def _gui_args(teleop, **overrides):
     values = {
         "gui_artifact_dir": teleop.GUI_ARTIFACT_ROOT / "pytest-fresh-artifact",
         "operator_name": "operator",
-        "operator_attestation": True,
         "rambo_visualizer": ["kit"],
         "smoke_walk": False,
         "smoke_press": False,
@@ -489,8 +541,6 @@ def test_gui_artifact_arguments_fail_closed_before_app_launcher() -> None:
         teleop._validate_gui_artifact_args(parser, _gui_args(teleop, max_steps=0))
     with pytest.raises(ValueError, match="operator-name"):
         teleop._validate_gui_artifact_args(parser, _gui_args(teleop, operator_name=" "))
-    with pytest.raises(ValueError, match="operator-attestation"):
-        teleop._validate_gui_artifact_args(parser, _gui_args(teleop, operator_attestation=False))
     with pytest.raises(ValueError, match="gui-arm-timeout"):
         teleop._validate_gui_artifact_args(parser, _gui_args(teleop, gui_arm_timeout_s=0.0))
     with pytest.raises(ValueError, match="below the M8 artifact root"):
@@ -525,6 +575,7 @@ def test_gui_recorder_observes_existing_callback_without_input_injection_api() -
     source = script.read_text(encoding="utf-8")
     assert "event_observer=observe_gui_keyboard_event" in source
     assert '"source": "carb_keyboard_callback"' in source
+    assert "--operator-attestation" not in source
     assert "configure_physx(env_cfg)" in source
     assert source.count("assert_physx_environment(env)") >= 2
 
@@ -534,7 +585,15 @@ def test_dedicated_m8_runner_rejects_non_gui_visualizer_before_python(tmp_path: 
     runner = root / "scripts/rambo/run_gui_keyboard_artifact.sh"
     artifact = tmp_path / "artifact"
     result = subprocess.run(
-        [str(runner), "--gui-artifact-dir", str(artifact), "--viz", "none"],
+        [
+            str(runner),
+            "--gui-artifact-dir",
+            str(artifact),
+            "--operator-name",
+            "operator",
+            "--viz",
+            "none",
+        ],
         cwd=root,
         env=os.environ.copy(),
         capture_output=True,
@@ -547,11 +606,129 @@ def test_dedicated_m8_runner_rejects_non_gui_visualizer_before_python(tmp_path: 
     assert not artifact.exists()
 
 
-def test_dedicated_m8_runner_uses_run60_and_post_close_finalizer() -> None:
+def test_dedicated_m8_runner_requires_eula_and_visible_display_before_python(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[2]
+    runner = root / "scripts/rambo/run_gui_keyboard_artifact.sh"
+    arguments = [
+        str(runner),
+        "--gui-artifact-dir",
+        str(tmp_path / "artifact"),
+        "--operator-name",
+        "operator",
+        "--viz",
+        "kit",
+    ]
+
+    missing_eula = os.environ.copy()
+    missing_eula.pop("OMNI_KIT_ACCEPT_EULA", None)
+    missing_eula["DISPLAY"] = ":test-visible-display"
+    result = subprocess.run(
+        arguments,
+        cwd=root,
+        env=missing_eula,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "OMNI_KIT_ACCEPT_EULA=Y" in result.stderr
+    assert not (tmp_path / "artifact").exists()
+
+    missing_display = os.environ.copy()
+    missing_display["OMNI_KIT_ACCEPT_EULA"] = "Y"
+    missing_display.pop("DISPLAY", None)
+    result = subprocess.run(
+        arguments,
+        cwd=root,
+        env=missing_display,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "requires DISPLAY" in result.stderr
+    assert not (tmp_path / "artifact").exists()
+
+    obsolete_flag = os.environ.copy()
+    obsolete_flag.pop("OMNI_KIT_ACCEPT_EULA", None)
+    obsolete_flag.pop("DISPLAY", None)
+    result = subprocess.run(
+        [*arguments, "--operator-attestation"],
+        cwd=root,
+        env=obsolete_flag,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 2
+    assert "operator-attestation is obsolete" in result.stderr
+    assert not (tmp_path / "artifact").exists()
+
+
+def test_dedicated_m8_runner_uses_post_close_finalizer_recorder_and_validator() -> None:
     root = Path(__file__).resolve().parents[2]
     source = (root / "scripts/rambo/run_gui_keyboard_artifact.sh").read_text(encoding="utf-8")
     assert 'rambo_validate_launch_contract "$@"' in source
     assert '"${SCRIPT_DIR}/run60.sh" "${TELEOP_SCRIPT}" "$@"' in source
     assert '"${VENV_DIR}/bin/python" "${FINALIZER}"' in source
+    assert '"${VENV_DIR}/bin/python" "${RECORDER}"' in source
+    assert '"${VENV_DIR}/bin/python" "${VALIDATOR}" --artifact-dir "${artifact_dir}"' in source
     assert "--process-exit-status" in source
+    assert "OMNI_KIT_ACCEPT_EULA=Y" in source
+    assert "requires DISPLAY" in source
+    assert "--operator-attestation is obsolete" in source
     assert "unset OMNI_KIT_ACCEPT_EULA" in source
+    assert source.index('if [[ "${child_status}" -ne 0 ]]; then') < source.index(
+        '"${VENV_DIR}/bin/python" "${RECORDER}"'
+    )
+
+
+def test_post_close_recorder_requires_tty_phrase_and_preflight() -> None:
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "scripts/rambo/record_gui_keyboard_attestation.py").read_text(encoding="utf-8")
+    assert "validate_pre_attestation_artifact" in source
+    assert "write_post_close_operator_attestation" in source
+    assert "sys.stdin.isatty()" in source
+    assert "TERMINAL_CONFIRMATION_PHRASE" in source
+
+
+def test_post_close_recorder_refuses_redirected_acknowledgement(tmp_path: Path) -> None:
+    root = Path(__file__).resolve().parents[2]
+    recorder = root / "scripts/rambo/record_gui_keyboard_attestation.py"
+    environment = os.environ.copy()
+    source_paths = [str(root / "source/rambo"), str(root / "source/crl2")]
+    if existing := environment.get("PYTHONPATH"):
+        source_paths.append(existing)
+    environment["PYTHONPATH"] = os.pathsep.join(source_paths)
+
+    unsealed = _write_valid_artifact(tmp_path / "unsealed", seal_post_close=False)
+    result = subprocess.run(
+        [sys.executable, str(recorder), "--artifact-dir", str(unsealed), "--operator-name", "operator"],
+        cwd=root,
+        env=environment,
+        input=f"{schema.TERMINAL_CONFIRMATION_PHRASE}\n",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 1
+    assert "pre-attestation files" in result.stderr
+    assert "interactive TTY" not in result.stderr
+    assert not (unsealed / schema.ATTESTATION_FILENAME).exists()
+
+    artifact = _write_valid_artifact(tmp_path / "artifact", seal_post_close=False)
+    _seal_post_close(artifact)
+
+    result = subprocess.run(
+        [sys.executable, str(recorder), "--artifact-dir", str(artifact), "--operator-name", "operator"],
+        cwd=root,
+        env=environment,
+        input=f"{schema.TERMINAL_CONFIRMATION_PHRASE}\n",
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "interactive TTY is required" in result.stderr
+    assert not (artifact / schema.ATTESTATION_FILENAME).exists()

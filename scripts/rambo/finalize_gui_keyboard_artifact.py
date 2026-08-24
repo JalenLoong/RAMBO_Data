@@ -21,9 +21,11 @@ from typing import Any
 ARTIFACT_KIND = "rambo_gui_keyboard_teleop"
 SUMMARY_FILENAME = "summary.json"
 PROCESS_EXIT_FILENAME = "process_exit.json"
+ATTESTATION_FILENAME = "attestation.json"
 CHECKSUMS_FILENAME = "checksums.sha256"
 POST_CLOSE_RUNNER = "scripts/rambo/run_gui_keyboard_artifact.sh"
 PROCESS_EXIT_SCHEMA_VERSION = 1
+ATTESTATION_CONFIRMATION_METHOD = "interactive_tty_exact_phrase_after_kit_close"
 
 
 class GuiKeyboardArtifactFinalizationError(RuntimeError):
@@ -111,6 +113,22 @@ def finalize_gui_keyboard_artifact(output_dir: Path, *, exit_status: int) -> dic
     _require(
         summary.get("post_close_exit_runner") == POST_CLOSE_RUNNER,
         "GUI workload summary post-close runner is invalid",
+    )
+    _require(
+        summary.get("post_close_attestation_required") is True,
+        "GUI workload summary does not require a post-close operator attestation",
+    )
+    _require(
+        summary.get("post_close_attestation_file") == ATTESTATION_FILENAME,
+        "GUI workload summary post-close attestation file is invalid",
+    )
+    _require(
+        summary.get("post_close_attestation_confirmation_method") == ATTESTATION_CONFIRMATION_METHOD,
+        "GUI workload summary post-close attestation method is invalid",
+    )
+    _require(
+        not (root / ATTESTATION_FILENAME).exists(),
+        "Operator attestation must be recorded only after the child exit is sealed",
     )
     process_exit_path = root / PROCESS_EXIT_FILENAME
     _require(not process_exit_path.exists(), f"Post-close exit record already exists: {process_exit_path}")

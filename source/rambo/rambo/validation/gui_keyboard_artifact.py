@@ -8,6 +8,7 @@ Carb keyboard callback; it never creates keyboard events itself.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
@@ -15,7 +16,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 ARTIFACT_KIND = "rambo_gui_keyboard_teleop"
 TASK_ID = "Isaac-RAMBO-Quadruped-Button-Go2-v0"
 MODE = "explicit_gui_keyboard_callback"
@@ -37,6 +38,8 @@ CHECKSUMS_FILENAME = "checksums.sha256"
 PROCESS_EXIT_FILENAME = "process_exit.json"
 POST_CLOSE_RUNNER = "scripts/rambo/run_gui_keyboard_artifact.sh"
 PROCESS_EXIT_SCHEMA_VERSION = 1
+ATTESTATION_CONFIRMATION_METHOD = "interactive_tty_exact_phrase_after_kit_close"
+TERMINAL_CONFIRMATION_PHRASE = "I OBSERVED THE M8 PHYSICAL KEYBOARD GUI"
 
 OPERATOR_ATTESTATION_STATEMENT = (
     "I personally focused the Isaac Sim GUI viewport and operated a physical keyboard to issue "
@@ -95,11 +98,11 @@ def write_json(path: str | Path, value: Any) -> Path:
 def write_checksums(output_dir: str | Path) -> Path:
     """Write SHA-256 entries for every evidence file except the checksum manifest."""
 
-    root = Path(output_dir)
+    root = Path(output_dir).expanduser().resolve()
     checksum_path = root / CHECKSUMS_FILENAME
     paths = sorted(path for path in root.rglob("*") if path.is_file() and path != checksum_path)
     checksum_path.write_text(
-        "".join(f"{sha256_file(path)}  {path.relative_to(root)}\n" for path in paths),
+        "".join(f"{sha256_file(path)}  {path.relative_to(root).as_posix()}\n" for path in paths),
         encoding="utf-8",
     )
     return checksum_path
@@ -115,13 +118,12 @@ class GuiKeyboardArtifactWriter:
     closed; until then this directory is deliberately not an accepted artifact.
     """
 
-    def __init__(self, output_dir: str | Path, *, manifest: dict[str, Any], attestation: dict[str, Any]) -> None:
+    def __init__(self, output_dir: str | Path, *, manifest: dict[str, Any]) -> None:
         self.root = Path(output_dir).expanduser().resolve()
         if self.root.exists():
             raise GuiKeyboardArtifactError(f"Refusing to overwrite existing artifact directory: {self.root}")
         self.root.mkdir(parents=True)
         write_json(self.root / MANIFEST_FILENAME, manifest)
-        write_json(self.root / ATTESTATION_FILENAME, attestation)
         self._events = (self.root / EVENTS_FILENAME).open("x", encoding="utf-8")
         self._states = (self.root / STATES_FILENAME).open("x", encoding="utf-8")
         self._event_count = 0
@@ -261,10 +263,13 @@ def _validate_checksums(root: Path) -> int:
         _require(target.is_file(), f"Checksummed file is missing: {relative}")
         _require(sha256_file(target) == digest, f"Checksum mismatch: {relative}")
         listed[path] = digest
+    # Exclude only this artifact's root manifest.  A nested file that happens
+    # to share the filename is still evidence and must be checksummed.
+    checksum_path = root / CHECKSUMS_FILENAME
     actual = {
         path.relative_to(root)
         for path in root.rglob("*")
-        if path.is_file() and path.name != CHECKSUMS_FILENAME
+        if path.is_file() and path != checksum_path
     }
     _require(set(listed) == actual, "Checksum manifest does not cover exactly all evidence files")
     return len(listed)
@@ -305,6 +310,20 @@ def _validate_manifest(manifest: dict[str, Any]) -> tuple[int, list[float]]:
     _require(post_close_exit.get("required") is True, "Manifest must require a post-close exit record")
     _require(post_close_exit.get("file") == PROCESS_EXIT_FILENAME, "Manifest post-close exit file is invalid")
     _require(post_close_exit.get("captured_by") == POST_CLOSE_RUNNER, "Manifest post-close runner is invalid")
+    post_close_attestation = manifest.get("post_close_attestation")
+    _require(isinstance(post_close_attestation, dict), "manifest.post_close_attestation is required")
+    _require(
+        post_close_attestation.get("required") is True,
+        "Manifest must require a post-close operator attestation",
+    )
+    _require(
+        post_close_attestation.get("file") == ATTESTATION_FILENAME,
+        "Manifest post-close attestation file is invalid",
+    )
+    _require(
+        post_close_attestation.get("confirmation_method") == ATTESTATION_CONFIRMATION_METHOD,
+        "Manifest post-close attestation method is invalid",
+    )
     input_capture = manifest.get("input_capture")
     _require(isinstance(input_capture, dict), "manifest.input_capture is required")
     _require(input_capture.get("source") == "carb_keyboard_callback", "Input source is not the Carb callback")
@@ -328,7 +347,7 @@ def _validate_manifest(manifest: dict[str, Any]) -> tuple[int, list[float]]:
     return max_steps, initial_leg_target
 
 
-def _validate_attestation(attestation: dict[str, Any]) -> None:
+def _validate_attestation(attestation: dict[str, Any], *, expected_binding: dict[str, str]) -> None:
     _require(attestation.get("schema_version") == SCHEMA_VERSION, "Attestation schema version is invalid")
     _require(attestation.get("kind") == "operator_attestation", "Attestation kind is invalid")
     _require(
@@ -336,6 +355,14 @@ def _validate_attestation(attestation: dict[str, Any]) -> None:
         "Attestation operator name is required",
     )
     _require(attestation.get("operator_acknowledged") is True, "Operator acknowledgement is required")
+    _require(
+        attestation.get("confirmation_method") == ATTESTATION_CONFIRMATION_METHOD,
+        "Attestation must use an interactive post-close TTY confirmation",
+    )
+    _require(
+        attestation.get("confirmation_phrase") == TERMINAL_CONFIRMATION_PHRASE,
+        "Attestation confirmation phrase is invalid",
+    )
     _require(attestation.get("statement") == OPERATOR_ATTESTATION_STATEMENT, "Attestation statement is invalid")
     _require(attestation.get("limitation") == PHYSICALITY_LIMITATION, "Attestation limitation is invalid")
     _require(
@@ -343,6 +370,10 @@ def _validate_attestation(attestation: dict[str, Any]) -> None:
         "Attestation must not claim independent physical-keyboard proof",
     )
     _require(isinstance(attestation.get("recorded_at_utc"), str) and attestation["recorded_at_utc"], "Attestation time is required")
+    _require(
+        attestation.get("pre_attestation_binding") == expected_binding,
+        "Attestation does not bind the sealed post-close artifact",
+    )
 
 
 def _validate_post_close_exit(process_exit: dict[str, Any]) -> None:
@@ -578,12 +609,22 @@ def _validate_activity_summary(
         )
 
 
-def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
-    """Validate a completed GUI-keyboard artifact without importing Kit.
+def _attestation_binding(root: Path) -> dict[str, str]:
+    """Bind a human declaration to the sealed workload and real child exit."""
 
-    A passing return value proves the structure, explicit PhysX evidence, and
-    the operator's declaration are internally consistent.  It intentionally
-    does *not* claim to independently prove physical keyboard use.
+    return {
+        "summary_sha256": sha256_file(root / SUMMARY_FILENAME),
+        "process_exit_sha256": sha256_file(root / PROCESS_EXIT_FILENAME),
+    }
+
+
+def validate_pre_attestation_artifact(artifact_dir: str | Path) -> dict[str, Any]:
+    """Verify all post-close M8 evidence that must exist before a human attests.
+
+    This standard-library-only helper deliberately does not require
+    ``attestation.json``.  The dedicated runner calls it through the interactive
+    recorder only after the Kit child has returned and its parent-observed zero
+    exit has been sealed.
     """
 
     root = Path(artifact_dir).expanduser().resolve()
@@ -593,20 +634,22 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
         SUMMARY_FILENAME,
         EVENTS_FILENAME,
         STATES_FILENAME,
-        ATTESTATION_FILENAME,
         PROCESS_EXIT_FILENAME,
         CHECKSUMS_FILENAME,
     }
     missing = sorted(name for name in required if not (root / name).is_file())
-    _require(not missing, f"Artifact is missing required files: {', '.join(missing)}")
+    _require(not missing, f"Artifact is missing required pre-attestation files: {', '.join(missing)}")
     # Verify the immutable evidence set before interpreting any of its records.
     checksum_count = _validate_checksums(root)
     manifest = _read_json(root / MANIFEST_FILENAME, "manifest")
     summary = _read_json(root / SUMMARY_FILENAME, "summary")
-    attestation = _read_json(root / ATTESTATION_FILENAME, "attestation")
     process_exit = _read_json(root / PROCESS_EXIT_FILENAME, "post-close process exit")
     max_steps, initial_leg_target = _validate_manifest(manifest)
-    _validate_attestation(attestation)
+
+    # The order matters for the interactive recorder: a declaration is never
+    # requested or written unless a parent has already observed a clean child
+    # exit and the workload says it completed before that exit.
+    _validate_post_close_exit(process_exit)
     _require(summary.get("schema_version") == SCHEMA_VERSION, "Summary schema version is invalid")
     _require(summary.get("artifact_kind") == ARTIFACT_KIND, "Summary artifact kind is invalid")
     _require(summary.get("task") == TASK_ID, "Summary task is invalid")
@@ -629,7 +672,18 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
     _require(summary.get("post_close_exit_required") is True, "Summary must require a post-close exit record")
     _require(summary.get("post_close_exit_file") == PROCESS_EXIT_FILENAME, "Summary post-close exit file is invalid")
     _require(summary.get("post_close_exit_runner") == POST_CLOSE_RUNNER, "Summary post-close runner is invalid")
-    _validate_post_close_exit(process_exit)
+    _require(
+        summary.get("post_close_attestation_required") is True,
+        "Summary must require a post-close operator attestation",
+    )
+    _require(
+        summary.get("post_close_attestation_file") == ATTESTATION_FILENAME,
+        "Summary post-close attestation file is invalid",
+    )
+    _require(
+        summary.get("post_close_attestation_confirmation_method") == ATTESTATION_CONFIRMATION_METHOD,
+        "Summary post-close attestation method is invalid",
+    )
     _validate_physx_evidence(summary.get("backend_before"), "summary.backend_before")
     _validate_physx_evidence(summary.get("backend_after"), "summary.backend_after")
     checkpoint = summary.get("checkpoint")
@@ -678,7 +732,71 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
         "checksum_count": checksum_count,
         "process_exit_status": process_exit["shell_exit_status"],
         "m8_evidence": state_evidence | {"unhandled_space_press_count": event_evidence["unhandled_space_press_count"]},
+        "attestation_binding": _attestation_binding(root),
+    }
+
+
+def write_post_close_operator_attestation(
+    artifact_dir: str | Path, *, operator_name: str, confirmation_phrase: str
+) -> dict[str, Any]:
+    """Add one human declaration only after all post-close evidence validates.
+
+    The caller must pass the exact phrase entered at the interactive TTY.  The
+    dedicated recorder obtains it only after its preflight succeeds.
+    """
+
+    root = Path(artifact_dir).expanduser().resolve()
+    evidence = validate_pre_attestation_artifact(root)
+    _require(not (root / ATTESTATION_FILENAME).exists(), "Refusing to overwrite an existing operator attestation")
+    name = operator_name.strip()
+    _require(name, "Operator name must not be empty")
+    _require(len(name) <= 160, "Operator name must be at most 160 characters")
+    _require(
+        confirmation_phrase == TERMINAL_CONFIRMATION_PHRASE,
+        "Operator acknowledgement phrase did not match",
+    )
+    attestation = {
+        "schema_version": SCHEMA_VERSION,
+        "kind": "operator_attestation",
+        "operator_name": name,
+        "operator_acknowledged": True,
+        "confirmation_method": ATTESTATION_CONFIRMATION_METHOD,
+        "confirmation_phrase": confirmation_phrase,
+        "statement": OPERATOR_ATTESTATION_STATEMENT,
+        "limitation": PHYSICALITY_LIMITATION,
+        "physical_keyboard_independently_proven": False,
+        "recorded_at_utc": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "pre_attestation_binding": evidence["attestation_binding"],
+    }
+    write_json(root / ATTESTATION_FILENAME, attestation)
+    write_checksums(root)
+    return {
+        "artifact_dir": str(root),
+        "operator_name": name,
+        "checksummed_files": _validate_checksums(root),
+        "process_exit_status": evidence["process_exit_status"],
+    }
+
+
+def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
+    """Validate a completed GUI-keyboard artifact without importing Kit.
+
+    A passing return value proves the structure, explicit PhysX evidence, and
+    a post-close operator declaration are internally consistent. It
+    intentionally does *not* claim to independently prove physical keyboard
+    use.
+    """
+
+    evidence = validate_pre_attestation_artifact(artifact_dir)
+    root = Path(evidence["artifact_dir"])
+    attestation_path = root / ATTESTATION_FILENAME
+    _require(attestation_path.is_file(), f"Artifact is missing required file: {ATTESTATION_FILENAME}")
+    attestation = _read_json(attestation_path, "attestation")
+    _validate_attestation(attestation, expected_binding=evidence["attestation_binding"])
+    return {
+        **evidence,
         "operator_attestation_required": True,
+        "operator_name": attestation["operator_name"],
         "physical_keyboard_independently_proven": False,
         "limitation": PHYSICALITY_LIMITATION,
     }
@@ -686,6 +804,7 @@ def validate_gui_keyboard_artifact(artifact_dir: str | Path) -> dict[str, Any]:
 
 __all__ = [
     "ARTIFACT_KIND",
+    "ATTESTATION_CONFIRMATION_METHOD",
     "ATTESTATION_FILENAME",
     "BUTTON_PRESS_THRESHOLD_M",
     "BUTTON_REBOUND_THRESHOLD_M",
@@ -709,10 +828,13 @@ __all__ = [
     "STATES_FILENAME",
     "SUMMARY_FILENAME",
     "TASK_ID",
+    "TERMINAL_CONFIRMATION_PHRASE",
     "VISUALIZER",
     "jsonable",
     "sha256_file",
     "validate_gui_keyboard_artifact",
+    "validate_pre_attestation_artifact",
     "write_checksums",
     "write_json",
+    "write_post_close_operator_attestation",
 ]

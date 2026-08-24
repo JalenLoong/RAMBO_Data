@@ -156,6 +156,23 @@ def test_m2_gui_attestation_refuses_automatic_visual_claims(tmp_path: Path) -> N
         )
 
 
+def test_m2_gui_runtime_validator_rejects_generic_renderer_core_only() -> None:
+    schema = _load_schema()
+    summary = _runtime_summary()
+    observation = summary["gui_observation"]
+    assert isinstance(observation, dict)
+    samples = observation["gpu_samples"]
+    assert isinstance(samples, list)
+    for sample in samples:
+        assert isinstance(sample, dict)
+        renderer = sample["renderer"]
+        assert isinstance(renderer, dict)
+        renderer["enabled_rtx_extensions"] = ["omni.kit.renderer.core"]
+
+    with pytest.raises(schema.M2CartpoleGuiArtifactError, match="explicitly RTX-labelled"):
+        schema.validate_runtime_summary(summary)
+
+
 def test_live_gpu_sampler_requires_the_running_process_and_rtx_gpu() -> None:
     schema = _load_schema()
 
