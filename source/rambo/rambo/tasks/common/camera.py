@@ -5,6 +5,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+import warp as wp
+
 
 # The acceptance rollout is 100 Hz and the physics loop is 500 Hz.  Keeping
 # this as an explicit contract makes the 30 s / 3000 policy-step run exactly
@@ -15,7 +17,39 @@ FRONT_RGB_UPDATE_PERIOD_S = 0.08
 # parent-frame offsets keep the physical camera at (+0.30, 0, +0.08) in the
 # initial world frame and pointing along world +X, clear of the chassis.
 UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS = (0.08, 0.0, -0.30)
-UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT = (math.sqrt(0.5), 0.0, math.sqrt(0.5), 0.0)
+# Isaac Lab 3 camera offsets use simulator-facing XYZW quaternions.  This is
+# the former WXYZ rotation ``(sqrt(0.5), 0, sqrt(0.5), 0)`` written as XYZW.
+UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT = (0.0, math.sqrt(0.5), 0.0, math.sqrt(0.5))
+
+
+@wp.kernel
+def _advance_camera_ticks_kernel(
+    elapsed_physics_ticks: wp.array(dtype=wp.int64),
+    deadline_crossed: wp.array(dtype=wp.bool),
+    elapsed_step_count: wp.int64,
+    interval_steps: wp.int64,
+) -> None:
+    """Advance each camera's exact integer cadence clock."""
+
+    env_id = wp.tid()
+    previous_ticks = elapsed_physics_ticks[env_id]
+    current_ticks = previous_ticks + elapsed_step_count
+    elapsed_physics_ticks[env_id] = current_ticks
+    deadline_crossed[env_id] = current_ticks // interval_steps > previous_ticks // interval_steps
+
+
+@wp.kernel
+def _reset_camera_ticks_kernel(
+    elapsed_physics_ticks: wp.array(dtype=wp.int64),
+    deadline_crossed: wp.array(dtype=wp.bool),
+    reset_mask: wp.array(dtype=wp.bool),
+) -> None:
+    """Reset only the camera clocks selected by an Isaac Lab reset mask."""
+
+    env_id = wp.tid()
+    if reset_mask[env_id]:
+        elapsed_physics_ticks[env_id] = wp.int64(0)
+        deadline_crossed[env_id] = False
 
 
 def camera_update_interval_steps(update_period_s: float, physics_timestep_s: float) -> int:
@@ -90,6 +124,8 @@ def _exact_cadence_camera_type() -> type[Any]:
     try:
         import torch
         from isaaclab.sensors import Camera
+        from isaaclab.sim import SimulationContext
+        from isaaclab.utils.warp import ProxyArray
     except ModuleNotFoundError as error:  # pragma: no cover - target-runtime guard.
         raise RuntimeError("Front RGB cameras require an installed Isaac Lab runtime.") from error
 
@@ -98,25 +134,74 @@ def _exact_cadence_camera_type() -> type[Any]:
 
         def _initialize_impl(self) -> None:
             super()._initialize_impl()
-            self._rambo_physics_timestep_s = float(self._sim_physics_dt)
+            sim = SimulationContext.instance()
+            if sim is None:
+                raise RuntimeError("RAMBO exact-cadence camera requires an active SimulationContext")
+            self._rambo_physics_timestep_s = float(sim.get_physics_dt())
             self._rambo_cadence_interval_steps = camera_update_interval_steps(
                 self.cfg.update_period,
                 self._rambo_physics_timestep_s,
             )
-            self._rambo_elapsed_physics_steps = torch.zeros(
-                self._num_envs,
-                dtype=torch.long,
-                device=self._device,
+            self._rambo_elapsed_physics_ticks = ProxyArray(
+                wp.zeros(self.num_instances, dtype=wp.int64, device=self.device)
             )
+            self._rambo_deadline_crossed = wp.zeros(self.num_instances, dtype=wp.bool, device=self.device)
+            self._rambo_reset_mask = wp.zeros(self.num_instances, dtype=wp.bool, device=self.device)
+            # Both Tensor views are zero-copy views of the Warp buffers.  Keep
+            # all logical/fancy indexing in Torch, while kernels receive only
+            # native Warp arrays and keep their required integer dtypes.
+            self._rambo_deadline_crossed_torch = wp.to_torch(self._rambo_deadline_crossed)
+            self._rambo_reset_mask_torch = wp.to_torch(self._rambo_reset_mask)
 
-        def reset(self, env_ids=None) -> None:
-            super().reset(env_ids)
-            if env_ids is None:
-                env_ids = self._ALL_INDICES
-            self._rambo_elapsed_physics_steps[env_ids] = 0
+        @property
+        def rambo_physics_ticks(self) -> Any:
+            """Exact elapsed physics ticks as a public ``ProxyArray`` view.
+
+            Diagnostics must use ``camera.rambo_physics_ticks.torch``.  It is
+            deliberately separate from Isaac Lab's internal float timestamp
+            buffers, which remain owned by the base sensor implementation.
+            """
+
+            return self._rambo_elapsed_physics_ticks
+
+        def reset(self, env_ids=None, env_mask=None) -> None:
+            """Reset official Camera state and the independent integer clock."""
+
+            super().reset(env_ids=env_ids, env_mask=env_mask)
+            if env_mask is None:
+                self._rambo_reset_mask.zero_()
+                if env_ids is None:
+                    self._rambo_reset_mask_torch.fill_(True)
+                else:
+                    if isinstance(env_ids, wp.array):
+                        reset_ids = wp.to_torch(env_ids)
+                    elif isinstance(env_ids, slice):
+                        reset_ids = torch.arange(self.num_instances, device=self.device)[env_ids]
+                    else:
+                        reset_ids = torch.as_tensor(env_ids, device=self.device)
+                    # Torch's conventional logical index type is int64.  This
+                    # is intentionally not passed into a Warp kernel.
+                    reset_ids = reset_ids.to(device=self.device, dtype=torch.long).reshape(-1)
+                    self._rambo_reset_mask_torch[reset_ids] = True
+                reset_mask = self._rambo_reset_mask
+            else:
+                reset_mask = env_mask
+            wp.launch(
+                _reset_camera_ticks_kernel,
+                dim=self.num_instances,
+                inputs=[
+                    self._rambo_elapsed_physics_ticks.warp,
+                    self._rambo_deadline_crossed,
+                    reset_mask,
+                ],
+                device=self.device,
+            )
 
         def update(self, dt: float, force_recompute: bool = False) -> None:
             """Advance sensor state with an integer number of physics ticks."""
+
+            if not self.is_initialized:
+                return
 
             dt = float(dt)
             if not math.isfinite(dt) or dt < 0.0:
@@ -132,26 +217,23 @@ def _exact_cadence_camera_type() -> type[Any]:
                     "RAMBO exact-cadence camera received a scene update that is not an integer "
                     f"multiple of physics dt: dt={dt}, physics_dt={self._rambo_physics_timestep_s}"
                 )
-
-            # Keep the parent timestamps available for diagnostics and normal
-            # buffer bookkeeping, but never use their float32 difference to
-            # decide an RGB deadline.
-            self._timestamp += dt
-            previous_elapsed_steps = self._rambo_elapsed_physics_steps
-            self._rambo_elapsed_physics_steps = previous_elapsed_steps + elapsed_step_count
-            elapsed_periods = torch.div(
-                previous_elapsed_steps,
-                self._rambo_cadence_interval_steps,
-                rounding_mode="floor",
+            wp.launch(
+                _advance_camera_ticks_kernel,
+                dim=self.num_instances,
+                inputs=[
+                    self._rambo_elapsed_physics_ticks.warp,
+                    self._rambo_deadline_crossed,
+                    elapsed_step_count,
+                    self._rambo_cadence_interval_steps,
+                ],
+                device=self.device,
             )
-            updated_periods = torch.div(
-                self._rambo_elapsed_physics_steps,
-                self._rambo_cadence_interval_steps,
-                rounding_mode="floor",
-            )
-            self._is_outdated |= updated_periods > elapsed_periods
-            if force_recompute or self._is_visualizing or self.cfg.history_length > 0:
-                self._update_outdated_buffers()
+            if bool(self._rambo_deadline_crossed_torch.any().item()):
+                # Delegate all timestamp/outdated-buffer mutation to the
+                # official Camera implementation.  Passing one full sensor
+                # period means its float timestamp is never used to decide the
+                # cadence; it only records an already-proven due frame.
+                super().update(dt=self.cfg.update_period, force_recompute=force_recompute)
 
     _EXACT_CADENCE_CAMERA_TYPE = RamboExactCadenceCamera
     return _EXACT_CADENCE_CAMERA_TYPE
@@ -170,7 +252,7 @@ def make_front_rgb_camera_cfg(
     height: int = 480,
     update_period: float = FRONT_RGB_UPDATE_PERIOD_S,
     offset_pos: tuple[float, float, float] = (0.30, 0.0, 0.08),
-    offset_rot: tuple[float, float, float, float] = (1.0, 0.0, 0.0, 0.0),
+    offset_rot: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 1.0),
 ) -> Any:
     """Create RAMBO's shared base-mounted front RGB camera configuration.
 
@@ -183,6 +265,7 @@ def make_front_rgb_camera_cfg(
     try:
         import isaaclab.sim as sim_utils
         from isaaclab.sensors import CameraCfg
+        from isaaclab_physx.renderers import IsaacRtxRendererCfg
     except ModuleNotFoundError as error:  # pragma: no cover - static-tooling path.
         raise RuntimeError("Front RGB cameras require an installed Isaac Lab runtime.") from error
 
@@ -195,6 +278,11 @@ def make_front_rgb_camera_cfg(
         update_period=update_period,
         offset=CameraCfg.OffsetCfg(pos=offset_pos, rot=offset_rot, convention="world"),
         data_types=["rgb"],
+        # RAMBO's production camera is attached to an explicitly PhysX-backed
+        # scene.  Be equally explicit about the RTX renderer used for its
+        # visual contract instead of relying on whichever default renderer a
+        # future Isaac Lab build happens to select.
+        renderer_cfg=IsaacRtxRendererCfg(),
         spawn=sim_utils.PinholeCameraCfg(
             focal_length=18.0,
             focus_distance=400.0,

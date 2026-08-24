@@ -116,9 +116,7 @@ def _configure_environment(env_cfg: Any, args: argparse.Namespace) -> None:
 
 def _validate_button_environment(base_env: Any) -> None:
     required = (
-        "_velocity_commands",
-        "_ee_pos_commands",
-        "_ee_force_commands",
+        "set_loco_manip_commands",
         "button_displacement",
         "button_success",
         "button_released",
@@ -128,33 +126,34 @@ def _validate_button_environment(base_env: Any) -> None:
     missing = [name for name in required if not hasattr(base_env, name)]
     if missing:
         raise RuntimeError("Button task is missing loco-manip interfaces: " + ", ".join(missing))
-    if tuple(base_env._velocity_commands.shape) != (1, 3):
-        raise RuntimeError(f"Unexpected velocity command shape: {base_env._velocity_commands.shape}")
-    if tuple(base_env._ee_pos_commands.shape) != (1, 3):
-        raise RuntimeError(f"Unexpected FL position command shape: {base_env._ee_pos_commands.shape}")
-    if tuple(base_env._ee_force_commands.shape) != (1, 3):
-        raise RuntimeError(f"Unexpected FL force command shape: {base_env._ee_force_commands.shape}")
+    if not callable(base_env.set_loco_manip_commands):
+        raise RuntimeError("Button task set_loco_manip_commands interface is not callable")
 
 
 def _prepare_smoke_press_start(base_env: Any, torch: Any) -> None:
     """Place Go2 where the trained FL target can reach the physical cap."""
 
     env_ids = torch.arange(base_env.num_envs, device=base_env.device, dtype=torch.long)
-    root_state = base_env._robot.data.default_root_state.clone()
-    root_state[:, 0] = 0.58
-    root_state[:, 1] = 0.0
-    root_state[:, 2] += 0.10
-    root_state[:, 7:] = 0.0
-    joint_pos = base_env._robot.data.default_joint_pos.clone()
-    joint_vel = torch.zeros_like(base_env._robot.data.default_joint_vel)
-    base_env._robot.write_root_pose_to_sim(root_state[:, :7], env_ids)
-    base_env._robot.write_root_velocity_to_sim(root_state[:, 7:], env_ids)
-    base_env._robot.write_joint_state_to_sim(joint_pos, joint_vel, None, env_ids)
-    base_env._velocity_commands.zero_()
-    base_env._ee_pos_commands.copy_(
-        torch.as_tensor(EE_DEFAULT, device=base_env.device).view(1, 3)
+    writer_env_ids = env_ids.to(dtype=torch.int32)
+    root_pose = base_env._robot.data.default_root_pose.torch.clone()
+    root_velocity = base_env._robot.data.default_root_vel.torch.clone()
+    root_pose[:, 0] = 0.58
+    root_pose[:, 1] = 0.0
+    root_pose[:, 2] += 0.10
+    root_velocity.zero_()
+    joint_pos = base_env._robot.data.default_joint_pos.torch.clone()
+    joint_vel = torch.zeros_like(base_env._robot.data.default_joint_vel.torch)
+    base_env._robot.write_root_pose_to_sim_index(root_pose=root_pose, env_ids=writer_env_ids)
+    base_env._robot.write_root_velocity_to_sim_index(root_velocity=root_velocity, env_ids=writer_env_ids)
+    base_env._robot.write_joint_position_to_sim_index(position=joint_pos, env_ids=writer_env_ids)
+    base_env._robot.write_joint_velocity_to_sim_index(velocity=joint_vel, env_ids=writer_env_ids)
+    zero_commands = torch.zeros((base_env.num_envs, 3), device=base_env.device, dtype=joint_pos.dtype)
+    base_env.set_loco_manip_commands(
+        base_velocity=zero_commands,
+        fl_position=torch.as_tensor(EE_DEFAULT, device=base_env.device, dtype=joint_pos.dtype).view(1, 3),
+        fl_force=zero_commands,
+        env_ids=env_ids,
     )
-    base_env._ee_force_commands.zero_()
     base_env.scene.write_data_to_sim()
     base_env.sim.forward()
     base_env._obs_history.zero_()
@@ -270,6 +269,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
+    from rambo.utils.physx import assert_physx_environment, configure_physx
     from rambo.validation.checkpoints import contract_for_task, load_verified_checkpoint, restore_runner
     from rambo.validation.rollout import seed_everything, validate_environment_contract
 
@@ -278,6 +278,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     checkpoint = load_verified_checkpoint(args.checkpoint, contract)
     env_cfg = parse_env_cfg(args.task, num_envs=1, use_fabric=not args.disable_fabric)
     _configure_environment(env_cfg, args)
+    configure_physx(env_cfg)
     agent_cfg = load_cfg_from_registry(args.task, "crl2_cfg_entry_point")
     if not isinstance(agent_cfg, dict):
         raise RuntimeError("RAMBO CRL2 configuration must be a dictionary")
@@ -287,6 +288,13 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     env = None
     try:
         env = Crl2VecEnvWrapper(gym.make(args.task, cfg=env_cfg))
+        physics_evidence = assert_physx_environment(env)
+        print(
+            "[PHYSX] "
+            f"manager={physics_evidence['actual_manager']} "
+            f"use_newton_actuators={physics_evidence['use_newton_actuators']}",
+            flush=True,
+        )
         seed_everything(args.seed, env)
         observations, _ = env.reset()
         validate_environment_contract(env, contract)
@@ -302,7 +310,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
             env._last_observations = base_env.obs_buf
             observations, _ = env.get_observations()
 
-        headless = bool(getattr(args, "headless", False))
+        headless = getattr(args, "rambo_visualizer", None) == ["none"]
         teleop = _HeadlessInput() if headless else _make_keyboard(base_env, args)
         teleop.reset()
         leg_target = EE_DEFAULT.copy()
@@ -327,8 +335,8 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
         press_mode = args.smoke_press or args.smoke_loco_manip
         retract_start = 810 if args.smoke_loco_manip else 610
         retract_end = 910 if args.smoke_loco_manip else 710
-        walk_start_x = float(base_env._robot.data.root_pos_w[0, 0].item())
-        walk_start_joint_pos = base_env._robot.data.joint_pos.clone()
+        walk_start_x = float(base_env._robot.data.root_link_pos_w.torch[0, 0].item())
+        walk_start_joint_pos = base_env._robot.data.joint_pos.torch.clone()
 
         print(f"[INFO] Verified checkpoint: {args.checkpoint.resolve()}")
         if not headless:
@@ -391,13 +399,11 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 if ready:
                     leg_target = np.clip(leg_target + leg_velocity * base_env.step_dt, EE_MIN, EE_MAX)
 
-                base_env._velocity_commands.copy_(
-                    torch.as_tensor(base_command, device=base_env.device).view(1, 3)
+                base_env.set_loco_manip_commands(
+                    base_velocity=torch.as_tensor(base_command, device=base_env.device).view(1, 3),
+                    fl_position=torch.as_tensor(leg_target, device=base_env.device).view(1, 3),
+                    fl_force=torch.zeros((1, 3), device=base_env.device, dtype=torch.float32),
                 )
-                base_env._ee_pos_commands.copy_(
-                    torch.as_tensor(leg_target, device=base_env.device).view(1, 3)
-                )
-                base_env._ee_force_commands.zero_()
 
                 actions = policy(observations)
                 if not torch.isfinite(actions).all():
@@ -414,13 +420,21 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     press_succeeded = press_succeeded or press_mode
                     release_announced = False
                     print(
-                        f"[BUTTON] PRESSED: travel={float(base_env.button_displacement[0].item()) * 1000.0:.1f} mm",
+                        "[BUTTON] PRESSED: "
+                        f"travel={float(base_env.button_displacement[0].item()) * 1000.0:.1f} mm "
+                        f"threshold={base_env.cfg.button_press_threshold_m * 1000.0:.1f} mm "
+                        f"sustained_steps>={base_env.cfg.button_hold_steps}",
                         flush=True,
                     )
                 prior_success = new_success
                 new_released = bool(base_env.button_released[0].item())
                 if new_success and not release_announced and not prior_released and new_released:
-                    print("[BUTTON] RELEASED", flush=True)
+                    print(
+                        "[BUTTON] RELEASED: "
+                        f"travel={float(base_env.button_displacement[0].item()) * 1000.0:.1f} mm "
+                        f"threshold={base_env.cfg.button_release_threshold_m * 1000.0:.1f} mm",
+                        flush=True,
+                    )
                     release_announced = True
                 prior_released = new_released
                 if (
@@ -436,7 +450,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     report_label = "SMOKE" if smoke_mode else "STATE"
                     print(
                         f"[{report_label}] step={step_count} "
-                        f"root_x={float(base_env._robot.data.root_pos_w[0, 0]):.3f} "
+                        f"root_x={float(base_env._robot.data.root_link_pos_w.torch[0, 0]):.3f} "
                         f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
                         f"button={float(base_env.button_displacement[0]) * 1000.0:.1f}mm "
                         f"success={int(new_success)} released={int(new_released)}",
@@ -445,15 +459,22 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 if press_mode and press_succeeded and press_released and step_count >= retract_end:
                     break
 
+        physics_evidence_after = assert_physx_environment(env)
+        print(
+            "[PHYSX] post "
+            f"manager={physics_evidence_after['actual_manager']} "
+            f"use_newton_actuators={physics_evidence_after['use_newton_actuators']}",
+            flush=True,
+        )
         if press_mode:
             if not press_succeeded:
                 raise RuntimeError("Physical button did not reach the 12-mm press threshold")
             if not press_released:
                 raise RuntimeError("Button pressed but did not spring back after FL retraction")
             if args.smoke_loco_manip:
-                walked = float(base_env._robot.data.root_pos_w[0, 0].item()) - walk_start_x
+                walked = float(base_env._robot.data.root_link_pos_w.torch[0, 0].item()) - walk_start_x
                 joint_delta = float(
-                    torch.max(torch.abs(base_env._robot.data.joint_pos - walk_start_joint_pos)).item()
+                    torch.max(torch.abs(base_env._robot.data.joint_pos.torch - walk_start_joint_pos)).item()
                 )
                 print(f"[SMOKE] forward displacement={walked:.3f}m joint_delta={joint_delta:.3f}rad")
                 if walked < 0.05 or joint_delta < 0.05:
@@ -462,15 +483,15 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
             else:
                 print("LOCO_MANIP_SMOKE_PRESS_SUCCESS", flush=True)
         elif args.smoke_walk:
-            walked = float(base_env._robot.data.root_pos_w[0, 0].item()) - walk_start_x
-            joint_delta = float(torch.max(torch.abs(base_env._robot.data.joint_pos - walk_start_joint_pos)).item())
+            walked = float(base_env._robot.data.root_link_pos_w.torch[0, 0].item()) - walk_start_x
+            joint_delta = float(torch.max(torch.abs(base_env._robot.data.joint_pos.torch - walk_start_joint_pos)).item())
             print(f"[SMOKE] forward displacement={walked:.3f}m joint_delta={joint_delta:.3f}rad")
             if walked < 0.05 or joint_delta < 0.05:
                 raise RuntimeError("Walking smoke test did not produce measurable base and joint motion")
             print("LOCO_MANIP_SMOKE_WALK_SUCCESS", flush=True)
         else:
             print(
-                f"[FINAL] root_x={float(base_env._robot.data.root_pos_w[0, 0].item()):.3f} "
+                f"[FINAL] root_x={float(base_env._robot.data.root_link_pos_w.torch[0, 0].item()):.3f} "
                 f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
                 f"button={float(base_env.button_displacement[0].item()) * 1000.0:.1f}mm "
                 f"success={int(bool(base_env.button_success[0].item()))} "
@@ -488,6 +509,11 @@ def main() -> int:
     parser, app_launcher_type = _build_parser()
     args = parser.parse_args()
     _validate_args(parser, args)
+    try:
+        from rambo.utils.physx import validate_rambo_visualizer_args
+    except ModuleNotFoundError as error:  # pragma: no cover - target-runtime guard.
+        raise RuntimeError("Run this script through scripts/rambo/run.sh") from error
+    args.rambo_visualizer = validate_rambo_visualizer_args(parser, args, sys.argv[1:])
     app_launcher = app_launcher_type(args)
     simulation_app = app_launcher.app
     try:

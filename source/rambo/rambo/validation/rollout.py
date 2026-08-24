@@ -11,7 +11,9 @@ from __future__ import annotations
 import copy
 import json
 import math
+import os
 import random
+import statistics
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -21,6 +23,19 @@ from .checkpoints import CheckpointContract, CheckpointContractError
 
 class RolloutValidationError(RuntimeError):
     """Raised when a policy rollout violates a RAMBO acceptance invariant."""
+
+
+# These are acceptance limits, not tuning parameters.  They deliberately
+# match the long-rollout gate in the dedicated checkpoint smoke launchers so
+# RGB validation cannot hide a renderer-side memory leak.
+_MEMORY_INTERVAL_STEPS = 100
+_MEMORY_ANALYSIS_START_STEP = 1000
+_MEMORY_WINDOW_STEPS = 500
+_MIB = 1024 * 1024
+_GPU_SLOPE_LIMIT_BYTES_PER_100_STEPS = 1 * _MIB
+_GPU_MEDIAN_DELTA_LIMIT_BYTES = 128 * _MIB
+_RSS_SLOPE_LIMIT_BYTES_PER_100_STEPS = 4 * _MIB
+_RSS_MEDIAN_DELTA_LIMIT_BYTES = 512 * _MIB
 
 
 def _termination_diagnostic_text(base_env: Any) -> str:
@@ -63,6 +78,141 @@ def _termination_diagnostic_text(base_env: Any) -> str:
     reason_text = ", ".join(active_reasons) if active_reasons else "unknown"
     detail_text = f"; {', '.join(details)}" if details else ""
     return f" (reasons: {reason_text}{detail_text})"
+
+
+def _rss_bytes() -> int:
+    """Read the process RSS from Linux procfs for a reproducible leak gate."""
+
+    try:
+        resident_pages = int(Path("/proc/self/statm").read_text(encoding="utf-8").split()[1])
+        return resident_pages * os.sysconf("SC_PAGE_SIZE")
+    except (FileNotFoundError, IndexError, OSError, ValueError) as exc:
+        raise RolloutValidationError("long rollout requires readable /proc/self/statm for RSS monitoring") from exc
+
+
+def _linear_slope_bytes_per_100_steps(samples: list[dict[str, int]], field: str) -> float:
+    """Calculate the ordinary-least-squares growth rate per 100 control steps."""
+
+    if len(samples) < 2:
+        raise RolloutValidationError(f"need at least two memory samples to calculate {field} slope")
+    xs = [float(sample["step"]) for sample in samples]
+    ys = [float(sample[field]) for sample in samples]
+    x_mean = statistics.fmean(xs)
+    y_mean = statistics.fmean(ys)
+    denominator = sum((x - x_mean) ** 2 for x in xs)
+    if denominator == 0.0:
+        raise RolloutValidationError(f"memory samples have degenerate steps for {field} slope")
+    return 100.0 * sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, ys)) / denominator
+
+
+def analyze_long_rollout_memory(samples: list[dict[str, int]], total_steps: int) -> dict[str, Any]:
+    """Fail closed on GPU/RSS growth during a 1000+-step RAMBO rollout.
+
+    ``samples`` are intentionally plain Python values, making this acceptance
+    calculation independently unit-testable and auditable in every artifact.
+    Short smokes retain their samples but are marked not applicable.
+    """
+
+    if total_steps < _MEMORY_ANALYSIS_START_STEP:
+        return {
+            "evaluated": False,
+            "reason": f"requires steps >= {_MEMORY_ANALYSIS_START_STEP}",
+        }
+    post_warmup = [sample for sample in samples if sample["step"] >= _MEMORY_ANALYSIS_START_STEP]
+    first_window = [sample for sample in samples if sample["step"] <= _MEMORY_WINDOW_STEPS]
+    last_window = [sample for sample in samples if sample["step"] > total_steps - _MEMORY_WINDOW_STEPS]
+    if len(post_warmup) < 2 or not first_window or not last_window:
+        raise RolloutValidationError("insufficient periodic samples for long-rollout memory analysis")
+
+    result: dict[str, Any] = {
+        "evaluated": True,
+        "interval_steps": _MEMORY_INTERVAL_STEPS,
+        "analysis_start_step": _MEMORY_ANALYSIS_START_STEP,
+        "first_window_steps": [sample["step"] for sample in first_window],
+        "last_window_steps": [sample["step"] for sample in last_window],
+    }
+    for label, field, slope_limit, median_delta_limit in (
+        (
+            "gpu",
+            "gpu_allocated_bytes",
+            _GPU_SLOPE_LIMIT_BYTES_PER_100_STEPS,
+            _GPU_MEDIAN_DELTA_LIMIT_BYTES,
+        ),
+        ("rss", "rss_bytes", _RSS_SLOPE_LIMIT_BYTES_PER_100_STEPS, _RSS_MEDIAN_DELTA_LIMIT_BYTES),
+    ):
+        slope = _linear_slope_bytes_per_100_steps(post_warmup, field)
+        first_median = float(statistics.median(sample[field] for sample in first_window))
+        last_median = float(statistics.median(sample[field] for sample in last_window))
+        median_delta = last_median - first_median
+        result[label] = {
+            "slope_bytes_per_100_steps": slope,
+            "slope_mib_per_100_steps": slope / _MIB,
+            "slope_limit_mib_per_100_steps": slope_limit / _MIB,
+            "first_500_step_median_bytes": first_median,
+            "last_500_step_median_bytes": last_median,
+            "median_delta_bytes": median_delta,
+            "median_delta_mib": median_delta / _MIB,
+            "median_delta_limit_mib": median_delta_limit / _MIB,
+        }
+        if slope > slope_limit:
+            error = RolloutValidationError(
+                f"{label} allocation slope {slope / _MIB:.6f} MiB/100 steps exceeds "
+                f"{slope_limit / _MIB:.6f} MiB/100 steps"
+            )
+            error.memory_analysis = result
+            raise error
+        if median_delta > median_delta_limit:
+            error = RolloutValidationError(
+                f"{label} first/last 500-step median growth {median_delta / _MIB:.6f} MiB exceeds "
+                f"{median_delta_limit / _MIB:.6f} MiB"
+            )
+            error.memory_analysis = result
+            raise error
+    return result
+
+
+class RolloutMemoryMonitor:
+    """Capture and enforce the RAMBO GPU/RSS long-run stability contract."""
+
+    def __init__(self, torch: Any, device: Any, total_steps: int):
+        if total_steps <= 0:
+            raise ValueError("total_steps must be positive")
+        if not torch.cuda.is_available():
+            raise RolloutValidationError("RAMBO long-rollout memory gate requires CUDA")
+        self._torch = torch
+        self._device = device
+        self._total_steps = total_steps
+        self.samples: list[dict[str, int]] = []
+
+    def sample(self, step: int) -> None:
+        """Sample once at startup and then exactly every 100 policy steps."""
+
+        if step != 0 and step != self._total_steps and step % _MEMORY_INTERVAL_STEPS:
+            return
+        if self.samples and self.samples[-1]["step"] == step:
+            return
+        self.samples.append(
+            {
+                "step": int(step),
+                "gpu_allocated_bytes": int(self._torch.cuda.memory_allocated(device=self._device)),
+                "rss_bytes": _rss_bytes(),
+            }
+        )
+
+    def finalize(self) -> dict[str, Any]:
+        """Return samples and fail-closed threshold analysis for the artifact."""
+
+        self.sample(self._total_steps)
+        result = {
+            "samples": self.samples,
+        }
+        try:
+            result["analysis"] = analyze_long_rollout_memory(self.samples, self._total_steps)
+        except RolloutValidationError as error:
+            result["analysis"] = getattr(error, "memory_analysis", {"evaluated": True})
+            error.memory_monitor = result
+            raise
+        return result
 
 
 def configure_validation_cfg(
@@ -220,20 +370,32 @@ def validate_environment_contract(env: Any, contract: CheckpointContract) -> Any
 
 
 def get_front_camera(base_env: Any) -> Any:
-    """Return the stable public camera when present, with a legacy fallback."""
+    """Return RAMBO's stable public front-camera interface."""
 
     camera = getattr(base_env, "front_camera", None)
     if camera is None:
-        camera = getattr(base_env, "_front_camera", None)
-    if camera is None:
         raise RolloutValidationError("RAMBO task did not expose a front RGB camera")
     return camera
+
+
+def _torch_view(value: Any) -> Any:
+    """Unwrap an Isaac Lab 3 ``ProxyArray`` without breaking test doubles.
+
+    The target runtime intentionally exposes camera and articulation buffers as
+    Warp-first ``ProxyArray`` objects.  Callers that need Torch must request
+    the public ``.torch`` view explicitly; ordinary Tensor/NumPy test doubles
+    remain supported so these validation helpers can run outside Kit.
+    """
+
+    proxy_torch = getattr(value, "torch", None)
+    return proxy_torch if proxy_torch is not None else value
 
 
 def _camera_frame_id(camera: Any) -> int:
     frame = getattr(camera, "frame", None)
     if frame is None:
         raise RolloutValidationError("Front camera does not expose a frame counter")
+    frame = _torch_view(frame)
     if hasattr(frame, "detach"):
         frame = frame.detach().reshape(-1)[0].item()
     elif hasattr(frame, "__getitem__") and not isinstance(frame, (str, bytes)):
@@ -282,13 +444,48 @@ def _flush_terminal_camera_render(base_env: Any, camera: Any) -> None:
     _camera_data(camera)
 
 
-def _to_rgb_uint8(value: Any) -> Any:
-    """Convert a one-environment RGB/RGBA tensor into HxWx3 uint8 NumPy data."""
+def _to_rgb_uint8(value: Any, *, cpu_staging: Any | None = None) -> Any:
+    """Convert one RGB/RGBA output into HxWx3 uint8 NumPy data.
+
+    Target RTX output is a CUDA Tensor behind a public ``ProxyArray``.  When
+    a recorder supplies a CPU staging tensor, the transfer reuses that one
+    allocation rather than creating a new host tensor for each of 375 frames.
+    This does not alter renderer output or image bytes; it prevents the host
+    allocator from looking like a growing rollout leak.
+    """
 
     import numpy as np
+    import torch
 
-    if hasattr(value, "detach"):
-        value = value.detach().cpu().numpy()
+    value = _torch_view(value)
+    if isinstance(value, torch.Tensor):
+        tensor = value.detach()
+        if tensor.ndim == 4 and tensor.shape[0] == 1:
+            tensor = tensor[0]
+        if tensor.ndim != 3 or tensor.shape[-1] < 3:
+            raise RolloutValidationError(
+                f"Expected HxWx3/4 camera output, got shape {tuple(tensor.shape)}"
+            )
+        tensor = tensor[..., :3]
+        if tensor.dtype != torch.uint8:
+            if tensor.is_floating_point():
+                scale = 255.0 if float(tensor.max().item()) <= 1.0 else 1.0
+                tensor = (tensor * scale).clamp(0.0, 255.0).to(dtype=torch.uint8)
+            else:
+                tensor = tensor.clamp(0, 255).to(dtype=torch.uint8)
+        if cpu_staging is not None:
+            if not isinstance(cpu_staging, torch.Tensor) or cpu_staging.device.type != "cpu":
+                raise RolloutValidationError("RGB CPU staging buffer must be a CPU torch.Tensor")
+            if cpu_staging.dtype != torch.uint8 or tuple(cpu_staging.shape) != tuple(tensor.shape):
+                raise RolloutValidationError(
+                    "RGB CPU staging buffer shape/dtype does not match camera output: "
+                    f"staging={tuple(cpu_staging.shape)}/{cpu_staging.dtype}, "
+                    f"output={tuple(tensor.shape)}/{tensor.dtype}"
+                )
+            cpu_staging.copy_(tensor, non_blocking=False)
+            return cpu_staging.numpy()
+        return tensor.cpu().numpy()
+
     frame = np.asarray(value)
     if frame.ndim == 4 and frame.shape[0] == 1:
         frame = frame[0]
@@ -327,11 +524,35 @@ class RgbFrameRecorder:
         self._adjacent_mad: list[float] = []
         self._first_frame: Any | None = None
         self._previous_frame: Any | None = None
+        self._cpu_rgb_staging: Any | None = None
         self._resolution_ok = True
         self._contact_sheet_indices = {
             round(index * (self.expected_count - 1) / 5) for index in range(6)
         }
         self._contact_sheet_frames: dict[int, Any] = {}
+
+    def _cpu_staging_for(self, value: Any) -> Any | None:
+        """Return the reusable target-runtime staging tensor, if applicable."""
+
+        import torch
+
+        value = _torch_view(value)
+        if not isinstance(value, torch.Tensor):
+            return None
+        shape = tuple(value.shape)
+        if len(shape) == 4 and shape[0] == 1:
+            shape = shape[1:]
+        if len(shape) != 3 or shape[-1] < 3:
+            raise RolloutValidationError(f"Expected HxWx3/4 camera output, got shape {shape}")
+        expected_shape = (*shape[:2], 3)
+        if self._cpu_rgb_staging is None:
+            self._cpu_rgb_staging = torch.empty(expected_shape, dtype=torch.uint8, device="cpu")
+        elif tuple(self._cpu_rgb_staging.shape) != expected_shape:
+            raise RolloutValidationError(
+                "RGB camera shape changed during rollout: "
+                f"expected staging {tuple(self._cpu_rgb_staging.shape)}, got {expected_shape}"
+            )
+        return self._cpu_rgb_staging
 
     def prime(self, camera: Any) -> None:
         """Set the post-reset camera frame as the baseline without recording it."""
@@ -365,7 +586,8 @@ class RgbFrameRecorder:
         output = getattr(data, "output", None)
         if not isinstance(output, dict) or "rgb" not in output:
             raise RolloutValidationError("Front camera has no 'rgb' output")
-        frame = _to_rgb_uint8(output["rgb"])
+        rgb_output = _torch_view(output["rgb"])
+        frame = _to_rgb_uint8(rgb_output, cpu_staging=self._cpu_staging_for(rgb_output))
         frame_index = len(self._timestamps)
         imageio.imwrite(self.rgb_dir / f"{frame_index:06d}.png", frame)
 
@@ -539,6 +761,8 @@ def run_policy_rollout(
     import torch
 
     base_env = env.unwrapped
+    memory_monitor = RolloutMemoryMonitor(torch, env.device, steps)
+    memory_monitor.sample(0)
     # QP environments retain a pre-reset terminal snapshot when this flag is
     # set.  Generic Gym environments simply ignore the attribute.
     base_env._record_termination_diagnostics = True
@@ -570,6 +794,10 @@ def run_policy_rollout(
     min_base_height = math.inf
     max_orientation_error = 0.0
     max_torque_limit_violation = 0.0
+    max_joint_velocity_ratio = 0.0
+    max_abs_joint_velocity_per_joint: list[float] | None = None
+    joint_velocity_limit_per_joint: list[float] | None = None
+    joint_names: list[str] | None = None
 
     for step in range(steps):
         with torch.inference_mode():
@@ -593,9 +821,21 @@ def run_policy_rollout(
             desired_torque = _require_attr(base_env, "desired_tor", "desired joint torques")
             robot = _require_attr(base_env, "_robot", "robot articulation")
             robot_data = _require_attr(robot, "data", "robot articulation data")
-            applied_torque = _require_attr(robot_data, "applied_torque", "applied joint torques")
-            root_pos_w = _require_attr(robot_data, "root_pos_w", "root position")
-            projected_gravity_b = _require_attr(robot_data, "projected_gravity_b", "projected gravity")
+            applied_torque = _torch_view(
+                _require_attr(robot_data, "applied_torque", "applied joint torques")
+            )
+            root_pos_w = _torch_view(
+                _require_attr(robot_data, "root_link_pos_w", "root-link position")
+            )
+            projected_gravity_b = _torch_view(
+                _require_attr(robot_data, "projected_gravity_b", "projected gravity")
+            )
+            joint_velocity = _torch_view(
+                _require_attr(robot_data, "joint_vel", "joint velocities")
+            )
+            joint_velocity_limits = _torch_view(
+                _require_attr(robot_data, "joint_vel_limits", "joint velocity limits")
+            )
             qp_cost = _get_qp_cost(extras)
 
             for name, value in {
@@ -607,8 +847,23 @@ def run_policy_rollout(
                 "QP cost": qp_cost,
                 "root position": root_pos_w,
                 "projected gravity": projected_gravity_b,
+                "joint velocity": joint_velocity,
+                "joint velocity limit": joint_velocity_limits,
             }.items():
                 _finite_or_raise(name, value, step)
+
+            if tuple(joint_velocity.shape) != tuple(joint_velocity_limits.shape):
+                raise RolloutValidationError(
+                    "public joint velocity and simulation-limit shapes differ: "
+                    f"velocity={tuple(joint_velocity.shape)}, limits={tuple(joint_velocity_limits.shape)}"
+                )
+            if joint_velocity.ndim != 2 or joint_velocity.shape[0] != int(env.num_envs):
+                raise RolloutValidationError(
+                    "public joint velocity must be batched by environment: "
+                    f"got {tuple(joint_velocity.shape)} for {env.num_envs} environments"
+                )
+            if not bool(torch.all(joint_velocity_limits > 0.0)):
+                raise RolloutValidationError("public simulation joint velocity limits must be positive")
 
             max_abs["grf"] = max(max_abs["grf"], _max_abs(grf))
             max_abs["desired_joint_position"] = max(
@@ -655,7 +910,32 @@ def run_policy_rollout(
                     f"{float(torque_violation.item()):.6f} at step {step}"
                 )
 
+            joint_velocity_ratio = joint_velocity.abs() / joint_velocity_limits
+            current_joint_velocity_ratio = float(joint_velocity_ratio.max().item())
+            max_joint_velocity_ratio = max(max_joint_velocity_ratio, current_joint_velocity_ratio)
+            if current_joint_velocity_ratio > 1.01:
+                raise RolloutValidationError(
+                    "joint velocity exceeds its public simulation limit by more than 1.01x "
+                    f"at step {step}: ratio={current_joint_velocity_ratio:.6f}"
+                )
+            current_joint_abs_max = joint_velocity.abs().amax(dim=0).detach().cpu().tolist()
+            if max_abs_joint_velocity_per_joint is None:
+                max_abs_joint_velocity_per_joint = [float(value) for value in current_joint_abs_max]
+                joint_velocity_limit_per_joint = [
+                    float(value) for value in joint_velocity_limits[0].detach().cpu().tolist()
+                ]
+                raw_joint_names = getattr(robot_data, "joint_names", None)
+                if not isinstance(raw_joint_names, (list, tuple)) or len(raw_joint_names) != joint_velocity.shape[1]:
+                    raise RolloutValidationError("public articulation joint_names are unavailable or mismatched")
+                joint_names = [str(name) for name in raw_joint_names]
+            else:
+                max_abs_joint_velocity_per_joint = [
+                    max(previous, float(current))
+                    for previous, current in zip(max_abs_joint_velocity_per_joint, current_joint_abs_max)
+                ]
+
             observations = next_observations
+            memory_monitor.sample(step + 1)
             if rgb_recorder is not None and camera is not None:
                 rgb_recorder.capture_if_new(camera, (step + 1) * policy_timestep)
 
@@ -690,6 +970,13 @@ def run_policy_rollout(
         "max_orientation_error": max_orientation_error,
         "orientation_error_threshold": contract.max_orientation_error,
         "max_torque_limit_violation": max_torque_limit_violation,
+        "joint_velocity": {
+            "max_ratio_to_sim_limit": max_joint_velocity_ratio,
+            "max_abs_per_joint_rad_s": max_abs_joint_velocity_per_joint,
+            "sim_limit_per_joint_rad_s": joint_velocity_limit_per_joint,
+            "joint_names": joint_names,
+        },
+        "memory_monitor": memory_monitor.finalize(),
     }
 
 
@@ -743,7 +1030,9 @@ def runtime_metadata() -> dict[str, Any]:
 
 __all__ = (
     "RgbFrameRecorder",
+    "RolloutMemoryMonitor",
     "RolloutValidationError",
+    "analyze_long_rollout_memory",
     "configure_validation_cfg",
     "get_front_camera",
     "get_policy_timestep",

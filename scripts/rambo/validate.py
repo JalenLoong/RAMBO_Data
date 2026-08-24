@@ -66,7 +66,7 @@ def _runtime_imports() -> dict[str, Any]:
     import rambo
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
-    from rambo.utils.physx import assert_physx_environment
+    from rambo.utils.physx import assert_physx_environment, configure_physx
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
     from rambo.validation.checkpoints import (
         contract_for_task,
@@ -93,6 +93,7 @@ def _runtime_imports() -> dict[str, Any]:
         "RgbFrameRecorder": RgbFrameRecorder,
         "RolloutValidationError": RolloutValidationError,
         "assert_physx_environment": assert_physx_environment,
+        "configure_physx": configure_physx,
         "configure_validation_cfg": configure_validation_cfg,
         "contract_for_task": contract_for_task,
         "load_cfg_from_registry": load_cfg_from_registry,
@@ -174,6 +175,9 @@ def main() -> int:
         if device is not None:
             parse_kwargs["device"] = device
         env_cfg = runtime["parse_env_cfg"](args_cli.task, **parse_kwargs)
+        # Re-assign at this validation call site as well as in the registry:
+        # a RAMBO validation must never rely on a future simulator default.
+        runtime["configure_physx"](env_cfg)
         if hasattr(env_cfg, "seed"):
             env_cfg.seed = args_cli.seed
         runtime["configure_validation_cfg"](
@@ -236,6 +240,12 @@ def main() -> int:
         summary["backend_after"] = runtime["assert_physx_environment"](env)
     except BaseException as exc:
         captured_error = exc
+        memory_monitor = getattr(exc, "memory_monitor", None)
+        if isinstance(memory_monitor, dict):
+            # Keep full samples even on a fail-closed threshold breach: they
+            # are the evidence needed to distinguish a renderer/host leak
+            # from a policy or physics failure on the next recovery attempt.
+            summary["memory_monitor"] = memory_monitor
     finally:
         if rgb_recorder is not None and rgb_metrics is None:
             try:

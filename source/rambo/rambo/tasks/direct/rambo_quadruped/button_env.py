@@ -19,6 +19,8 @@ from isaaclab.assets import RigidObject, RigidObjectCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 
+from rambo.utils.physx import assert_physx_environment
+
 from .qp_env import QPEnv, QPEnvCfg
 
 
@@ -163,7 +165,11 @@ class ButtonQPEnv(QPEnv):
 
     def __init__(self, cfg: ButtonQPEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
-        self._button_rest_root_state = self._button_cap.data.default_root_state.clone()
+        # The button task is intentionally fail-closed: package availability is
+        # not enough, the active simulation manager must be PhysX as well.
+        self._button_physx_evidence = assert_physx_environment(self)
+        self._button_rest_root_pose = self._button_cap.data.default_root_pose.torch.clone()
+        self._button_rest_root_velocity = self._button_cap.data.default_root_vel.torch.clone()
         self._button_pressed_steps = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
         self._button_success = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self._update_status_marker()
@@ -177,18 +183,30 @@ class ButtonQPEnv(QPEnv):
         super()._reset_idx(env_ids)
         # DirectRLEnv may reset while ButtonQPEnv.__init__ is still inside its
         # parent constructor. The subsequent public reset initializes telemetry.
-        if not hasattr(self, "_button_rest_root_state"):
+        if not hasattr(self, "_button_rest_root_pose"):
             return
-        if env_ids is None or len(env_ids) == self.num_envs:
-            env_ids = torch.arange(self.num_envs, dtype=torch.long, device=self.device)
+        env_ids = self._resolve_loco_manip_env_ids(env_ids)
+        writer_env_ids = env_ids.to(dtype=torch.int32)
 
-        self._button_cap.reset(env_ids)
-        self._button_cap.write_root_state_to_sim(self._button_rest_root_state[env_ids], env_ids=env_ids)
-        self._velocity_commands[env_ids] = 0.0
-        self._ee_pos_commands[env_ids] = torch.as_tensor(
-            self.cfg.ee_default_command, device=self.device, dtype=self._ee_pos_commands.dtype
+        self._button_cap.reset(env_ids=env_ids)
+        self._button_cap.write_root_pose_to_sim_index(
+            root_pose=self._button_rest_root_pose.index_select(0, env_ids), env_ids=writer_env_ids
         )
-        self._ee_force_commands[env_ids] = 0.0
+        self._button_cap.write_root_velocity_to_sim_index(
+            root_velocity=self._button_rest_root_velocity.index_select(0, env_ids), env_ids=writer_env_ids
+        )
+        default_fl_position = torch.as_tensor(
+            self.cfg.ee_default_command, device=self.device, dtype=self._ee_pos_commands.dtype
+        ).expand(env_ids.numel(), -1)
+        zero_commands = torch.zeros(
+            (env_ids.numel(), 3), device=self.device, dtype=self._velocity_commands.dtype
+        )
+        self.set_loco_manip_commands(
+            base_velocity=zero_commands,
+            fl_position=default_fl_position,
+            fl_force=zero_commands,
+            env_ids=env_ids,
+        )
         self.desired_pos[env_ids] = self.default_joint_pos[env_ids]
         self.desired_vel[env_ids] = 0.0
         self.desired_tor[env_ids] = 0.0
@@ -200,8 +218,108 @@ class ButtonQPEnv(QPEnv):
 
     @property
     def button_displacement(self) -> torch.Tensor:
-        displacement = self._button_cap.data.root_pos_w[:, 0] - self._button_rest_root_state[:, 0]
+        displacement = self._button_cap.data.root_link_pos_w.torch[:, 0] - self._button_rest_root_pose[:, 0]
         return displacement.clamp(0.0, self.cfg.button_stroke_m)
+
+    def _resolve_loco_manip_env_ids(self, env_ids: Sequence[int] | torch.Tensor | None) -> torch.Tensor:
+        """Validate and normalize partial-environment command indices."""
+
+        device = torch.device(self.device)
+        if env_ids is None:
+            resolved = torch.arange(self.num_envs, dtype=torch.long, device=device)
+        elif isinstance(env_ids, torch.Tensor):
+            if env_ids.device != device:
+                raise ValueError(
+                    f"env_ids must be on {device}, received {env_ids.device}"
+                )
+            if env_ids.ndim != 1:
+                raise ValueError(f"env_ids must be one-dimensional, received shape {tuple(env_ids.shape)}")
+            if env_ids.dtype not in (torch.int32, torch.int64):
+                raise TypeError(f"env_ids must use int32 or int64, received {env_ids.dtype}")
+            resolved = env_ids.to(dtype=torch.long)
+        elif isinstance(env_ids, Sequence) and not isinstance(env_ids, (str, bytes)):
+            try:
+                resolved = torch.as_tensor(env_ids, dtype=torch.long, device=device)
+            except (TypeError, ValueError) as error:
+                raise TypeError("env_ids must be an integer sequence or a torch tensor") from error
+            if resolved.ndim != 1:
+                raise ValueError(f"env_ids must be one-dimensional, received shape {tuple(resolved.shape)}")
+        else:
+            raise TypeError("env_ids must be None, an integer sequence, or a torch tensor")
+
+        if torch.any(resolved < 0) or torch.any(resolved >= self.num_envs):
+            raise IndexError(f"env_ids must be in [0, {self.num_envs}), received {resolved.tolist()}")
+        if resolved.numel() != torch.unique(resolved).numel():
+            raise ValueError("env_ids must not contain duplicates")
+        return resolved
+
+    @staticmethod
+    def _validate_loco_manip_command(
+        name: str,
+        command: torch.Tensor,
+        *,
+        expected_rows: int,
+        device: torch.device,
+        dtype: torch.dtype,
+    ) -> None:
+        """Fail early instead of silently copying malformed teleop commands."""
+
+        if not isinstance(command, torch.Tensor):
+            raise TypeError(f"{name} must be a torch.Tensor, received {type(command).__name__}")
+        if command.device != device:
+            raise ValueError(f"{name} must be on {device}, received {command.device}")
+        if command.dtype != dtype:
+            raise TypeError(f"{name} must use {dtype}, received {command.dtype}")
+        if tuple(command.shape) != (expected_rows, 3):
+            raise ValueError(
+                f"{name} must have shape ({expected_rows}, 3), received {tuple(command.shape)}"
+            )
+        if not bool(torch.isfinite(command).all()):
+            raise ValueError(f"{name} must contain only finite values")
+
+    def set_loco_manip_commands(
+        self,
+        base_velocity: torch.Tensor,
+        fl_position: torch.Tensor,
+        fl_force: torch.Tensor,
+        env_ids: Sequence[int] | torch.Tensor | None = None,
+    ) -> None:
+        """Set validated locomotion and FL manipulation commands.
+
+        All command tensors must have shape ``(len(env_ids), 3)`` (or
+        ``(num_envs, 3)`` when ``env_ids`` is omitted), live on the RAMBO
+        environment device, match the command-buffer dtype, and be finite.
+        The public method intentionally owns mutation of the task command
+        buffers so teleop and smoke callers do not depend on private fields.
+        """
+
+        resolved_env_ids = self._resolve_loco_manip_env_ids(env_ids)
+        expected_rows = resolved_env_ids.numel()
+        device = torch.device(self.device)
+        self._validate_loco_manip_command(
+            "base_velocity",
+            base_velocity,
+            expected_rows=expected_rows,
+            device=device,
+            dtype=self._velocity_commands.dtype,
+        )
+        self._validate_loco_manip_command(
+            "fl_position",
+            fl_position,
+            expected_rows=expected_rows,
+            device=device,
+            dtype=self._ee_pos_commands.dtype,
+        )
+        self._validate_loco_manip_command(
+            "fl_force",
+            fl_force,
+            expected_rows=expected_rows,
+            device=device,
+            dtype=self._ee_force_commands.dtype,
+        )
+        self._velocity_commands.index_copy_(0, resolved_env_ids, base_velocity)
+        self._ee_pos_commands.index_copy_(0, resolved_env_ids, fl_position)
+        self._ee_force_commands.index_copy_(0, resolved_env_ids, fl_force)
 
     @property
     def button_success(self) -> torch.Tensor:

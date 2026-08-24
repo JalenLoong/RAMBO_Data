@@ -17,7 +17,12 @@ from rambo.actuators.go2 import (  # noqa: E402
     GO2_ACTUATOR_DELAY_STEPS,
     make_go2_delayed_dc_motor_cfgs,
 )
-from rambo.validation.rollout import RgbFrameRecorder, configure_validation_cfg  # noqa: E402
+from rambo.validation.rollout import (  # noqa: E402
+    RgbFrameRecorder,
+    RolloutValidationError,
+    analyze_long_rollout_memory,
+    configure_validation_cfg,
+)
 from rambo.tasks.common.camera import (  # noqa: E402
     UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS,
     UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT,
@@ -90,7 +95,7 @@ def test_biped_camera_mount_is_transformed_with_the_upright_base() -> None:
     # (0.08, 0, -0.30) mount therefore resolves to world (0.30, 0, 0.08).
     pitch_minus_90 = np.array(((0.0, 0.0, -1.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0)))
     np.testing.assert_allclose(pitch_minus_90 @ UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS, (0.30, 0.0, 0.08))
-    np.testing.assert_allclose(UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT, (np.sqrt(0.5), 0.0, np.sqrt(0.5), 0.0))
+    np.testing.assert_allclose(UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT, (0.0, np.sqrt(0.5), 0.0, np.sqrt(0.5)))
 
 
 def test_validation_config_removes_all_randomization_without_mutating_source_sequence() -> None:
@@ -253,3 +258,87 @@ def test_rgb_recorder_reads_lazy_camera_data_before_frame(
     assert recorder.capture_if_new(camera, 0.08) is True
     recorder.finalize()
     assert np.load(tmp_path / "lazy-camera" / "rgb_frame_ids.npy").tolist() == [2]
+
+
+def test_rgb_recorder_uses_explicit_target_proxyarray_torch_views(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Camera frame/output access must use Isaac Lab 3's public ``.torch`` bridge."""
+
+    _install_minimal_imageio(monkeypatch)
+
+    class ProxyView:
+        def __init__(self, value) -> None:
+            self.value = value
+            self.read_count = 0
+
+        @property
+        def torch(self):
+            self.read_count += 1
+            return self.value
+
+    frame_before = ProxyView(torch.tensor([7]))
+    rgb_before = ProxyView(_rgb_frame(7))
+    camera = SimpleNamespace(
+        frame=frame_before,
+        data=SimpleNamespace(output={"rgb": rgb_before}),
+    )
+    recorder = RgbFrameRecorder(tmp_path / "proxy-camera", expected_count=1)
+    recorder.prime(camera)
+    assert frame_before.read_count == 1
+
+    frame_after = ProxyView(torch.tensor([8]))
+    rgb_after = ProxyView(_rgb_frame(8))
+    camera.frame = frame_after
+    camera.data.output["rgb"] = rgb_after
+    assert recorder.capture_if_new(camera, 0.08) is True
+    assert frame_after.read_count == 1
+    assert rgb_after.read_count == 1
+
+
+def test_rgb_recorder_reuses_one_cpu_staging_tensor_for_torch_frames(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 375-frame run must not allocate a new host Torch tensor per RGB frame."""
+
+    _install_minimal_imageio(monkeypatch)
+    camera = SimpleNamespace(
+        frame=torch.tensor([1]),
+        data=SimpleNamespace(output={"rgb": torch.from_numpy(_rgb_frame(1))}),
+    )
+    recorder = RgbFrameRecorder(tmp_path / "torch-staging", expected_count=2)
+    recorder.prime(camera)
+
+    camera.frame = torch.tensor([2])
+    camera.data.output["rgb"] = torch.from_numpy(_rgb_frame(2))
+    assert recorder.capture_if_new(camera, 0.08) is True
+    staging_id = id(recorder._cpu_rgb_staging)
+
+    camera.frame = torch.tensor([3])
+    camera.data.output["rgb"] = torch.from_numpy(_rgb_frame(3))
+    assert recorder.capture_if_new(camera, 0.16) is True
+    assert id(recorder._cpu_rgb_staging) == staging_id
+
+
+def test_long_rollout_memory_gate_uses_approved_slopes_and_windows() -> None:
+    samples = [
+        {
+            "step": step,
+            "gpu_allocated_bytes": 100 * 1024 * 1024,
+            "rss_bytes": 2 * 1024 * 1024 * 1024,
+        }
+        for step in range(0, 3001, 100)
+    ]
+
+    result = analyze_long_rollout_memory(samples, 3000)
+
+    assert result["evaluated"] is True
+    assert result["gpu"]["slope_mib_per_100_steps"] == 0.0
+    assert result["rss"]["median_delta_mib"] == 0.0
+
+    leaking_gpu_samples = [dict(sample) for sample in samples]
+    for sample in leaking_gpu_samples:
+        if sample["step"] >= 1000:
+            sample["gpu_allocated_bytes"] += (sample["step"] - 1000) * 2 * 1024 * 1024 // 100
+    with pytest.raises(RolloutValidationError, match="gpu allocation slope"):
+        analyze_long_rollout_memory(leaking_gpu_samples, 3000)
