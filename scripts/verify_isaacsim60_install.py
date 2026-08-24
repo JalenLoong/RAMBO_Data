@@ -67,9 +67,17 @@ _DIRECT_INPUT_PIN = re.compile(
 )
 _NAME_NORMALIZER = re.compile(r"[-_.]+")
 _OPTIONAL_NEWTON_EXTRA_PATTERNS = (
-    re.compile(r"isaaclab_newton\s*\[", re.IGNORECASE),
-    re.compile(r"isaaclab_physx\s*\[[^\]]*\bnewton\b", re.IGNORECASE),
-    re.compile(r"isaaclab_physx\s*\[[^\]]*\ball\b", re.IGNORECASE),
+    # Distribution names are normalized by installers, so accept the spelling
+    # variants used in direct requirements and shell commands.  A bare
+    # ``isaaclab_newton`` is part of the official pinned core graph; only an
+    # extra is prohibited.
+    re.compile(r"isaaclab[-_.]newton\s*\[", re.IGNORECASE),
+    # ``newton[sim]`` is an optional backend extra rather than the bare
+    # transitive Newton package allowed by this migration.
+    re.compile(r"(?<![A-Za-z0-9_.-])newton\s*\[[^\]]+\]", re.IGNORECASE),
+    # Do not let a broad Isaac Lab/PhysX extra silently pull Newton in.
+    re.compile(r"isaaclab(?:[-_.]physx)?\s*\[[^\]]*\bnewton\b", re.IGNORECASE),
+    re.compile(r"isaaclab(?:[-_.]physx)?\s*\[[^\]]*\ball\b", re.IGNORECASE),
 )
 
 

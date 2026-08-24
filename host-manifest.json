@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-08-24T14:50:40Z",
+  "generated_at_utc": "2026-08-24T15:05:40Z",
   "repository": {
     "worktree": "/workspace/rambo60",
     "branch": "adapt/isaacsim60-isaaclab30b2",
@@ -16,6 +16,21 @@
       "driver_version": "595.71.05",
       "memory_mib": 24564,
       "compute_capability": "8.9"
+    },
+    "memory": {
+      "probe": "/proc/meminfo (static capacity inventory; not a runtime acceptance metric)",
+      "physical_total_bytes": 66479996928,
+      "swap_total_bytes": 8589930496
+    },
+    "toolchain": {
+      "uv": {
+        "path": "/usr/local/bin/uv",
+        "version": "0.11.19"
+      },
+      "git": {
+        "path": "/usr/bin/git",
+        "version": "2.43.0"
+      }
     }
   },
   "runtime": {
@@ -119,6 +134,31 @@
   "container_status": {
     "docker_engine_or_nvidia_container_toolkit_available_on_validation_host": false,
     "docker_build_or_runtime_validated": false,
+    "probe_scope": "executable-path and Debian package inventory only; Docker, Kit, and NVIDIA Container Toolkit were not started",
+    "docker_cli": {
+      "executable_present": false,
+      "path": null,
+      "version": null
+    },
+    "nvidia_container_toolkit": {
+      "nvidia_container_cli_present": false,
+      "nvidia_container_runtime_present": false,
+      "package_probe": {
+        "manager": "dpkg-query",
+        "packages_checked": [
+          "docker.io",
+          "docker-ce",
+          "docker-ce-cli",
+          "docker-buildx-plugin",
+          "docker-compose-plugin",
+          "nvidia-container-toolkit",
+          "nvidia-container-runtime",
+          "libnvidia-container-tools",
+          "libnvidia-container1"
+        ],
+        "installed_packages": []
+      }
+    },
     "dockerfile_sha256": "d70aacc58656772578e552a2773a31b4313385eb3fa73e40172885d1f41abcbf"
   }
 }

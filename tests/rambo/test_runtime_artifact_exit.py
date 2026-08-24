@@ -107,6 +107,7 @@ def test_runtime_artifact_wrapper_seals_a_real_child_exit_without_starting_kit(t
         "import argparse, json\n"
         "parser = argparse.ArgumentParser()\n"
         "parser.add_argument('--output-dir', type=Path, required=True)\n"
+        "parser.add_argument('--viz', choices=('none', 'kit'), required=True)\n"
         "args = parser.parse_args()\n"
         "args.output_dir.mkdir(parents=True, exist_ok=True)\n"
         "(args.output_dir / 'summary.json').write_text(json.dumps({'passed': True}) + '\\n')\n",
@@ -122,6 +123,8 @@ def test_runtime_artifact_wrapper_seals_a_real_child_exit_without_starting_kit(t
             str(child),
             "--output-dir",
             str(artifact),
+            "--viz",
+            "none",
         ],
         cwd=root,
         env=environment,

@@ -10,6 +10,7 @@ set -uo pipefail
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly VENV_DIR="${RAMBO_VENV:-/workspace/venvs/rambo60}"
 readonly FINALIZER="${SCRIPT_DIR}/finalize_runtime_artifact.py"
+readonly CONTRACT="${SCRIPT_DIR}/run60_contract.sh"
 
 usage() {
     echo "Usage: $0 <RAMBO Python script and arguments including exactly one --output-dir>" >&2
@@ -19,6 +20,17 @@ if [[ "$#" -eq 0 ]]; then
     usage
     exit 2
 fi
+if [[ ! -r "${CONTRACT}" ]]; then
+    echo "Missing RAMBO launch contract: ${CONTRACT}" >&2
+    exit 1
+fi
+
+# Validate before any venv/Python work or artifact finalization.  This keeps a
+# rejected launcher override from ever reaching Kit and avoids sealing a
+# misleading partial artifact for an invocation that never started.
+# shellcheck source=run60_contract.sh
+source "${CONTRACT}"
+rambo_validate_launch_contract "$@" || exit $?
 if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
     echo "RAMBO Python 3.12 venv was not found: ${VENV_DIR}/bin/python" >&2
     exit 1
