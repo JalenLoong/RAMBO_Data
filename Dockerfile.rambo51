@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM vastai/linux-desktop:cuda-12.1-ubuntu-22.04
+FROM vastai/linux-desktop:cuda-12.1-ubuntu-22.04@sha256:ebe4705b9a7a323994c656aac686dc54691f58d676b2f41d3811c616fe9e16a2
 
 LABEL org.opencontainers.image.title="RAMBO Isaac Sim 5.1 Blackwell runtime" \
       org.opencontainers.image.description="RAMBO reference runtime with Isaac Sim 5.1, Isaac Lab 2.3.2, and PyTorch 2.7 cu128" \

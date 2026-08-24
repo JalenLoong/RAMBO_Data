@@ -15,7 +15,7 @@
 | Isaac Sim / Isaac Lab | 5.1.0 / 2.3.2 |
 | QP stack | qpth 0.0.18、CVXPY 1.5.4、OSQP 0.6.7.post3、ECOS 2.0.14 |
 
-2026-08-24 检查到该 base tag 的 registry digest 为 `sha256:ebe4705b9a7a323994c656aac686dc54691f58d676b2f41d3811c616fe9e16a2`。Dockerfile 按要求保留 tag 形式的 exact `FROM`；由于 registry tag 理论上可变，重新构建前应记录当次 `docker image inspect` 的 RepoDigest。
+2026-08-24 检查到该 base tag 的 registry digest 为 `sha256:ebe4705b9a7a323994c656aac686dc54691f58d676b2f41d3811c616fe9e16a2`。Runtime contract 中保留可读的 tag 名，Dockerfile 实际使用完整的 `tag@sha256:digest` 引用；这样即使 upstream tag 发生漂移，重新构建仍会使用这次已经验证的 exact base image。
 
 Base image 的入口为 `/opt/instance-tools/bin/entrypoint.sh`，负责 Vast.ai Linux Desktop / Selkies 启动。`Dockerfile.rambo51` 没有声明 `ENTRYPOINT` 或 `CMD`，也不删除或替换 desktop、Jupyter 和 Selkies runtime，因此继承该入口。镜像不安装 NVIDIA kernel driver；GPU driver 始终来自 Vast.ai host。
 
