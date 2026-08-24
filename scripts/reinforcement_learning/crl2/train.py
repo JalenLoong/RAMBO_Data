@@ -9,6 +9,29 @@
 
 import argparse
 
+
+def _reject_rambo_task_from_legacy_launcher() -> None:
+    """Reject RAMBO before importing AppLauncher can bootstrap Kit.
+
+    This preserves the generic example for non-RAMBO tasks while ensuring that
+    an unaudited legacy training route cannot even create a Kit process for a
+    RAMBO task.
+    """
+
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--task")
+    pre_args, _ = pre_parser.parse_known_args()
+    if isinstance(pre_args.task, str) and pre_args.task.startswith("Isaac-RAMBO-"):
+        pre_parser.error(
+            "Isaac-RAMBO-* must use the dedicated PhysX-only scripts/rambo launchers "
+            "through scripts/rambo/run60.sh with an explicit --viz none or --viz kit; "
+            "the legacy CRL2 launcher refuses to start Kit for RAMBO."
+        )
+
+
+_reject_rambo_task_from_legacy_launcher()
+
+# Safe only after the RAMBO pre-parser has rejected the unsupported route.
 from isaaclab.app import AppLauncher
 
 # add argparse arguments

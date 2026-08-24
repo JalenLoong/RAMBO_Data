@@ -98,19 +98,13 @@ uv pip install --python "${PYTHON}" "cvxpy==1.6.7" "clarabel==0.11.1" "scs==3.2.
 uv pip install --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/crl2"
 uv pip install --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/rambo"
 
-"${PYTHON}" - <<'PY'
-import sys
-import torch
-
-if torch.__version__ != "2.10.0+cu128":
-    raise SystemExit(f"Unexpected torch build: {torch.__version__}")
-if not torch.cuda.is_available():
-    raise SystemExit("Pinned CUDA PyTorch cannot see a GPU")
-print(f"Python: {sys.version.split()[0]}")
-print(f"Torch: {torch.__version__}")
-print(f"GPU: {torch.cuda.get_device_name(0)}")
-print(f"Compute capability: {torch.cuda.get_device_capability(0)}")
-PY
+# This read-only verifier does not launch Kit or any physics backend.  It
+# records the exact expected metadata conflicts from the vendor wheel graph
+# and rejects unexpected resolver drift rather than treating ``pip check`` as
+# a blanket success/failure signal.
+"${PYTHON}" "${REPO_ROOT}/scripts/verify_isaacsim60_install.py" \
+    --isaaclab-source "${ISAACLAB_SOURCE}" \
+    --requirements-input "${REPO_ROOT}/requirements/isaacsim60.in"
 
 echo "Setup complete: ${VENV_DIR}"
 echo "Run RAMBO through scripts/rambo/run60.sh and explicitly pass --viz none or --viz kit."

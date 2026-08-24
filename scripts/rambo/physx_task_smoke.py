@@ -119,12 +119,15 @@ def main() -> int:
         import gymnasium as gym
         import rambo
         import torch
-        from rambo.utils import assert_physx_environment, parse_env_cfg
+        from rambo.utils import assert_physx_environment, configure_physx, parse_env_cfg
 
         task, expected_observation_dim = TASKS[args_cli.task]
         if not rambo.register_tasks():
             raise RuntimeError("RAMBO task registration requires an active Isaac Sim Kit application")
         env_cfg = parse_env_cfg(task, device=args_cli.device or "cuda:0", num_envs=1)
+        # Do not rely solely on the registry contract: this concrete smoke
+        # entry point must itself request PhysX before Gym constructs the env.
+        configure_physx(env_cfg)
         env_cfg.seed = args_cli.seed
         if args_cli.disable_events:
             env_cfg.events = None

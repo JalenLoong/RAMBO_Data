@@ -43,5 +43,22 @@ def test_checkpoint_entry_points_use_the_shared_physx_launcher_gate() -> None:
         contents = (root / "scripts" / "rambo" / name).read_text(encoding="utf-8")
         assert "validate_rambo_visualizer_args" in contents
         assert "assert_physx_environment" in contents
+        assert "configure_physx" in contents
         assert "skip_cleanup" not in contents
         assert "os._exit" not in contents
+
+    task_smoke = (root / "scripts" / "rambo" / "physx_task_smoke.py").read_text(encoding="utf-8")
+    assert "--viz none" in task_smoke
+    assert "assert_physx_environment" in task_smoke
+    assert "configure_physx" in task_smoke
+
+
+def test_rgbd_smoke_disables_nested_biped_debug_callbacks_before_kit_teardown() -> None:
+    """Camera-only runs must not retain biped marker callbacks after close."""
+
+    root = Path(__file__).resolve().parents[2]
+    contents = (root / "scripts" / "rambo" / "physx_rgbd_smoke.py").read_text(encoding="utf-8")
+    assert "joint_position_controller_debug_vis" in contents
+    assert "contact_generator_debug_vis" in contents
+    assert "qp_debug_vis" in contents
+    assert "use_newton_actuators = False" in contents

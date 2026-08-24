@@ -315,6 +315,24 @@ def main() -> int:
         ):
             if hasattr(env_cfg, attribute):
                 setattr(env_cfg, attribute, False)
+        # Biped's controller/QP markers subscribe to Kit post-update events
+        # independently of the top-level RAMBO command visualizers.  A short
+        # camera smoke must not leave those debug callbacks alive while Kit
+        # tears down its USD prims; disable only the diagnostic streams, not
+        # any policy or physics behavior.
+        for config_attribute, flag in (
+            ("contact_generator_config", "contact_generator_debug_vis"),
+            ("joint_position_controller_config", "joint_position_controller_debug_vis"),
+            ("qp_torque_optimizer_config", "qp_debug_vis"),
+        ):
+            nested_config = getattr(env_cfg, config_attribute, None)
+            if nested_config is not None:
+                if not isinstance(nested_config, dict):
+                    raise RuntimeError(
+                        f"RAMBO {config_attribute} must be a dict when present; "
+                        f"got {type(nested_config).__name__}"
+                    )
+                nested_config[flag] = False
         if not hasattr(env_cfg, "enable_rgb_camera") or not hasattr(env_cfg, "front_camera"):
             raise RuntimeError("RAMBO task config does not expose its front-camera contract")
         env_cfg.enable_rgb_camera = True

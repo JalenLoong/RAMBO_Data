@@ -71,7 +71,7 @@ def _runtime_imports():
     import torch
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
-    from rambo.utils.physx import assert_physx_environment
+    from rambo.utils.physx import assert_physx_environment, configure_physx
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
     from rambo.validation.checkpoints import (
         contract_for_task,
@@ -93,6 +93,7 @@ def _runtime_imports():
         "Crl2VecEnvWrapper": Crl2VecEnvWrapper,
         "RolloutValidationError": RolloutValidationError,
         "assert_physx_environment": assert_physx_environment,
+        "configure_physx": configure_physx,
         "configure_validation_cfg": configure_validation_cfg,
         "contract_for_task": contract_for_task,
         "load_cfg_from_registry": load_cfg_from_registry,
@@ -146,6 +147,10 @@ def main() -> int:
         if device is not None:
             parse_kwargs["device"] = device
         env_cfg = runtime["parse_env_cfg"](args_cli.task, **parse_kwargs)
+        # Repeat the selection at this production call site.  Registry-level
+        # defaults are also configured, but a future default may never turn a
+        # RAMBO replay into an implicit backend choice.
+        runtime["configure_physx"](env_cfg)
         if hasattr(env_cfg, "seed"):
             env_cfg.seed = args_cli.seed
         if args_cli.enable_rgb_camera:

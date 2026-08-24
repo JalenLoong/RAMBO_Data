@@ -1,0 +1,84 @@
+# syntax=docker/dockerfile:1.7
+#
+# Deferred build specification for the RAMBO Isaac Sim 6 runtime.  It is
+# intentionally fail-closed: callers must provide an immutable, independently
+# verified Ubuntu 24.04 base image reference (tag plus sha256 digest).  No
+# Docker build or container runtime validation has been performed on the native
+# migration host, where Docker and NVIDIA Container Toolkit are unavailable.
+
+ARG RAMBO_BASE_IMAGE
+FROM ${RAMBO_BASE_IMAGE}
+
+ARG RAMBO_BASE_IMAGE
+ARG ISAACLAB_REPOSITORY=https://github.com/isaac-sim/IsaacLab.git
+ARG ISAACLAB_COMMIT=ffff603eafc6b74264a5261cc0183d6a65390d78
+ARG UV_VERSION=0.11.19
+
+LABEL org.opencontainers.image.title="RAMBO Isaac Sim 6 PhysX runtime (deferred)" \
+      org.opencontainers.image.description="Pinned RAMBO installation path for Isaac Sim 6.0.1.0 and Isaac Lab v3.0.0-beta2.patch1" \
+      org.opencontainers.image.source="https://github.com/JalenLoong/rambo" \
+      org.opencontainers.image.version="isaacsim-6.0.1.0-isaaclab-v3.0.0-beta2.patch1" \
+      org.opencontainers.image.rambo.physics="PhysX only" \
+      org.opencontainers.image.rambo.eula="not baked; process-scoped runtime consent only"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# The base is supplied by the operator because its exact immutable digest must
+# be verified alongside the target driver/container-runtime combination.  Do
+# not relax this to a mutable tag and do not use a base other than Ubuntu 24.04.
+RUN case "${RAMBO_BASE_IMAGE}" in \
+      *@sha256:*) ;; \
+      *) echo "RAMBO_BASE_IMAGE must be an immutable tag@sha256:digest reference" >&2; exit 64 ;; \
+    esac \
+    && . /etc/os-release \
+    && test "${ID}" = "ubuntu" \
+    && test "${VERSION_ID}" = "24.04"
+
+# Keep system Python separate from RAMBO's venv.  No driver package, CUDA
+# driver, EULA variable, or optional Newton extra is installed in this image.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update \
+    && apt-get install --no-install-recommends -y \
+        ca-certificates \
+        git \
+        python3-pip \
+        python3.12 \
+        python3.12-venv \
+    && python3.12 -m pip install --break-system-packages --no-cache-dir "uv==${UV_VERSION}" \
+    && python3.12 -c 'import sys; assert sys.version_info[:2] == (3, 12), sys.version'
+
+ENV RAMBO_VENV=/opt/venvs/rambo60 \
+    RAMBO_ISAACLAB_SOURCE=/opt/IsaacLab-3.0.0-beta2.patch1 \
+    PYTHONNOUSERSITE=1 \
+    PATH=/opt/venvs/rambo60/bin:${PATH}
+
+# Clone a detached exact commit from the official repository.  The installer
+# repeats this identity check before it can install any extension.  No release
+# branch, main/develop, nightly, or optional Newton extra is selected here.
+RUN git clone --no-checkout "${ISAACLAB_REPOSITORY}" "${RAMBO_ISAACLAB_SOURCE}" \
+    && git -C "${RAMBO_ISAACLAB_SOURCE}" checkout --detach "${ISAACLAB_COMMIT}" \
+    && test "$(git -C "${RAMBO_ISAACLAB_SOURCE}" rev-parse HEAD)" = "${ISAACLAB_COMMIT}"
+
+WORKDIR /opt/rambo
+
+# Separate the heavyweight pinned simulator layer from later application-code
+# changes.  The setup script is the authoritative installation transaction.
+COPY requirements/isaacsim60.in requirements/isaacsim60.in
+COPY scripts/setup_isaacsim60.sh scripts/setup_isaacsim60.sh
+COPY scripts/verify_isaacsim60_install.py scripts/verify_isaacsim60_install.py
+COPY source/crl2 source/crl2
+COPY source/rambo source/rambo
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked \
+    bash scripts/setup_isaacsim60.sh
+
+# The reference source is copied last.  Checkpoints, artifacts, caches, and
+# credentials remain outside the build context through .dockerignore.
+COPY . /opt/rambo
+RUN /opt/venvs/rambo60/bin/python -m pip install --no-deps --editable /opt/rambo/source/crl2 \
+    && /opt/venvs/rambo60/bin/python -m pip install --no-deps --editable /opt/rambo/source/rambo
+
+# Do not add OMNI_KIT_ACCEPT_EULA, PRIVACY_CONSENT, EULA markers, an ENTRYPOINT,
+# or a CMD here.  The deployer must preserve the base image's reviewed runtime
+# contract and pass the accepted EULA only to an individual Isaac Sim process.
+WORKDIR /workspace

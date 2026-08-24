@@ -9,6 +9,29 @@
 
 import argparse
 
+
+def _reject_rambo_task_from_legacy_launcher() -> None:
+    """Reject RAMBO before importing AppLauncher can bootstrap Kit.
+
+    Importing ``isaaclab.app.AppLauncher`` may initialize an inner Kit kernel in
+    Isaac Sim 6.  This small pre-parser therefore runs first, so a RAMBO task
+    exits through ``ArgumentParser.error`` without even importing AppLauncher.
+    """
+
+    pre_parser = argparse.ArgumentParser(add_help=False)
+    pre_parser.add_argument("--task")
+    pre_args, _ = pre_parser.parse_known_args()
+    if isinstance(pre_args.task, str) and pre_args.task.startswith("Isaac-RAMBO-"):
+        pre_parser.error(
+            "Isaac-RAMBO-* must use scripts/rambo/{play,validate,teleop_loco_manip}.py "
+            "through scripts/rambo/run60.sh with an explicit --viz none or --viz kit; "
+            "the legacy CRL2 launcher refuses to start Kit for RAMBO."
+        )
+
+
+_reject_rambo_task_from_legacy_launcher()
+
+# Safe only after the RAMBO pre-parser has rejected the unsupported route.
 from isaaclab.app import AppLauncher
 
 # add argparse arguments
