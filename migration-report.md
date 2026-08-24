@@ -20,15 +20,14 @@ smoke、validation 和 recorder 都显式配置 `PhysxCfg`、
 启动命令的 `OMNI_KIT_ACCEPT_EULA=Y` 前缀传递，不写入环境、marker 或镜像。
 
 本轮已批准延期两项：M5.2 的 Isaac Sim 5.1 历史 QP snapshot 比较，以及 M11
-Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。当前
-已形成 clean local commit `e449b1d`，并已完成绑定该 commit 的 M3
-quaternion/API inventory 扫描；后续只需在干净源码上完成 M7/M9 的 sealed runtime
-provenance 证据。
+Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。非 GUI
+runtime 已在 clean source `358daa5` 上重跑并封存；M11 current-scope native freeze
+绑定 `a349de9`，两者都不选择或执行 Newton。
 
 新增的 `run_runtime_artifact.sh` 会在 Kit 子进程真正退出后写入
 `process_exit.json` 并重算 checksum。此前所有 Kit artifact 的 `summary.json`
-均在 close 前写出，因此只能称为 pre-close workload evidence；本轮会用 sealed
-artifact 重新取代需要接受的非 GUI runtime 证据。
+均在 close 前写出，因此只能称为 pre-close workload evidence；本轮已用 sealed
+artifact 取代需要接受的非 GUI runtime 证据。
 
 ## 证据矩阵
 
@@ -36,20 +35,20 @@ artifact 重新取代需要接受的非 GUI runtime 证据。
 | --- | --- | --- |
 | M0–M1 | 完成 | legacy baseline 已保护；目标 venv、固定 Isaac Sim/Isaac Lab checkout、host/checkpoint manifests 均已建立。 |
 | M2.1 CUDA | **未按原计划通过** | `M2/20260824T135749Z-cuda-ada-compatible-contract/` 成功证明 Torch CUDA 12.8 可在 RTX 4090 `(8,9)` 做同步 CUDA 算术；但该 fixed wheel 的 `torch.cuda.get_arch_list()` 没有 `sm_89`（有 `sm_86`），故原计划的字面 `assert "sm_89" ...` 未满足。它只能称运行兼容性证据，除非正式修改验收标准。 |
-| M2.2 官方 Cartpole | workload 技术替代 gate 通过；sealed rerun 待执行 | `M2/20260824T135518Z-official-cartpole-direct-16-physx/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX 和后端 evidence。该旧 artifact 没有运行前 backend 与 post-close exit sidecar；修复后需 sealed rerun。固定 tag 的 literal `zero_agent.py --viz none` 没有有限退出路径，不能伪称 literal 命令通过。 |
-| M2.3 Kit GUI | 待人工 | 必须在与 M2.2 相同的 Direct Cartpole task 上，由真实操作者观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090（非 llvmpipe）。现有 `Isaac-Cartpole-v0` 短 Kit 启动仅支持 Kit/PhysX 启动事实，不能替代此门禁。 |
-| M2.4 官方 Go2 + RGB | workload 技术通过；sealed rerun 待执行 | warm-up `M2/20260824T125356Z-official-go2-rgb-1000-warmup/` 与 clean restart `M2/20260824T125434Z-official-go2-rgb-1000-restart/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、前后 PhysX manager、`false` 和 checksums；旧 artifact 无 post-close exit sidecar。 |
+| M2.2 官方 Cartpole | sealed 通过 | `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX、前后 `PhysxManager` 与 post-close exit 0。literal `zero_agent.py --viz none` 仍无有限退出路径，不能伪称 literal 命令通过。 |
+| M2.3 Kit GUI | **本轮已延期** | 后续必须在同一 Direct Cartpole task 上由真实操作者观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090；不得以日志或自动化替代。 |
+| M2.4 官方 Go2 + RGB | sealed 通过 | warm-up `M2/20260824T143007Z-official-go2-rgb-1000-warmup-sealed/` 与 clean restart `M2/20260824T143029Z-official-go2-rgb-1000-restart-sealed/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、PhysX 前后 manager、checksums 与 exit 0。 |
 | M3 API inventory | 完成（clean-source） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 clean、checksums 已复核；扫描仅保留两处已审计 XYZW `[0,0,0,1]` identity 候选。 |
-| M4 API/空间合同 | workload 技术通过；sealed clean rerun 待执行 | `M4/20260824T111439Z-*-space-contract-r2/` 覆盖四足/双足空间合同和 PhysX，但需绑定最终 clean revision 与 post-close exit。 |
+| M4 API/空间合同 | sealed 通过 | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/`：各 1 env/5 step，PhysX 前后 FQN 与 exit 0。 |
 | M5.1 qpth | 通过（范围受限） | `M5/20260824T105302Z-qpth-contract/` 覆盖 CPU/CUDA toy qpth forward/backward、KKT、残差与确定性；不等于历史 RAMBO QP 对比。 |
 | M5.2 RAMBO 5.1 QP 数值比较 | **已批准延期** | 所需旧端 snapshot 未保存；本轮不以其阻断后续自动化工作。 |
-| M6 四足 | workload 技术证据成立；sealed rerun 待执行 | 405/18、16 step 与 production walking 3000 step / 0 terminal：`M6/20260824T112247Z-*`、`M6/20260824T113722Z-quadruped-policy-longrun-n1-schedulefixed/`。`M6/20260824T134233Z-*` 与 `134254Z-*` 是全支撑零 action 100/1000 的独立静止诊断，**不是** production walking contact schedule；后者的旧 1000-step 尝试约在 152 step terminal，保留为失败。首个真实 policy→QP transition：`M6/20260824T133438Z-quadruped-first-policy-qp-transition/`。旧 Kit artifacts 无 post-close exit sidecar。 |
-| M7 四足 RGB | workload 技术通过；sealed clean provenance 待重跑 | `M7/20260824T131656Z-quadruped-3000-rgb-thirdperson-final/` 有 3000 action、15,000 physics ticks、375 前视 RGB 与第三人称技术证据，但在 dirty source 上运行，旧 manifest 缺完整 exact-pinned provenance 和 post-close exit。 |
-| M8 Button 非交互 | 通过 | `M8/20260824T112955Z-teleop-loco-manip/` 覆盖 deterministic Button press/hold/release。 |
-| M8 GUI 真实键盘 | 待人工 | 已实现可审计 artifact/离线验证器；仍需真实操作者在 `--viz kit` 下完成物理键盘操作。合成输入不计通过。 |
-| M9 双足 | workload 技术通过；sealed clean provenance 待重跑 | 旧 3000/RGB artifact `M9/20260824T132054Z-biped-3000-rgb-thirdperson-final/` 发生在 dirty source。独立性 runtime `M9/20260824T134918Z-biped-front-leg-independence-physx/` 证明 FL/FR 受不同命令且 QP 六个逻辑 contact slot 对应 override；该旧 schema 无 clean-source/post-close exit evidence，需 schema-v2 sealed rerun。 |
-| M10 Button recorder | workload 技术子门禁通过；sealed rerun 待执行 | `M10/20260824T122000Z-button-episode-3000-provenance-v2/`：3000 action/observation/post-state、375 RGB、381 checksums 与离线 acceptance；旧 artifact 无 post-close exit sidecar。 |
-| M11 native freeze | 阶段性可复现；最终冻结待自动化 chain | pinned `.in`/lock、metadata verifier 和 manifests 已有；最终 commit/host freeze 应等待 M3、M4 provenance 和 M7/M9 clean artifacts。 |
+| M6 四足 | sealed 通过 | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000-step production policy→QP rollout 和 first transition；独立 `143407Z-*`/`143422Z-*` 100/1000-step 全支撑零动作诊断也通过，但不替代 production schedule。 |
+| M7 四足 RGB | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：3000 policy step、15,000 physics tick、375 前视 RGB、终态独立 RGBD、PhysX 前后 FQN、checksum 与 exit 0。 |
+| M8 Button 非交互 | sealed 通过 | M10 current artifact 覆盖 deterministic Button press/hold/release 且满足 30 秒数据合同。 |
+| M8 GUI 真实键盘 | **本轮已延期** | 只接受真实操作者在 `--viz kit` 使用物理键盘；合成输入、重放与注入不计通过。 |
+| M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。 |
+| M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T145221Z-native-freeze-final-current-scope/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、输入/工件索引 checksum 全部通过。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明
@@ -76,18 +75,16 @@ artifact 记录 Torch `2.10.0+cu128`、CUDA 12.8、RTX 4090 capability `(8,9)`�
 新的 `--third-person-diagnostic final` 会在创建 `AppLauncher` **之前**捕获并要求：
 RAMBO Git HEAD、porcelain clean status、完整 Python argv、Isaac Lab exact tag/HEAD/
 package version、Isaac Sim package version、Torch/CUDA/GPU。manifest 写入时再次检查
-clean source。下一批 M7/M9 3000-step artifact 只有满足此合同才可作为 final clean
-evidence。
+clean source。当前 M7/M9 sealed artifacts 均满足此合同，并分别保存 375 张生产前视
+RGB、终态独立 RGBD、完整 provenance、checksum 与 post-close exit evidence。
 
 ## 尚需完成的工作
 
-1. 重跑 M7 quadruped 和 M9 biped 的 clean-source final PhysX diagnostics，并绑定
-   M4 provenance；M3 inventory/quaternion scan 已完成。
-2. 由真实操作者完成 M2.3 的 Direct Cartpole GUI 检查和 M8 physical-keyboard
-   teleoperation；不得使用 xdotool、pyautogui、重放或注入事件。
+1. M2.1 的原字面 `sm_89` 断言仍未满足；当前只有 Ada runtime compatibility evidence，
+   需先正式决定是否修订验收标准。
+2. M2.3 GUI 与 M8 physical-keyboard GUI 已按本轮范围延期；后续由真实操作者在
+   `--viz kit` 完成，绝不允许 xdotool、pyautogui、重放或事件注入。
 3. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
    具备输入/主机条件时恢复。
-4. 在上述自动化和人工 GUI 条件满足后再生成 M11 final native freeze。由于本地分支
-   尚无 remote tracking，push 仍须具备 GitHub 凭据/授权。
 
 所有 artifact 保留历史失败和非验收尝试，以便审计；它们不会被删除或改写为成功。

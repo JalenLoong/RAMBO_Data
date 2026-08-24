@@ -127,8 +127,8 @@ determinism；再验证 RAMBO QP shape、ordering、friction/torque constraints�
   physics ticks 一帧；非黑、变化、camera projection 与 contact sheet 均证明 scene/robot 可见。
 - M8 Button：暴露 `set_loco_manip_commands(base_velocity, fl_position, fl_force, env_ids=None)`；
   使用固定 seed 42 步序（110–269 前进、300–549 FL z、550–809 FL x、810–909 retract）。
-  要求 12 mm 连续 5 steps、回弹 ≤2 mm、步行与关节变化均 ≥0.05。GUI 用 xdotool/wmctrl
-  自动化；仅在无法自动化时把真正人工键盘检查保留到最后。
+  要求 12 mm 连续 5 steps、回弹 ≤2 mm、步行与关节变化均 ≥0.05。GUI 只接受真实操作者
+  的物理键盘；禁止 xdotool/wmctrl、pyautogui、重放或任何输入注入，并在非 GUI 门禁后延期。
 - M9 Biped：435/18、strict load、FL/FR 与 contact override 独立性、phase offset 19.6s、
   16-step/16-env/3000-step/RGB；height ≥0.3，orientation error ≤0.8。
 - M10：新 recorder 生成 Button task 的 30s episode，3000 observation/action/post-state、375
