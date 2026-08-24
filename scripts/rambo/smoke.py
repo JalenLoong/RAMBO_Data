@@ -12,6 +12,8 @@ the normal NVIDIA prompt unless the operator has already accepted the EULA.
 
 Examples:
     scripts/rambo/run.sh scripts/rambo/smoke.py --headless --steps 100
+    scripts/rambo/run.sh scripts/rambo/smoke.py --hardware-profile ada \
+        --headless --steps 100
     scripts/rambo/run.sh scripts/rambo/smoke.py --headless --enable-camera \
         --camera-output /tmp/go2-smoke-rgb.npy
 """
@@ -23,6 +25,28 @@ import hashlib
 import sys
 from pathlib import Path
 from typing import Any
+
+
+_HARDWARE_PROFILES = {
+    "blackwell": ((12, 0), "sm_120"),
+    "ada": ((8, 9), "sm_89"),
+}
+_HARDWARE_PROFILE_CHOICES = (*_HARDWARE_PROFILES, "compatible")
+
+
+def _add_hardware_profile_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the hardware gate without requiring Isaac Lab in CPU-side tests."""
+
+    parser.add_argument(
+        "--hardware-profile",
+        choices=_HARDWARE_PROFILE_CHOICES,
+        default="blackwell",
+        help=(
+            "GPU validation gate: blackwell = strict CC 12.0 / sm_120; "
+            "ada = strict CC 8.9 / sm_89; compatible = accept the current GPU "
+            "only if its capability matches a compiled Torch arch (default: blackwell)."
+        ),
+    )
 
 
 def _build_parser() -> tuple[argparse.ArgumentParser, type]:
@@ -38,6 +62,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser = argparse.ArgumentParser(
         description="Finite official-Go2 Isaac Lab smoke test for the RAMBO migration."
     )
+    _add_hardware_profile_argument(parser)
     parser.add_argument(
         "--steps",
         type=int,
@@ -74,7 +99,7 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
     if args.physics_dt <= 0.0:
         parser.error("--physics-dt must be positive")
     if not str(args.device).startswith("cuda"):
-        parser.error("--device must identify a CUDA device for this RTX 5080 migration gate")
+        parser.error("--device must identify a CUDA device for this RAMBO hardware gate")
     if args.camera_output is not None:
         if not args.enable_camera:
             parser.error("--camera-output requires --enable-camera")
@@ -87,8 +112,57 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
         args.enable_cameras = True
 
 
-def _check_target_runtime() -> dict[str, Any]:
-    """Validate the Python 3.11 / Torch 2.7 CUDA 12.8 Blackwell gate."""
+def _architecture_for_capability(capability: object) -> str:
+    """Convert a conventional two-integer CUDA capability into its SASS arch."""
+
+    if (
+        not isinstance(capability, tuple)
+        or len(capability) != 2
+        or any(isinstance(value, bool) or not isinstance(value, int) for value in capability)
+    ):
+        raise RuntimeError(
+            f"Cannot reliably convert CUDA compute capability {capability!r} to an sm_* arch"
+        )
+    major, minor = capability
+    if major <= 0 or minor < 0 or minor > 9:
+        raise RuntimeError(
+            f"Cannot reliably convert CUDA compute capability {capability!r} to an sm_* arch"
+        )
+    return f"sm_{major}{minor}"
+
+
+def _validate_hardware_profile(
+    hardware_profile: str,
+    capability: tuple[int, int],
+    architectures: tuple[str, ...],
+) -> str:
+    """Return the required SASS arch or fail the selected hardware gate."""
+
+    if hardware_profile == "compatible":
+        required_architecture = _architecture_for_capability(capability)
+    elif hardware_profile in _HARDWARE_PROFILES:
+        expected_capability, required_architecture = _HARDWARE_PROFILES[hardware_profile]
+        if capability != expected_capability:
+            raise RuntimeError(
+                f"hardware_profile={hardware_profile}: "
+                f"expected capability={expected_capability}; actual capability={capability}"
+            )
+    else:
+        raise ValueError(
+            f"Unknown hardware profile {hardware_profile!r}; "
+            f"expected one of {_HARDWARE_PROFILE_CHOICES}"
+        )
+
+    if required_architecture not in architectures:
+        raise RuntimeError(
+            f"hardware_profile={hardware_profile}: required architecture={required_architecture}; "
+            f"actual capability={capability}; compiled architectures={architectures}"
+        )
+    return required_architecture
+
+
+def _check_target_runtime(hardware_profile: str) -> dict[str, Any]:
+    """Validate Python/Torch/CUDA and the selected GPU hardware profile."""
 
     import torch
 
@@ -104,13 +178,9 @@ def _check_target_runtime() -> dict[str, Any]:
     device_index = torch.cuda.current_device()
     capability = torch.cuda.get_device_capability(device_index)
     architectures = tuple(torch.cuda.get_arch_list())
-    if capability != (12, 0):
-        raise RuntimeError(
-            "This migration gate requires Blackwell compute capability (12, 0); "
-            f"got {capability} on {torch.cuda.get_device_name(device_index)!r}"
-        )
-    if "sm_120" not in architectures:
-        raise RuntimeError(f"PyTorch was not compiled with sm_120 support: {architectures}")
+    required_architecture = _validate_hardware_profile(
+        hardware_profile, capability, architectures
+    )
 
     # Submit and synchronize a tiny CUDA operation.  This verifies that a device
     # can execute work, not merely that it is listed by the driver.
@@ -123,7 +193,9 @@ def _check_target_runtime() -> dict[str, Any]:
         "torch": torch.__version__,
         "torch_cuda": torch.version.cuda,
         "gpu": torch.cuda.get_device_name(device_index),
+        "hardware_profile": hardware_profile,
         "compute_capability": capability,
+        "required_architecture": required_architecture,
         "compiled_architectures": architectures,
         "cuda_probe_sum": probe_sum,
     }
@@ -324,7 +396,7 @@ def main() -> None:
     parser, app_launcher_type = _build_parser()
     args = parser.parse_args()
     _validate_args(parser, args)
-    runtime = _check_target_runtime()
+    runtime = _check_target_runtime(args.hardware_profile)
     print(f"CUDA_RUNTIME={runtime}")
 
     app_launcher = app_launcher_type(args)

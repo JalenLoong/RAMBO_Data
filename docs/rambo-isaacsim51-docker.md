@@ -85,11 +85,11 @@ git switch new_IsaacSim_IsaacLab
 
 这会让同一个 venv 使用 workspace 中正在开发的包。挂载 `/workspace` 不会遮住 `/opt/venvs/rambo51` 或 `/opt/rambo`。
 
-## Vast RTX 5080 端验证
+## Vast GPU 端验证
 
 首次启动 Isaac Sim 时由操作者阅读并接受 NVIDIA EULA。不要在 image build 中自动接受 EULA。只有操作者已经合法接受后，自动化 session 才应设置 `OMNI_KIT_ACCEPT_EULA=YES`。
 
-以下命令在 RTX 5080、R580 host driver、GPU/Vulkan 已暴露给容器后执行。先保存 host fingerprint：
+以下命令在 R580 host driver、GPU/Vulkan 已暴露给容器后执行。先保存 host fingerprint：
 
 ```bash
 nvidia-smi
@@ -110,9 +110,11 @@ print("architectures", torch.cuda.get_arch_list())
 PY
 ```
 
-预期 driver 是已验证的 `580.159.03`（最低目标 580.65.06），GPU capability 为 `(12, 0)`，Torch arch list 包含 `sm_120`。
+预期 driver 是已验证的 `580.159.03`（最低目标 580.65.06）。`smoke.py` 提供三个 hardware profile：默认 `blackwell` 严格要求 CC `(12, 0)` 和 `sm_120`；`ada` 严格要求 CC `(8, 9)` 和 `sm_89`；`compatible` 根据当前 capability 推导 `sm_*`，并只在该 SASS arch 存在于 Torch compiled arch list 时通过。`compatible` 仅用于一般 portability diagnostics。
 
-从 baked reference copy 运行 official Go2、RGB 和 qpth gate：
+### Blackwell production validation
+
+RTX 5070 Ti、5080 和 5090 的 production gate 保持默认 strict Blackwell 行为：CC 必须为 `(12, 0)`，Torch arch list 必须包含 `sm_120`。从 baked reference copy 运行 official Go2 和 RGB gate：
 
 ```bash
 cd /opt/rambo
@@ -120,8 +122,39 @@ cd /opt/rambo
 scripts/rambo/run.sh scripts/rambo/smoke.py --headless --steps 100
 
 scripts/rambo/run.sh scripts/rambo/smoke.py \
+  --hardware-profile blackwell \
   --headless --steps 100 --enable-camera \
   --camera-output /tmp/rambo-go2-smoke-rgb.npy
+```
+
+不指定 `--hardware-profile` 与显式指定 `--hardware-profile blackwell` 完全等价。
+
+### RTX 4090 portability validation
+
+RTX 4090 使用 strict Ada gate；compute capability 是 authoritative check，不依赖 GPU 名称：
+
+```bash
+cd /opt/rambo
+
+scripts/rambo/run.sh scripts/rambo/smoke.py \
+  --hardware-profile ada \
+  --headless \
+  --steps 100
+
+scripts/rambo/run.sh scripts/rambo/smoke.py \
+  --hardware-profile ada \
+  --headless \
+  --steps 100 \
+  --enable-camera \
+  --camera-output /tmp/rambo-go2-smoke-rgb.npy
+```
+
+RTX 4090 + R580 validation 证明 image、CUDA、Vulkan、Isaac Sim、Isaac Lab 和 RAMBO 的跨 host portability，但不能替代 Blackwell production validation。
+
+上述对应 hardware smoke 通过后，再运行共同的 CUDA qpth gate：
+
+```bash
+cd /opt/rambo
 
 RAMBO_REQUIRE_CUDA_QPTH=1 scripts/rambo/run.sh \
   -m pytest -q tests/rambo/test_qpth_contract.py
