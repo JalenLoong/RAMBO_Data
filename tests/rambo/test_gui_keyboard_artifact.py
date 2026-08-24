@@ -580,6 +580,16 @@ def test_gui_recorder_observes_existing_callback_without_input_injection_api() -
     assert source.count("assert_physx_environment(env)") >= 2
 
 
+def test_operator_statement_allows_live_selkies_human_keyboard_but_rejects_automation() -> None:
+    statement = schema.OPERATOR_ATTESTATION_STATEMENT
+    assert "physical keyboard" in statement
+    assert "live Selkies WebRTC session" in statement
+    assert "scripted" in statement
+    assert "replayed" in statement
+    assert "automated" in statement
+    assert "injected" in statement
+
+
 def test_dedicated_m8_runner_rejects_non_gui_visualizer_before_python(tmp_path: Path) -> None:
     root = Path(__file__).resolve().parents[2]
     runner = root / "scripts/rambo/run_gui_keyboard_artifact.sh"

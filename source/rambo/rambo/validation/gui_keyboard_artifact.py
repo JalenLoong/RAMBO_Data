@@ -42,9 +42,10 @@ ATTESTATION_CONFIRMATION_METHOD = "interactive_tty_exact_phrase_after_kit_close"
 TERMINAL_CONFIRMATION_PHRASE = "I OBSERVED THE M8 PHYSICAL KEYBOARD GUI"
 
 OPERATOR_ATTESTATION_STATEMENT = (
-    "I personally focused the Isaac Sim GUI viewport and operated a physical keyboard to issue "
-    "base and FL commands, press SPACE, and observe a simulated button press and rebound. "
-    "I did not use a synthetic, scripted, remote, or injected keyboard-event source."
+    "I personally focused the Isaac Sim GUI viewport and operated my physical keyboard through "
+    "the live Selkies WebRTC session to issue base and FL commands, press SPACE, and observe a "
+    "simulated button press and rebound. I did not use a synthetic, scripted, replayed, automated, "
+    "or injected keyboard-event source."
 )
 PHYSICALITY_LIMITATION = (
     "This artifact records callback observations and simulation states, but it cannot "

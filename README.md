@@ -329,9 +329,10 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   --seed 42 --viz kit
 
 # The only accepted M8 GUI path. Run from the visible desktop session (for
-# example DISPLAY=:20). A named operator must focus the viewport and use a
-# physical keyboard: issue a base command, move FL, press SPACE once, press
-# the button to at least 12 mm, then retract until it reports released.
+# example DISPLAY=:20). A named operator must focus the viewport and use their
+# physical keyboard through the live Selkies WebRTC session: issue a base
+# command, move FL, press SPACE once, press the button to at least 12 mm, then
+# retract until it reports released.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 M8_GUI_OUT="/workspace/migration-output/isaac60/M8/${STAMP}-gui-keyboard"
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_gui_keyboard_artifact.sh \
@@ -371,9 +372,11 @@ named operator at an interactive TTY to type an exact acknowledgement, then run
 the offline validator. Missing, redirected, interrupted, or mismatched
 attestations leave the artifact unaccepted. A passing offline validator proves
 internal consistency but intentionally does not independently prove the
-physical origin of keyboard events. Never use xdotool, pyautogui, replayed
-events, or any injected input source. Retain a failed artifact for diagnosis
-and use a new output directory for the next genuine attempt.
+physical origin of keyboard events. Live human operation of the operator's
+physical keyboard through Selkies WebRTC is the intended remote-desktop path;
+never use xdotool, pyautogui, scripted or replayed events, automation, or any
+injected input source. Retain a failed artifact for diagnosis and use a new
+output directory for the next genuine attempt.
 
 The recorder writes actions, observations, post-step state, 375 RGB frames,
 timestamps, runtime/checkpoint/PhysX evidence, memory samples, and a checksum
