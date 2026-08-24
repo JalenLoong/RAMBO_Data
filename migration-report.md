@@ -22,7 +22,7 @@ smoke、validation 和 recorder 都显式配置 `PhysxCfg`、
 本轮已批准延期两项：M5.2 的 Isaac Sim 5.1 历史 QP snapshot 比较，以及 M11
 Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。非 GUI
 long-runtime 已在 clean source `358daa5` 上封存，新增短门禁绑定 `078bfa2`；M11
-current-scope native freeze 将绑定其完整 canonical input list，所有这些路径都不选择或执行
+current-scope native freeze 已绑定完整 canonical input list，所有这些路径都不选择或执行
 Newton。
 
 新增的 `run_runtime_artifact.sh` 会在 Kit 子进程真正退出后写入
@@ -49,7 +49,7 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M8 GUI 真实键盘 | **本轮已延期** | 只接受真实操作者在 `--viz kit` 使用物理键盘；合成输入、重放与注入不计通过。 |
 | M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`M9/20260824T151210Z-biped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（435/18、256 env-steps、PhysX 前后 FQN、exit 0）；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。RGB visibility 的前视流 + 同 rollout third-person 解释与 M7 相同。 |
 | M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
-| M11 native freeze | current-scope 完成 | `M11/20260824T151345Z-native-freeze-final-current-scope-v2/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、20 项 canonical source inputs、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
+| M11 native freeze | current-scope 完成 | `M11/20260824T151639Z-native-freeze-final-current-scope-v3/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、20 项 canonical source inputs、接受工件索引与 checksum 全部通过；它取代旧的 6-input freeze。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明
