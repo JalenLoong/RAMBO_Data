@@ -31,7 +31,8 @@
 | M0 | 完成 | 删除已授权的损坏 venv，释放 20,005,949,440 B；证据见 `M0/20260824T100222Z-host-and-cleanup/` |
 | M1：精确栈安装 | 完成 | Isaac Sim 6.0.1.0、tag `ffff603…`、Torch 2.10.0+cu128、RTX 4090 CUDA 已通过 |
 | M2：官方 PhysX 门禁 | 完成 | Cartpole、Go2、RTX RGB、Kit GUI 与独立 clean restart 均通过；脚本 `scripts/rambo/official_physx_smoke.py` |
-| M3–M11 | 未开始 | M3 API inventory 是下一阶段；见 `CODEX_EXECUTION_PLAN.md` |
+| M3：API inventory | 完成 | `MIGRATION_API_INVENTORY.md`；覆盖 PhysX、ProxyArray、XYZW、view/writer、Camera、Button、teleop 与 lifecycle |
+| M4–M11 | 未开始 | M4 共享 PhysX contract 与核心 Isaac Lab 3 API 迁移是下一阶段 |
 
 ## 最近命令与结果
 
@@ -47,6 +48,7 @@
 10. M2：为精确 tag 的 `isaaclab_tasks` 补装常规 `hydra-core==1.3.2` / `omegaconf==2.3.1`；未安装任何 Newton optional extra。
 11. M2：以进程级 `OMNI_KIT_ACCEPT_EULA=Y` 启动隔离官方 gate。Cartpole 16-step、Go2 16-step、RTX RGB 640×480、Kit GUI Cartpole 8-step 与热缓存相机 clean restart 均通过，五个成功 artifact 的 exit code 均为 0。
 12. M2：每个成功 summary 都同时记录 `PhysxCfg`、`PhysxManager`、`use_newton_actuators=false` 与 `cuda:0`。Kit GUI experience 按固定官方依赖图加载了 `isaaclab_newton` 扩展，但活跃 manager 仍是 `PhysxManager`，未选择或执行 Newton physics backend。首次 RTX 冷启动为 shader cache 初始化耗时约 156 秒；独立热缓存重启为 8 秒，满足 60 秒关闭/重启门槛。
+13. M3：完成对所有 RAMBO 配置、入口、资产/传感器数据、QP、相机、Button、teleop、生命周期和打包 metadata 的只读 API inventory。确认现有 RAMBO 源码没有主动执行 Newton，但除官方 gate 外的运行路径仍需在 M4 显式选择并实际断言 PhysX。
 
 ## 当前 blocker
 
@@ -54,4 +56,4 @@
 
 ## 下一精确动作
 
-M3：生成 RAMBO 全量 API inventory，并将每项旧 Isaac Sim 5.1 API 映射到 Isaac Sim 6 / Isaac Lab 3 的 PhysX 目标 API 与测试。
+M4：实现共享 PhysX contract，并迁移最先阻断 RAMBO 实例化的 Isaac Lab 3 API（Python 3.12 metadata、显式 physics、XYZW 与 ProxyArray/view/writer）。
