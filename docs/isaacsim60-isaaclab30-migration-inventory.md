@@ -6,7 +6,15 @@
 
 本清单基于迁移基线 `10154c6d2f20d33f51e5e126801c507e6fe206db` 与目标
 Isaac Lab `v3.0.0-beta2.patch1` (`ffff603eafc6b74264a5261cc0183d6a65390d78`) 的
-只读比对。盘点期间没有启动 RAMBO 仿真，也没有选择或执行 Newton 后端。
+只读比对。最终 M3 clean-source 扫描绑定 RAMBO commit
+`e449b1dd9f06ee3a4fc29338e5d917d12c8cce05`，证据目录为
+`/workspace/migration-output/isaac60/M3/20260824T142802Z-api-inventory-clean/`；
+该目录的 `checksums.sha256` 已复核。扫描找到的两个字面 quaternion 候选均为
+已审计的 XYZW identity `[0,0,0,1]`，没有 `[1,0,0,0]` WXYZ identity 候选。
+盘点期间没有启动 RAMBO 仿真，也没有选择或执行 Newton 后端。
+
+除非本表明确列为 sealed runtime evidence，“runtime 通过”仅指此前保留的
+技术 workload evidence；最终 runtime 状态以根目录的 `MIGRATION_STATUS.md` 为准。
 
 ## 不可协商的运行时合同
 

@@ -21,7 +21,9 @@ smoke、validation 和 recorder 都显式配置 `PhysxCfg`、
 
 本轮已批准延期两项：M5.2 的 Isaac Sim 5.1 历史 QP snapshot 比较，以及 M11
 Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。当前
-分支仍需形成新的 clean local commit，随后可本地重跑 M3/M7/M9 的 provenance 证据。
+已形成 clean local commit `e449b1d`，并已完成绑定该 commit 的 M3
+quaternion/API inventory 扫描；后续只需在干净源码上完成 M7/M9 的 sealed runtime
+provenance 证据。
 
 新增的 `run_runtime_artifact.sh` 会在 Kit 子进程真正退出后写入
 `process_exit.json` 并重算 checksum。此前所有 Kit artifact 的 `summary.json`
@@ -37,7 +39,7 @@ artifact 重新取代需要接受的非 GUI runtime 证据。
 | M2.2 官方 Cartpole | workload 技术替代 gate 通过；sealed rerun 待执行 | `M2/20260824T135518Z-official-cartpole-direct-16-physx/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX 和后端 evidence。该旧 artifact 没有运行前 backend 与 post-close exit sidecar；修复后需 sealed rerun。固定 tag 的 literal `zero_agent.py --viz none` 没有有限退出路径，不能伪称 literal 命令通过。 |
 | M2.3 Kit GUI | 待人工 | 必须在与 M2.2 相同的 Direct Cartpole task 上，由真实操作者观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090（非 llvmpipe）。现有 `Isaac-Cartpole-v0` 短 Kit 启动仅支持 Kit/PhysX 启动事实，不能替代此门禁。 |
 | M2.4 官方 Go2 + RGB | workload 技术通过；sealed rerun 待执行 | warm-up `M2/20260824T125356Z-official-go2-rgb-1000-warmup/` 与 clean restart `M2/20260824T125434Z-official-go2-rgb-1000-restart/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、前后 PhysX manager、`false` 和 checksums；旧 artifact 无 post-close exit sidecar。 |
-| M3 API inventory | 待 clean-source 重扫 | 现存 `/workspace/migration_logs/{quaternion-scan,api-inventory}.txt` 早于后续源码变更；不能作为最终 freeze。 |
+| M3 API inventory | 完成（clean-source） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 clean、checksums 已复核；扫描仅保留两处已审计 XYZW `[0,0,0,1]` identity 候选。 |
 | M4 API/空间合同 | workload 技术通过；sealed clean rerun 待执行 | `M4/20260824T111439Z-*-space-contract-r2/` 覆盖四足/双足空间合同和 PhysX，但需绑定最终 clean revision 与 post-close exit。 |
 | M5.1 qpth | 通过（范围受限） | `M5/20260824T105302Z-qpth-contract/` 覆盖 CPU/CUDA toy qpth forward/backward、KKT、残差与确定性；不等于历史 RAMBO QP 对比。 |
 | M5.2 RAMBO 5.1 QP 数值比较 | **已批准延期** | 所需旧端 snapshot 未保存；本轮不以其阻断后续自动化工作。 |
@@ -79,8 +81,8 @@ evidence。
 
 ## 尚需完成的工作
 
-1. 提交当前代码后，重跑 M3 inventory/quaternion scan、M7 quadruped 和 M9 biped 的
-   clean-source final PhysX diagnostics，并绑定 M4 provenance。
+1. 重跑 M7 quadruped 和 M9 biped 的 clean-source final PhysX diagnostics，并绑定
+   M4 provenance；M3 inventory/quaternion scan 已完成。
 2. 由真实操作者完成 M2.3 的 Direct Cartpole GUI 检查和 M8 physical-keyboard
    teleoperation；不得使用 xdotool、pyautogui、重放或注入事件。
 3. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
