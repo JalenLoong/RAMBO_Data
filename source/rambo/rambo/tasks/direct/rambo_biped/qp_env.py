@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import torch
 import numpy as np
 import omni.kit.app
@@ -115,6 +117,10 @@ FR_FORCE_Z = [-20.0, 20.0]
 # FR_FORCE_Z = [-0.0, 0.0]
 
 SYMMETRIC = True
+
+# RAMBO's logical joint vector interleaves the four legs by joint type.  These
+# are the FL/FR hip, thigh, and calf slots used by the biped QP override.
+FRONT_LEG_LOGICAL_JOINT_SLOTS = (0, 1, 4, 5, 8, 9)
 
 
 @configclass
@@ -641,6 +647,9 @@ class QPEnvCfg(DirectRLEnvCfg):
 class QPEnv(DirectRLEnv):
 
     def __init__(self, cfg: QPEnvCfg, render_mode: str | None = None, **kwargs):
+        # Runtime validation can opt in to a clone-only QP trace.  Normal
+        # training and rollout paths keep this ``None`` and allocate nothing.
+        self._runtime_qp_diagnostic_sink: Callable[[dict[str, object]], None] | None = None
         super().__init__(cfg, render_mode, **kwargs)
         self._physics_backend_evidence = assert_physx_environment(self)
 
@@ -747,6 +756,75 @@ class QPEnv(DirectRLEnv):
         self._robot.set_joint_velocity_target_index(target=self.desired_vel, joint_ids=joint_ids)
         self._robot.set_joint_effort_target_index(target=self.desired_tor, joint_ids=joint_ids)
 
+    def set_runtime_qp_diagnostic_sink(
+        self,
+        sink: Callable[[dict[str, object]], None] | None,
+    ) -> None:
+        """Install an opt-in, clone-only sink for one QP control-step trace.
+
+        The sink is deliberately absent from the normal task configuration and
+        receives detached clones only after the controller has computed its
+        commands.  It cannot feed data back into the QP or actuator path.
+        """
+
+        if sink is not None and not callable(sink):
+            raise TypeError("runtime QP diagnostic sink must be callable or None")
+        self._runtime_qp_diagnostic_sink = sink
+
+    @staticmethod
+    def _runtime_qp_clone(value: object, label: str) -> torch.Tensor:
+        """Return a detached diagnostic clone or fail if a required QP field vanished."""
+
+        if not isinstance(value, torch.Tensor):
+            raise RuntimeError(f"Runtime QP diagnostic requires tensor field {label}")
+        return value.detach().clone()
+
+    def _emit_runtime_qp_diagnostic(
+        self,
+        *,
+        contact_source: torch.Tensor | None,
+        contact_source_label: str | None,
+        contact_state_expanded: torch.Tensor | None,
+        grf: torch.Tensor | None,
+        desired_joint_torque: torch.Tensor,
+    ) -> None:
+        """Emit source/QP evidence only when an explicit runtime sink is installed."""
+
+        sink = self._runtime_qp_diagnostic_sink
+        if sink is None:
+            return
+        if contact_source is None or contact_source_label is None or contact_state_expanded is None or grf is None:
+            raise RuntimeError(
+                "Runtime QP diagnostic requires feedforward torque, a contact source, and QP GRF output"
+            )
+        sink(
+            {
+                "contact_source": contact_source_label,
+                "source_contact_state": self._runtime_qp_clone(contact_source, "contact source"),
+                "contact_schedule_mode": self._runtime_qp_clone(
+                    self.contact_generator.desired_contact_mode,
+                    "contact schedule mode",
+                ),
+                "contact_schedule_phase": self._runtime_qp_clone(
+                    self.contact_generator.desired_contact_phase,
+                    "contact schedule phase",
+                ),
+                "front_leg_logical_joint_slots": FRONT_LEG_LOGICAL_JOINT_SLOTS,
+                "front_leg_override_applied": True,
+                "use_actual_contact": bool(self.cfg.use_actual_contact),
+                "contact_state_expanded": self._runtime_qp_clone(
+                    contact_state_expanded,
+                    "contact_state_expanded",
+                ),
+                "grf": self._runtime_qp_clone(grf, "grf"),
+                "desired_joint_torque": self._runtime_qp_clone(
+                    desired_joint_torque,
+                    "desired_joint_torque",
+                ),
+                "desired_tor": self._runtime_qp_clone(self.desired_tor, "desired_tor"),
+            }
+        )
+
     def step(self, action: torch.Tensor):
         action = action.to(self.device)
         if self.cfg.action_noise_model:
@@ -842,6 +920,32 @@ class QPEnv(DirectRLEnv):
             self.desired_pos[reset_env_ids] = desired_motor_position[reset_env_ids]
             self.desired_vel[reset_env_ids] = torch.zeros_like(self.joint_vel[reset_env_ids])
             self.desired_tor[reset_env_ids] = desired_joint_torque[reset_env_ids]
+
+        # Keep the default controller path allocation-free: the clone-only
+        # diagnostic method is not even entered until validation opts in.
+        if self._runtime_qp_diagnostic_sink is not None:
+            if self.cfg.add_feedforward_torque:
+                if self.cfg.use_actual_contact:
+                    contact_source = self.foot_contacts
+                    contact_source_label = "foot_contacts"
+                else:
+                    contact_source = self.contact_generator.desired_contact_state
+                    contact_source_label = "contact_generator.desired_contact_state"
+                self._emit_runtime_qp_diagnostic(
+                    contact_source=contact_source,
+                    contact_source_label=contact_source_label,
+                    contact_state_expanded=contact_state_expanded,
+                    grf=grf,
+                    desired_joint_torque=desired_joint_torque,
+                )
+            else:
+                self._emit_runtime_qp_diagnostic(
+                    contact_source=None,
+                    contact_source_label=None,
+                    contact_state_expanded=None,
+                    grf=None,
+                    desired_joint_torque=desired_joint_torque,
+                )
 
         external_force_com_fl = -self._ee_force_fl_commands
         external_force_com_fr = -self._ee_force_fr_commands

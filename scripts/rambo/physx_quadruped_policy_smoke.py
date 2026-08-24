@@ -66,6 +66,14 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser.add_argument("--steps", type=int, default=DEFAULT_STEPS, help="Finite policy steps to execute.")
     parser.add_argument("--seed", type=int, default=42, help="Fixed Python/NumPy/Torch/environment seed.")
     parser.add_argument(
+        "--record-first-transition",
+        action="store_true",
+        help=(
+            "Opt-in M6 artifact: record the reset policy observation, its first policy action, "
+            "and the existing QP outputs after that exact first env.step."
+        ),
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         required=True,
@@ -527,6 +535,210 @@ def _sha256_path(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _tensor_sha256(tensor: Any, label: str) -> str:
+    """Hash a finite tensor with shape/dtype domain separation for M6 evidence."""
+
+    import torch
+
+    if not isinstance(tensor, torch.Tensor):
+        raise PolicySmokeError(f"{label} must be a torch.Tensor, got {type(tensor).__name__}")
+    if tensor.numel() == 0:
+        raise PolicySmokeError(f"{label} must not be empty")
+    if not bool(torch.isfinite(tensor).all()):
+        raise PolicySmokeError(f"{label} contains NaN or Inf")
+    detached = tensor.detach().contiguous().cpu()
+    digest = hashlib.sha256()
+    digest.update(json.dumps({"dtype": str(detached.dtype), "shape": list(detached.shape)}).encode("utf-8"))
+    digest.update(detached.numpy().tobytes())
+    return digest.hexdigest()
+
+
+def _artifact_tensor_metrics(tensor: Any, label: str) -> dict[str, Any]:
+    """Return finite tensor metrics plus a content SHA for a first-transition field."""
+
+    metrics = _tensor_metrics(tensor, label)
+    metrics["sha256"] = _tensor_sha256(tensor, label)
+    return metrics
+
+
+def _existing_qp_outputs(base_env: Any) -> dict[str, Any]:
+    """Read QP results already produced by the completed first ``env.step``.
+
+    This function deliberately only reads the stateful outputs that the normal
+    QP path has already populated.  It never recomputes the QP, invokes the
+    optimizer, mutates qpth state, or touches any random-number generator.
+    """
+
+    torque_optimizer = getattr(base_env, "torque_optimizer", None)
+    if torque_optimizer is None:
+        raise PolicySmokeError("First-transition evidence requires base_env.torque_optimizer")
+    grf = getattr(torque_optimizer, "grf", None)
+    desired_tor = getattr(base_env, "desired_tor", None)
+    extras = getattr(base_env, "extras", None)
+    if not isinstance(extras, Mapping):
+        raise PolicySmokeError("First-transition evidence requires base_env.extras mapping")
+    step_log = extras.get("log")
+    if not isinstance(step_log, Mapping):
+        raise PolicySmokeError("First-transition evidence requires base_env.extras['log'] mapping")
+    qp_cost = step_log.get("Step Log/QP Cost")
+    return {
+        "grf": grf,
+        "desired_tor": desired_tor,
+        "qp_cost": qp_cost,
+    }
+
+
+def _cpu_numpy_copy(tensor: Any, label: str, torch: Any) -> Any:
+    """Snapshot a tensor after all finite checks, without retaining simulator storage."""
+
+    if not isinstance(tensor, torch.Tensor):
+        raise PolicySmokeError(f"{label} must be a torch.Tensor, got {type(tensor).__name__}")
+    if not bool(torch.isfinite(tensor).all()):
+        raise PolicySmokeError(f"{label} contains NaN or Inf")
+    return tensor.detach().contiguous().cpu().numpy().copy()
+
+
+def _record_first_transition(
+    output_dir: Path,
+    *,
+    initial_policy_observations: Any,
+    first_actions: Any,
+    post_step_observations: Any,
+    post_step_rewards: Any,
+    post_step_dones: Any,
+    base_env: Any,
+    num_envs: int,
+    observation_dim: int,
+    action_dim: int,
+    torch: Any,
+) -> tuple[tuple[Path, Path], dict[str, Any]]:
+    """Write exactly one reset→policy→step evidence record for an M6 replay.
+
+    The caller invokes this only after the first real ``policy(observations)``
+    and the resulting first real ``env.step(actions)``.  It snapshots existing
+    outputs and never takes another policy/QP step, so it cannot alter qpth
+    solver execution or replay randomness.
+    """
+
+    expected_observation_shape = (num_envs, observation_dim)
+    expected_action_shape = (num_envs, action_dim)
+    if tuple(initial_policy_observations.shape) != expected_observation_shape:
+        raise PolicySmokeError(
+            "First-transition initial policy observation has unexpected shape: "
+            f"expected {expected_observation_shape}, got {tuple(initial_policy_observations.shape)}"
+        )
+    if tuple(first_actions.shape) != expected_action_shape:
+        raise PolicySmokeError(
+            "First-transition policy action has unexpected shape: "
+            f"expected {expected_action_shape}, got {tuple(first_actions.shape)}"
+        )
+    if tuple(post_step_observations.shape) != expected_observation_shape:
+        raise PolicySmokeError(
+            "First-transition post-step policy observation has unexpected shape: "
+            f"expected {expected_observation_shape}, got {tuple(post_step_observations.shape)}"
+        )
+    if tuple(post_step_rewards.shape) != (num_envs,):
+        raise PolicySmokeError(
+            "First-transition rewards have unexpected shape: "
+            f"expected ({num_envs},), got {tuple(post_step_rewards.shape)}"
+        )
+    if not isinstance(post_step_dones, torch.Tensor) or tuple(post_step_dones.shape) != (num_envs,):
+        raise PolicySmokeError(
+            "First-transition dones must be a torch.Tensor with shape "
+            f"({num_envs},), got {type(post_step_dones).__name__} {getattr(post_step_dones, 'shape', None)}"
+        )
+
+    qp_outputs = _existing_qp_outputs(base_env)
+    tensor_values = {
+        "initial_policy_observation": initial_policy_observations,
+        "first_action": first_actions,
+        "post_step_policy_observation": post_step_observations,
+        "post_step_reward": post_step_rewards,
+        "qp_grf": qp_outputs["grf"],
+        "desired_tor": qp_outputs["desired_tor"],
+        "qp_cost": qp_outputs["qp_cost"],
+    }
+    metrics = {
+        name: _artifact_tensor_metrics(tensor, f"first_transition.{name}")
+        for name, tensor in tensor_values.items()
+    }
+    done_values = post_step_dones.detach().cpu().to(dtype=torch.bool)
+    npz_values = {
+        name: _cpu_numpy_copy(tensor, f"first_transition.{name}", torch)
+        for name, tensor in tensor_values.items()
+    }
+    npz_values["post_step_done"] = done_values.numpy().copy()
+
+    npz_path = output_dir / "first_transition.npz"
+    json_path = output_dir / "first_transition.json"
+    import numpy as np
+
+    np.savez(npz_path, **npz_values)
+    record = {
+        "schema_version": 1,
+        "recorded_after_policy_step": 1,
+        "contract": {
+            "initial_policy_observation_shape": list(expected_observation_shape),
+            "first_action_shape": list(expected_action_shape),
+            "initial_policy_observation_dim": observation_dim,
+            "first_action_dim": action_dim,
+        },
+        "all_required_floating_tensors_finite": True,
+        "post_step_dones": {
+            "shape": list(done_values.shape),
+            "values": done_values.tolist(),
+            "any_true": bool(torch.any(done_values).item()),
+        },
+        "existing_qp_outputs": {
+            "grf": metrics["qp_grf"],
+            "desired_tor": metrics["desired_tor"],
+            "qp_cost": metrics["qp_cost"],
+            "sources": {
+                "grf": "base_env.torque_optimizer.grf after the first env.step",
+                "desired_tor": "base_env.desired_tor after the first env.step",
+                "qp_cost": "base_env.extras['log']['Step Log/QP Cost'] after the first env.step",
+            },
+        },
+        "tensors": {
+            "initial_policy_observation": metrics["initial_policy_observation"],
+            "first_action": metrics["first_action"],
+            "post_step_policy_observation": metrics["post_step_policy_observation"],
+            "post_step_reward": metrics["post_step_reward"],
+        },
+        "full_tensor_payload": {
+            "container": npz_path.name,
+            "arrays": {
+                name: {"shape": metrics[name]["shape"], "sha256": metrics[name]["sha256"]}
+                for name in tensor_values
+            },
+            "post_step_done": {"shape": list(done_values.shape), "values_are_boolean": True},
+        },
+        "diagnostic_side_effects": {
+            "additional_policy_calls": 0,
+            "additional_env_steps": 0,
+            "additional_qp_solves": 0,
+            "qpth_or_rng_mutation": False,
+        },
+        "npz_file": npz_path.name,
+        "npz_sha256": _sha256_path(npz_path),
+    }
+    json_path.write_text(json.dumps(_jsonable(record), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    summary = {
+        "requested": True,
+        "recorded": True,
+        "step": 1,
+        "npz_file": npz_path.name,
+        "npz_sha256": _sha256_path(npz_path),
+        "json_file": json_path.name,
+        "json_sha256": _sha256_path(json_path),
+        "initial_policy_observation": metrics["initial_policy_observation"],
+        "first_action": metrics["first_action"],
+        "existing_qp_outputs": record["existing_qp_outputs"],
+        "diagnostic_side_effects": record["diagnostic_side_effects"],
+    }
+    return (npz_path, json_path), summary
+
+
 def _write_summary(
     output_dir: Path, summary: dict[str, Any], evidence_paths: tuple[Path, ...] = ()
 ) -> None:
@@ -569,10 +781,17 @@ def main() -> int:
         "eula_acceptance": "explicit_user_consent",
         "command": [str(Path(sys.executable).resolve()), *sys.argv],
     }
+    if args_cli.record_first_transition:
+        summary["first_transition"] = {
+            "requested": True,
+            "recorded": False,
+            "reason": "awaiting first reset-to-policy-to-env.step transition",
+        }
     simulation_app = None
     env = None
     runtime: dict[str, Any] | None = None
     trace_writer: _StateTraceWriter | None = None
+    first_transition_paths: tuple[Path, Path] = ()
     memory_samples: list[dict[str, int]] = []
     rollout_progress: dict[str, Any] = {
         "steps_completed": 0,
@@ -693,6 +912,12 @@ def main() -> int:
         action_mean_total = 0.0
         for step in range(args_cli.steps):
             with runtime["torch"].inference_mode():
+                first_transition_input = None
+                if args_cli.record_first_transition and step == 0:
+                    # This is the exact tensor subsequently passed to the real
+                    # released policy; the clone avoids retaining a mutable
+                    # environment observation buffer for evidence writing.
+                    first_transition_input = observations.detach().clone()
                 actions = policy(observations)
                 if tuple(actions.shape) != (args_cli.num_envs, contract.action_dim):
                     raise PolicySmokeError(
@@ -710,6 +935,24 @@ def main() -> int:
                 step_terminal_count = int(runtime["torch"].count_nonzero(dones).detach().cpu())
                 rollout_progress["terminal_count_all_envs"] += step_terminal_count
                 rollout_progress["terminal_count_by_step"].append(step_terminal_count)
+
+                if args_cli.record_first_transition and step == 0:
+                    if first_transition_input is None:  # pragma: no cover - defensive invariant.
+                        raise PolicySmokeError("First-transition input snapshot was not captured")
+                    first_transition_paths, first_transition_summary = _record_first_transition(
+                        output_dir,
+                        initial_policy_observations=first_transition_input,
+                        first_actions=actions.detach().clone(),
+                        post_step_observations=observations.detach().clone(),
+                        post_step_rewards=rewards.detach().clone(),
+                        post_step_dones=dones.detach().clone(),
+                        base_env=base_env,
+                        num_envs=args_cli.num_envs,
+                        observation_dim=contract.observation_dim,
+                        action_dim=contract.action_dim,
+                        torch=runtime["torch"],
+                    )
+                    summary["first_transition"] = first_transition_summary
 
                 state_record, state_extrema = _collect_public_robot_state(
                     base_env,
@@ -780,11 +1023,11 @@ def main() -> int:
         summary["traceback"] = traceback.format_exc()
         traceback.print_exception(type(error), error, error.__traceback__)
     finally:
-        evidence_paths: tuple[Path, ...] = ()
+        evidence_paths: list[Path] = list(first_transition_paths)
         if trace_writer is not None:
             try:
                 trace_writer.close()
-                evidence_paths = (trace_writer.path,)
+                evidence_paths.append(trace_writer.path)
                 state_progress["trace_file"] = trace_writer.path.name
                 state_progress["trace_sha256"] = _sha256_path(trace_writer.path)
                 state_progress["records"] = trace_writer.records
@@ -797,6 +1040,15 @@ def main() -> int:
             state_progress["min_base_height_m"] = None
         summary.setdefault("rollout", rollout_progress)
         summary.setdefault("public_state_monitor", state_progress)
+        if args_cli.record_first_transition:
+            summary.setdefault(
+                "first_transition",
+                {
+                    "requested": True,
+                    "recorded": False,
+                    "reason": "rollout did not reach the first completed policy transition",
+                },
+            )
         summary.setdefault(
             "memory_monitor",
             {
@@ -823,7 +1075,7 @@ def main() -> int:
                     summary["traceback"] = traceback.format_exc()
         summary["passed"] = exit_code == 0
         summary["shutdown_mode"] = "isaacsim_default_fast_shutdown"
-        _write_summary(output_dir, summary, evidence_paths)
+        _write_summary(output_dir, summary, tuple(evidence_paths))
 
     if simulation_app is not None:
         simulation_app.close(exit_code=exit_code)

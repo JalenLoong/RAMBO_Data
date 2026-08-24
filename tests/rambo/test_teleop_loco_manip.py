@@ -19,7 +19,7 @@ def _load_teleop_module():
     return module
 
 
-def test_keyboard_event_name_accepts_native_and_synthetic_isaac_sim_inputs() -> None:
+def test_keyboard_event_name_accepts_named_and_string_like_carb_key_values() -> None:
     teleop = _load_teleop_module()
 
     assert teleop._keyboard_event_name(SimpleNamespace(input=SimpleNamespace(name="R"))) == "R"
@@ -131,7 +131,8 @@ def test_teleop_uses_public_command_api_and_preserves_space_fallthrough() -> Non
     assert script_source.count("env_ids=writer_env_ids") == 4
     assert "base_env._velocity_commands.copy_(" not in script_source
     assert "base_env._ee_pos_commands.copy_(" not in script_source
-    assert '"SPACE"' not in script_source
+    assert '"SPACE":' not in script_source
+    assert 'record["key"] == "SPACE"' in script_source
 
 
 def test_button_source_uses_physx_checked_proxy_and_index_writer_apis() -> None:

@@ -23,7 +23,8 @@ digest 时，它会直接拒绝 build；不要为了让 build 继续而改用可
 | Checkpoint / artifacts | runtime read-only mount / output mount；绝不 COPY 进 image |
 
 镜像不安装 NVIDIA kernel driver，也不安装任何 Newton optional extra。精确
-Isaac Sim / Isaac Lab 依赖图所要求的裸 Newton 相关 package 可以存在，但
+Isaac Sim / Isaac Lab 依赖图所要求的裸 Newton 相关 package（包括 pinned tag
+官方 core install 的 `isaaclab_newton`）可以存在，但
 RAMBO config、smoke、validation、recorder 和 production execution 都必须在
 运行前后记录实际 `PhysxManager`，不能选择或执行 Newton backend。
 
@@ -80,7 +81,7 @@ DOCKER_BUILDKIT=1 docker build \
 
 `Dockerfile.rambo60` clones only the detached exact Isaac Lab commit, then runs
 `scripts/setup_isaacsim60.sh --docker-build-metadata-only`。它会安装精确 Isaac
-Sim / Torch / Isaac Lab 路径和必要的 bare transitive packages，并消费
+Sim / Torch / Isaac Lab 路径和官方 core 所需的 bare packages，并消费
 `requirements/isaacsim60.lock` 强制非 editable wheel 版本，但不会请求 Isaac
 Lab Newton optional extra。该 build mode 只核验 Python、包、lock、Isaac Lab
 editable provenance 与 `pip check` allowlist：Docker build 本身通常没有 GPU，
@@ -92,6 +93,7 @@ Build 后先执行不启动 Kit 的 metadata 检查，再决定是否进行 GPU 
 
 ```bash
 docker run --rm --entrypoint /bin/bash rambo-isaac60-physx:deferred -lc '
+  cd /opt/rambo
   python --version
   python scripts/verify_isaacsim60_install.py \
     --isaaclab-source /opt/IsaacLab-3.0.0-beta2.patch1 \
@@ -128,9 +130,9 @@ docker run --rm --gpus all \
       --requirements-input requirements/isaacsim60.in \
       --requirements-lock requirements/isaacsim60.lock \
       --installer-script scripts/setup_isaacsim60.sh
-    scripts/rambo/run60.sh scripts/rambo/official_physx_smoke.py \
-      --scenario cartpole --steps 16 \
-      --output-dir /artifacts/official-cartpole \
+    scripts/rambo/run_runtime_artifact.sh scripts/rambo60/official_go2_smoke.py \
+      --steps 1000 \
+      --output-dir /artifacts/official-go2-rgb-1000 \
       --viz none
   '
 ```

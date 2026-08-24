@@ -99,8 +99,9 @@ source /workspace/venvs/rambo60/bin/activate
 
 - `isaacsim[all,extscache]==6.0.1.0`;
 - `torch==2.10.0+cu128`, `torchvision==0.25.0+cu128`, and `numpy==2.3.1`;
-- the Isaac Lab extensions from the exact checkout, with bare transitive graph
-  nodes only and no Newton optional extras;
+- the Isaac Lab extensions from the exact checkout, including the pinned tag's
+  official core bare nodes (such as `isaaclab_newton`) but no Newton optional
+  extras;
 - `qpth==0.0.18`, `cvxpy==1.6.7`, `clarabel==0.11.1`, and `scs==3.2.11`.
 
 The direct dependency intent is recorded in
@@ -125,17 +126,47 @@ stack from RAMBO task issues:
 
 ```bash
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-OUT="/workspace/migration-output/isaac60/M2/${STAMP}-official-cartpole"
+OUT="/workspace/migration-output/isaac60/M2/${STAMP}-official-cartpole-direct-16"
 
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/official_physx_smoke.py \
-  --scenario cartpole --steps 16 --output-dir "$OUT" --viz none
+  --scenario cartpole-direct --num-envs 16 --steps 16 --output-dir "$OUT" --viz none
 ```
 
-The same gate supports `--scenario go2` and `--scenario camera`. A successful
-summary must record `PhysxCfg`, the actual `PhysxManager`,
+This finite wrapper uses the official `Isaac-Cartpole-Direct-v0` task but is
+not the pinned tag's literal `zero_agent.py` command: that upstream script
+defines but never applies its `MAX_STEPS` limit, so `--viz none` has no finite
+completion condition. The same gate supports `--scenario cartpole`, `go2`, and
+`camera`. A successful summary must record `PhysxCfg`, the actual `PhysxManager`,
 `use_newton_actuators=false`, and RTX GPU evidence. Do not infer backend use
 from installed package names.
+
+For the separate, non-simulator CUDA/Ada compatibility record, run:
+
+```bash
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+/workspace/venvs/rambo60/bin/python scripts/rambo/verify_cuda_m2.py \
+  --output-dir "/workspace/migration-output/isaac60/M2/${STAMP}-cuda-ada-compatible-contract"
+```
+
+This checks the actual CUDA device, capability, finite CUDA arithmetic, and
+the wheel's compiled architecture list without launching Kit. On the pinned
+wheel currently validated here, this proves Ada runtime compatibility via
+`sm_86` but does **not** make the plan's literal `sm_89` assertion true; see
+[MIGRATION_STATUS.md](MIGRATION_STATUS.md) before treating it as an M2.1
+acceptance result.
+
+Every acceptance artifact produced by a Kit child must use
+`run_runtime_artifact.sh`, not `run60.sh` directly. The wrapper records the
+actual post-close shell exit in `process_exit.json` and refreshes
+`checksums.sha256`; a passed `summary.json` without a zero, checksum-covered
+exit sidecar is only pre-close workload evidence. Verify a non-RGB artifact
+without starting Kit:
+
+```bash
+/workspace/venvs/rambo60/bin/python scripts/rambo/validate_runtime_artifact.py \
+  --artifact-dir "$OUT"
+```
 
 Pure Python contract tests do not start Kit or need EULA consent:
 
@@ -161,7 +192,7 @@ GPU/RSS growth.
 
 ```bash
 # Quadruped: finite PhysX-only policy replay without a camera.
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/physx_quadruped_policy_smoke.py \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --num-envs 1 --steps 3000 --seed 42 \
@@ -169,7 +200,7 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   --viz none
 
 # Quadruped: 3,000 steps plus the required 375 RTX RGB frames.
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/validate.py \
   --task Isaac-RAMBO-Quadruped-Go2-v0 \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
@@ -178,7 +209,7 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   --viz none
 
 # Biped: its dedicated gate fixes the 19.6-second validation phase.
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/physx_biped_policy_smoke.py \
   --checkpoint /workspace/rambo-go2-policies/biped/model_4000.pt \
   --num-envs 1 --steps 3000 --seed 42 \
@@ -188,7 +219,51 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
 
 Run the same `validate.py` command with `Isaac-RAMBO-Biped-Go2-v0` and the
 biped checkpoint for its RGB acceptance run. `validate.py` requires a positive
-step count divisible by eight so that the camera cadence remains exact.
+step count divisible by eight so that the camera cadence remains exact. For the
+M7/M9 visual-review contract, use the opt-in final third-person diagnostic; it
+does not alter the production front-camera mount or cadence and only runs after
+the same 3,000-step/375-frame policy rollout has passed.
+
+```bash
+# M7: checkpoint rollout plus a final independent robot-and-scene RGBD view.
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+M7_OUT="/workspace/migration-output/isaac60/M7/${STAMP}-quadruped-3000-rgb-thirdperson-final"
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh scripts/rambo/validate.py \
+  --task Isaac-RAMBO-Quadruped-Go2-v0 \
+  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --seed 42 --steps 3000 --third-person-diagnostic final \
+  --output-dir "$M7_OUT" \
+  --viz none
+
+# M9: the same evidence for the released biped checkpoint.
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+M9_OUT="/workspace/migration-output/isaac60/M9/${STAMP}-biped-3000-rgb-thirdperson-final"
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh scripts/rambo/validate.py \
+  --task Isaac-RAMBO-Biped-Go2-v0 \
+  --checkpoint /workspace/rambo-go2-policies/biped/model_4000.pt \
+  --seed 42 --steps 3000 --third-person-diagnostic final \
+  --output-dir "$M9_OUT" \
+  --viz none
+```
+
+The successful diagnostic writes `third_person_final_robot_scene_rgb.png`, its
+depth array, `third_person_diagnostic_manifest.json`, and a checksum manifest.
+Its summary must still show 15,000 physics ticks, 375 production front RGB
+frames, the final action step 3,000, unchanged front-camera tick counter, and
+actual `PhysxManager` evidence before and after capture.
+For the `final` mode, the RAMBO worktree must be clean before `AppLauncher`
+starts and when the manifest is written; the artifact records the exact RAMBO
+commit, full argv, pinned Isaac Lab tag/commit/version, Isaac Sim version, and
+Torch/CUDA/GPU provenance. This prevents a dirty-source technical run from
+being represented as final acceptance evidence.
+After the wrapper returns zero, verify this stronger final contract offline:
+
+```bash
+PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+  scripts/rambo/validate_final_third_person_artifact.py --artifact-dir "$M7_OUT"
+PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+  scripts/rambo/validate_final_third_person_artifact.py --artifact-dir "$M9_OUT"
+```
 
 ## Button loco-manipulation and evidence recorder
 
@@ -201,7 +276,9 @@ joint motion of at least 0.05.
 Use `--viz kit` only for the genuine interactive keyboard check. Click the
 viewport first; arrows/numpad command the base, `Z`/`X` yaw, `W`/`S`, `A`/`D`,
 and `R`/`F` move the FL target, `L` clears commands, and `C` clears a released
-success latch. Do not claim a GUI keyboard check from a synthetic input trace.
+success latch. `SPACE` is deliberately not a RAMBO loco-manip mapping and is
+recorded as the GUI/timeline conflict during the audited run. Do not claim a
+GUI keyboard check from a synthetic input trace.
 
 ```bash
 # Interactive operator check; this is deliberately not --headless.
@@ -210,9 +287,26 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --seed 42 --viz kit
 
+# Auditable M8 GUI evidence. A named operator must focus the viewport and use
+# a physical keyboard: issue a base command, move FL, press SPACE once, press
+# the button to at least 12 mm, then retract until it reports released.
+STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+M8_GUI_OUT="/workspace/migration-output/isaac60/M8/${STAMP}-gui-keyboard"
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+  scripts/rambo/teleop_loco_manip.py \
+  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --seed 42 --max-steps 3000 --viz kit \
+  --gui-artifact-dir "$M8_GUI_OUT" \
+  --operator-name "<your-name>" --operator-attestation \
+  --gui-arm-timeout-s 120
+
+# Offline-only validator: reads the immutable artifact and never launches Kit.
+PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+  scripts/rambo/validate_gui_keyboard_artifact.py --artifact-dir "$M8_GUI_OUT"
+
 # Non-interactive deterministic Button evidence and independent offline audit.
 M10_OUT="/workspace/migration-output/isaac60/M10/$(date -u +%Y%m%dT%H%M%SZ)-button"
-OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
+OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/record_button_physx_episode.py \
   --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
   --seed 42 --steps 3000 --output-dir "$M10_OUT" --viz none
@@ -220,7 +314,18 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
 PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
   scripts/rambo/validate_button_physx_episode.py \
   --artifact-dir "$M10_OUT" --require-acceptance
+
+/workspace/venvs/rambo60/bin/python scripts/rambo/validate_runtime_artifact.py \
+  --artifact-dir "$M10_OUT"
 ```
+
+The audited GUI mode refuses scripted smoke flags and records native Carb
+callback observations, every control-step state, explicit PhysX evidence before
+and after the run, named-operator attestation, and checksums. A passing offline
+validator proves internal consistency but intentionally does not independently
+prove the physical origin of keyboard events. Never use xdotool, pyautogui,
+replayed events, or any injected input source. Retain a failed artifact for
+diagnosis and use a new output directory for the next genuine attempt.
 
 The recorder writes actions, observations, post-step state, 375 RGB frames,
 timestamps, runtime/checkpoint/PhysX evidence, memory samples, and a checksum

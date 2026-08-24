@@ -8,6 +8,7 @@ used before diagnosing any RAMBO migration failure.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -22,14 +23,19 @@ def _has_option(name: str) -> bool:
 
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("--scenario", choices=("cartpole", "go2", "camera"), required=True)
+parser.add_argument("--scenario", choices=("cartpole", "cartpole-direct", "go2", "camera"), required=True)
 parser.add_argument("--steps", type=int, default=16)
+parser.add_argument("--num-envs", type=int, default=1)
 parser.add_argument("--output-dir", type=Path, required=True)
 AppLauncher.add_app_launcher_args(parser)
 args_cli = parser.parse_args()
 
 if args_cli.steps <= 0:
     parser.error("--steps must be positive")
+if args_cli.num_envs <= 0:
+    parser.error("--num-envs must be positive")
+if args_cli.scenario in {"go2", "camera"} and args_cli.num_envs != 1:
+    parser.error(f"--scenario {args_cli.scenario} requires exactly one environment")
 if _has_option("--headless"):
     parser.error("--headless is forbidden; use --viz none")
 if not _has_option("--viz") and not _has_option("--visualizer"):
@@ -84,9 +90,15 @@ def _jsonable(value: Any) -> Any:
 
 
 def _write_summary(payload: dict[str, Any]) -> None:
-    (output_dir / "summary.json").write_text(
+    summary_path = output_dir / "summary.json"
+    summary_path.write_text(
         json.dumps(_jsonable(payload), indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    checksum_lines = []
+    for path in sorted(output_dir.iterdir()):
+        if path.is_file() and path.name != "checksums.sha256":
+            checksum_lines.append(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n")
+    (output_dir / "checksums.sha256").write_text("".join(checksum_lines), encoding="utf-8")
 
 
 def _assert_physx(sim: Any) -> dict[str, Any]:
@@ -151,12 +163,19 @@ def _run_task(task: str) -> dict[str, Any]:
     from isaaclab_tasks.utils import parse_env_cfg
     from isaaclab_physx.physics import PhysxCfg
 
-    env_cfg = parse_env_cfg(task, device=args_cli.device or "cuda:0", num_envs=1)
+    env_cfg = parse_env_cfg(task, device=args_cli.device or "cuda:0", num_envs=args_cli.num_envs)
+    if not hasattr(env_cfg, "seed"):
+        raise RuntimeError(f"Official task {task} does not expose the required seed configuration")
+    env_cfg.seed = 42
     env_cfg.sim.physics = PhysxCfg()
     env_cfg.sim.use_newton_actuators = False
     env = gym.make(task, cfg=env_cfg)
     try:
-        _assert_physx(env.unwrapped.sim)
+        if int(env.unwrapped.num_envs) != args_cli.num_envs:
+            raise RuntimeError(
+                f"Task constructed {env.unwrapped.num_envs} environments, expected {args_cli.num_envs}"
+            )
+        backend_before = _assert_physx(env.unwrapped.sim)
         observations, _ = env.reset(seed=42)
         _finite_tree(observations, "reset_observations")
         for step in range(args_cli.steps):
@@ -167,8 +186,10 @@ def _run_task(task: str) -> dict[str, Any]:
         return {
             "task": task,
             "steps": args_cli.steps,
+            "num_envs": args_cli.num_envs,
             "action_shape": list(env.action_space.shape),
-            "backend": backend_after_steps,
+            "backend_before": backend_before,
+            "backend_after": backend_after_steps,
         }
     finally:
         env.close()
@@ -190,7 +211,7 @@ def _run_camera() -> dict[str, Any]:
     )
     camera = None
     try:
-        _assert_physx(sim)
+        backend_before = _assert_physx(sim)
         sim_utils.GroundPlaneCfg().func("/World/defaultGroundPlane", sim_utils.GroundPlaneCfg())
         light_cfg = sim_utils.DistantLightCfg(intensity=3000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
@@ -241,7 +262,8 @@ def _run_camera() -> dict[str, Any]:
         iio.imwrite(output_dir / "rgb.png", frame.numpy())
         return {
             "steps": max(args_cli.steps, 8),
-            "backend": _assert_physx(sim),
+            "backend_before": backend_before,
+            "backend_after": _assert_physx(sim),
             "rgb_shape": list(rgb.shape),
             "rgb_mean": mean,
             "rgb_std": std,
@@ -262,11 +284,14 @@ def main() -> int:
         "scenario": args_cli.scenario,
         "viz": visualizer_selection,
         "eula_acceptance": "explicit_user_consent",
+        "command": [str(Path(sys.executable).resolve()), *sys.argv],
     }
     exit_code = 0
     try:
         if args_cli.scenario == "cartpole":
             summary.update(_run_task("Isaac-Cartpole-v0"))
+        elif args_cli.scenario == "cartpole-direct":
+            summary.update(_run_task("Isaac-Cartpole-Direct-v0"))
         elif args_cli.scenario == "go2":
             summary.update(_run_task("Isaac-Velocity-Flat-Unitree-Go2-v0"))
         else:

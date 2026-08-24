@@ -4,9 +4,10 @@
 This verifier deliberately only reads Python/package/GPU metadata.  It never
 creates a simulation context and therefore never selects a physics backend.
 It is used by the installer and can be run independently before a RAMBO launch.
-Bare Newton distributions are expected in this exact Isaac Lab dependency graph;
-the verifier rejects only optional Newton *extras* requested by RAMBO's pinned
-direct input or canonical setup script, not those transitive distributions.
+Bare Newton distributions are expected in the exact Isaac Lab dependency graph;
+in particular, the pinned tag's official core installation includes bare
+``isaaclab_newton``.  The verifier rejects only optional Newton *extras*
+requested by RAMBO's pinned direct input or canonical setup script.
 """
 
 from __future__ import annotations
@@ -311,7 +312,7 @@ def verify(
         "gpu": gpu,
         "physics_policy": {
             "required_runtime_backend": "PhysX",
-            "bare_transitive_newton_packages_allowed": True,
+            "bare_official_core_newton_packages_allowed": True,
             "pinned_input_requests_no_optional_isaaclab_newton_extras": True,
             "canonical_setup_requests_no_optional_isaaclab_newton_extras": True,
             "metadata_verifier_does_not_select_or_execute_a_physics_backend": True,

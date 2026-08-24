@@ -435,10 +435,16 @@ should match with the dimension of the ``indices`` list.
 Quaternion Convention
 ---------------------
 
-Isaac Lab and Isaac Sim both adopt ``wxyz`` as the quaternion convention. However, the quaternion
-convention used in Isaac Gym Preview Release was ``xyzw``.
-Remember to switch all quaternions to use the ``xyzw`` convention when working indexing rotation data.
-Similarly, please ensure all quaternions are in ``wxyz`` before passing them to Isaac Lab APIs.
+Quaternion ordering must be checked at each API boundary; it is not safe to apply
+a global reorder during a migration.  For the Isaac Lab 3.0 public
+simulator-facing tensors used by this RAMBO migration, including articulation
+state data and camera configuration offsets, the order is ``xyzw``.  USD
+``Gf.Quatf`` and some math-facing APIs may instead be scalar-first ``wxyz``.
+
+Keep legacy Isaac Gym or application-local math in its native convention, and
+use an explicit, tested boundary conversion only where an API requires it.  In
+particular, RAMBO retains its historical QP/checkpoint math as ``wxyz`` while
+converting simulator-facing tensors explicitly to and from ``xyzw``.
 
 
 Articulation Joint Order

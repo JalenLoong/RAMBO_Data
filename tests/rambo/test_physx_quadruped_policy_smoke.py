@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -118,6 +120,69 @@ def test_policy_smoke_memory_analysis_enforces_both_approved_thresholds() -> Non
         module._memory_analysis(leaking_gpu_samples, 3000)
 
 
+def test_record_first_transition_writes_hashed_existing_qp_outputs_without_a_second_solve(tmp_path: Path) -> None:
+    torch = pytest.importorskip("torch")
+    np = pytest.importorskip("numpy")
+    module = _load_smoke_module()
+
+    class Optimizer:
+        grf = torch.full((1, 12), 2.0, dtype=torch.float32)
+
+        def get_grf(self):  # pragma: no cover - the recorder must never invoke this.
+            raise AssertionError("first-transition recorder recomputed the QP")
+
+    base_env = SimpleNamespace(
+        torque_optimizer=Optimizer(),
+        desired_tor=torch.full((1, 12), 3.0, dtype=torch.float32),
+        extras={"log": {"Step Log/QP Cost": torch.tensor(0.25, dtype=torch.float32)}},
+    )
+    paths, summary = module._record_first_transition(
+        tmp_path,
+        initial_policy_observations=torch.zeros((1, 405), dtype=torch.float32),
+        first_actions=torch.ones((1, 18), dtype=torch.float32),
+        post_step_observations=torch.full((1, 405), 0.5, dtype=torch.float32),
+        post_step_rewards=torch.tensor([1.25], dtype=torch.float32),
+        post_step_dones=torch.tensor([False]),
+        base_env=base_env,
+        num_envs=1,
+        observation_dim=405,
+        action_dim=18,
+        torch=torch,
+    )
+
+    npz_path, json_path = paths
+    assert npz_path.name == "first_transition.npz"
+    assert json_path.name == "first_transition.json"
+    assert summary["recorded"] is True
+    assert len(summary["npz_sha256"]) == 64
+    assert len(summary["json_sha256"]) == 64
+    record = json.loads(json_path.read_text(encoding="utf-8"))
+    assert record["contract"] == {
+        "first_action_dim": 18,
+        "first_action_shape": [1, 18],
+        "initial_policy_observation_dim": 405,
+        "initial_policy_observation_shape": [1, 405],
+    }
+    assert record["existing_qp_outputs"]["grf"]["shape"] == [1, 12]
+    assert record["existing_qp_outputs"]["desired_tor"]["shape"] == [1, 12]
+    assert record["existing_qp_outputs"]["qp_cost"]["shape"] == []
+    assert record["all_required_floating_tensors_finite"] is True
+    assert record["diagnostic_side_effects"]["additional_qp_solves"] == 0
+    with np.load(npz_path) as artifact:
+        assert artifact["initial_policy_observation"].shape == (1, 405)
+        assert artifact["first_action"].shape == (1, 18)
+        assert artifact["qp_grf"].shape == (1, 12)
+        assert artifact["desired_tor"].shape == (1, 12)
+        assert artifact["qp_cost"].shape == ()
+    module._write_summary(tmp_path, {"passed": True}, paths)
+    checksummed_files = {
+        line.split(maxsplit=1)[1]
+        for line in (tmp_path / "checksums.sha256").read_text(encoding="utf-8").splitlines()
+    }
+    assert checksummed_files == {"summary.json", "first_transition.npz", "first_transition.json"}
+    assert "get_grf(" not in inspect.getsource(module._existing_qp_outputs)
+
+
 def test_long_smoke_extends_a_copied_contact_schedule_to_its_required_span() -> None:
     module = _load_smoke_module()
     original_contact_config = {
@@ -165,5 +230,8 @@ def test_policy_smoke_uses_the_shared_fail_closed_physx_gate() -> None:
     assert "configure_physx" in contents
     assert "assert_physx_environment" in contents
     assert "use_newton_actuators=False" in contents
+    assert "--record-first-transition" in contents
+    assert '"first_transition.npz"' in contents
+    assert '"first_transition.json"' in contents
     assert '"--num-envs"' in contents
     assert "os._exit" not in contents

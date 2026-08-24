@@ -1,78 +1,91 @@
 # RAMBO Isaac Sim 6 / Isaac Lab 3 迁移报告
 
 生成时间：2026-08-24（UTC）
-运行验收代码：`b0bc68eb32c99ba326bde9a447a898951e774b71`
+状态来源：[MIGRATION_STATUS.md](MIGRATION_STATUS.md)。本报告是证据状态记录，
+不是“全部迁移完成”的声明。
 
-## 结论
+## 当前结论
 
-自动化的原生 PhysX 迁移门禁已通过：固定的 Isaac Sim `6.0.1.0`、Isaac Lab
-`v3.0.0-beta2.patch1` / `ffff603eafc6b74264a5261cc0183d6a65390d78`、Python
-3.12.3、Torch `2.10.0+cu128` 在 RTX 4090 / driver 595.71.05 上完成了官方门禁、
-四足与双足策略、RGB、Button 交互和 30 秒 recorder 验收。所有已接受的 RAMBO
-runtime artifact 都在运行前后记录了 `PhysxCfg`、
-`isaaclab_physx.physics.physx_manager.PhysxManager` 和
-`use_newton_actuators=false`；没有 RAMBO runtime 选择或执行 Newton。
+RAMBO 的目标运行路径已迁移为 Isaac Sim `6.0.1.0`、Isaac Lab
+`v3.0.0-beta2.patch1` (`ffff603eafc6b74264a5261cc0183d6a65390d78`)、
+Python 3.12.3 和 Torch `2.10.0+cu128`。所有已运行的 RAMBO simulation、
+smoke、validation 和 recorder 都显式配置 `PhysxCfg`、
+`use_newton_actuators=false`，并在运行前后记录实际
+`isaaclab_physx.physics.physx_manager.PhysxManager`。没有任何 RAMBO runtime
+选择或执行 Newton。
 
-裸 Newton 相关分发包是精确官方依赖图允许的传递节点，不是失败条件；安装输入和
-canonical setup 均不请求 Isaac Lab Newton optional extra。该结论不能用包存在与否
-替代实际 backend 断言。
+精确官方安装图中的裸 Newton package（包括 pinned tag 官方 core install 的
+`isaaclab_newton`）允许存在；这既不是失败条件，也绝不授权 RAMBO 使用 Newton。
+安装输入和 canonical setup 均不请求可选 Newton extras。EULA 只由每条 Kit
+启动命令的 `OMNI_KIT_ACCEPT_EULA=Y` 前缀传递，不写入环境、marker 或镜像。
 
-尚有两项不能伪造为通过的外部工作：真实操作者的 GUI 物理键盘检查，以及在具备
-Docker Engine/NVIDIA Container Toolkit 的独立主机上实际 build/run 容器验收。
+本轮已批准延期两项：M5.2 的 Isaac Sim 5.1 历史 QP snapshot 比较，以及 M11
+Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。当前
+分支仍需形成新的 clean local commit，随后可本地重跑 M3/M7/M9 的 provenance 证据。
 
-## 已接受的原生证据
+新增的 `run_runtime_artifact.sh` 会在 Kit 子进程真正退出后写入
+`process_exit.json` 并重算 checksum。此前所有 Kit artifact 的 `summary.json`
+均在 close 前写出，因此只能称为 pre-close workload evidence；本轮会用 sealed
+artifact 重新取代需要接受的非 GUI runtime 证据。
 
-| 门禁 | 状态 | 主要 artifact / 结果 |
+## 证据矩阵
+
+| 门禁 | 严格状态 | 证据与限定 |
 | --- | --- | --- |
-| M0–M1 | 通过 | host 清理与精确安装：`/workspace/migration-output/isaac60/M0/20260824T100222Z-host-and-cleanup/`、`M1/` |
-| M2 官方门禁 | 通过 | Cartpole、Go2、RTX RGB、Kit GUI 和 clean restart：`/workspace/migration-output/isaac60/M2/20260824T103300Z-cartpole-physx/` 至 `M2/20260824T104800Z-camera-physx-warm-restart/` |
-| M4 API/空间 contract | 通过 | 四足/双足各 5 control steps、PhysX 前后断言：`M4/20260824T111439Z-quadruped-space-contract-r2/`、`M4/20260824T111439Z-biped-space-contract-r2/` |
-| M5 qpth | 通过 | CPU/CUDA forward/backward、KKT、残差、确定性：`M5/20260824T105302Z-qpth-contract/` |
-| M6 四足 3000 步 | 通过 | 405/18、3000 steps、0 terminal、15,000 physics ticks：`M6/20260824T113722Z-quadruped-policy-longrun-n1-schedulefixed/`；summary SHA-256 `fc748621e4b2746d2b25ab8369fb0c5d61ca3e64b267ba165122cf0c2e227251` |
-| M7 四足 RGB | 通过 | 3000 steps、375 × 640×480 RGB、12.5 Hz：`M7/20260824T115012Z-quadruped-3000-rgb-stagingfixed/`；summary SHA-256 `ba271c314973e2fec34e4d23a6f2801b68707b3eb42a0529b42ab7f7504114af` |
-| M8 Button 非交互 smoke | 通过 | 15.8 mm 按压、至少 5 步、1.6 mm 回弹、base 0.520 m、joint 0.976 rad：`M8/20260824T112955Z-teleop-loco-manip/` |
-| M9 双足 3000 步与 RGB | 通过 | 435/18、3000 steps、0 terminal、19.6 s phase；`M9/20260824T115916Z-biped-policy-longrun-n1/`；RGB：`M9/20260824T120253Z-biped-3000-rgb/` |
-| M10 Button recorder | 通过 | 3000 action/observation/post-state、375 RGB、381 checksums、离线 `--require-acceptance` 通过：`M10/20260824T122000Z-button-episode-3000-provenance-v2/` |
+| M0–M1 | 完成 | legacy baseline 已保护；目标 venv、固定 Isaac Sim/Isaac Lab checkout、host/checkpoint manifests 均已建立。 |
+| M2.1 CUDA | **未按原计划通过** | `M2/20260824T135749Z-cuda-ada-compatible-contract/` 成功证明 Torch CUDA 12.8 可在 RTX 4090 `(8,9)` 做同步 CUDA 算术；但该 fixed wheel 的 `torch.cuda.get_arch_list()` 没有 `sm_89`（有 `sm_86`），故原计划的字面 `assert "sm_89" ...` 未满足。它只能称运行兼容性证据，除非正式修改验收标准。 |
+| M2.2 官方 Cartpole | workload 技术替代 gate 通过；sealed rerun 待执行 | `M2/20260824T135518Z-official-cartpole-direct-16-physx/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX 和后端 evidence。该旧 artifact 没有运行前 backend 与 post-close exit sidecar；修复后需 sealed rerun。固定 tag 的 literal `zero_agent.py --viz none` 没有有限退出路径，不能伪称 literal 命令通过。 |
+| M2.3 Kit GUI | 待人工 | 必须在与 M2.2 相同的 Direct Cartpole task 上，由真实操作者观察 window、viewport、play/stop、Vulkan、Kit GPU memory 和 RTX 4090（非 llvmpipe）。现有 `Isaac-Cartpole-v0` 短 Kit 启动仅支持 Kit/PhysX 启动事实，不能替代此门禁。 |
+| M2.4 官方 Go2 + RGB | workload 技术通过；sealed rerun 待执行 | warm-up `M2/20260824T125356Z-official-go2-rgb-1000-warmup/` 与 clean restart `M2/20260824T125434Z-official-go2-rgb-1000-restart/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、前后 PhysX manager、`false` 和 checksums；旧 artifact 无 post-close exit sidecar。 |
+| M3 API inventory | 待 clean-source 重扫 | 现存 `/workspace/migration_logs/{quaternion-scan,api-inventory}.txt` 早于后续源码变更；不能作为最终 freeze。 |
+| M4 API/空间合同 | workload 技术通过；sealed clean rerun 待执行 | `M4/20260824T111439Z-*-space-contract-r2/` 覆盖四足/双足空间合同和 PhysX，但需绑定最终 clean revision 与 post-close exit。 |
+| M5.1 qpth | 通过（范围受限） | `M5/20260824T105302Z-qpth-contract/` 覆盖 CPU/CUDA toy qpth forward/backward、KKT、残差与确定性；不等于历史 RAMBO QP 对比。 |
+| M5.2 RAMBO 5.1 QP 数值比较 | **已批准延期** | 所需旧端 snapshot 未保存；本轮不以其阻断后续自动化工作。 |
+| M6 四足 | workload 技术证据成立；sealed rerun 待执行 | 405/18、16 step 与 production walking 3000 step / 0 terminal：`M6/20260824T112247Z-*`、`M6/20260824T113722Z-quadruped-policy-longrun-n1-schedulefixed/`。`M6/20260824T134233Z-*` 与 `134254Z-*` 是全支撑零 action 100/1000 的独立静止诊断，**不是** production walking contact schedule；后者的旧 1000-step 尝试约在 152 step terminal，保留为失败。首个真实 policy→QP transition：`M6/20260824T133438Z-quadruped-first-policy-qp-transition/`。旧 Kit artifacts 无 post-close exit sidecar。 |
+| M7 四足 RGB | workload 技术通过；sealed clean provenance 待重跑 | `M7/20260824T131656Z-quadruped-3000-rgb-thirdperson-final/` 有 3000 action、15,000 physics ticks、375 前视 RGB 与第三人称技术证据，但在 dirty source 上运行，旧 manifest 缺完整 exact-pinned provenance 和 post-close exit。 |
+| M8 Button 非交互 | 通过 | `M8/20260824T112955Z-teleop-loco-manip/` 覆盖 deterministic Button press/hold/release。 |
+| M8 GUI 真实键盘 | 待人工 | 已实现可审计 artifact/离线验证器；仍需真实操作者在 `--viz kit` 下完成物理键盘操作。合成输入不计通过。 |
+| M9 双足 | workload 技术通过；sealed clean provenance 待重跑 | 旧 3000/RGB artifact `M9/20260824T132054Z-biped-3000-rgb-thirdperson-final/` 发生在 dirty source。独立性 runtime `M9/20260824T134918Z-biped-front-leg-independence-physx/` 证明 FL/FR 受不同命令且 QP 六个逻辑 contact slot 对应 override；该旧 schema 无 clean-source/post-close exit evidence，需 schema-v2 sealed rerun。 |
+| M10 Button recorder | workload 技术子门禁通过；sealed rerun 待执行 | `M10/20260824T122000Z-button-episode-3000-provenance-v2/`：3000 action/observation/post-state、375 RGB、381 checksums 与离线 acceptance；旧 artifact 无 post-close exit sidecar。 |
+| M11 native freeze | 阶段性可复现；最终冻结待自动化 chain | pinned `.in`/lock、metadata verifier 和 manifests 已有；最终 commit/host freeze 应等待 M3、M4 provenance 和 M7/M9 clean artifacts。 |
+| M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
-M10 最终验收的按钮位移为 19.99354 mm，连续按下 17 步；第 765 action step 首次成功，
-第 795 step 后回弹，成功后最小位移约 `2.98e-7 m`；base/FL foot 最大位移分别为
-0.58812 m/0.83201 m。GPU 分配增长为 0，RSS 斜率为 0.01317 MiB/100 steps。其
-`summary.json` SHA-256 为
-`5305be4b3a6e0038b8381d80eb49c33503fa4d1535253715b96025d852e8d2fd`，
-`manifest.json` SHA-256 为
-`74317adadc99bacfe8e6ccfa83b1f8dd55b890c4be7ea1098be02aadf9e9ca00`。
+## 关键技术说明
 
-## 完整性说明
+### M2.1 的 CUDA/Ada 结果
 
-M10 最终 artifact 自带 `checksums.sha256`，381 个文件均已复核。早期已接受的
-M7 最终 RGB、M8 teleop 和 M9 最终 RGB artifact 没有持久 checksum manifest，故
-不将它们说成具有 manifest；其独立摘要/图像哈希如下，供追溯：
+artifact 记录 Torch `2.10.0+cu128`、CUDA 12.8、RTX 4090 capability `(8,9)`、
+成功 CUDA 算术和 `sm_86` compiled arch。PyTorch 的
+[`get_arch_list`](https://docs.pytorch.org/docs/stable/generated/torch.cuda.get_arch_list.html)
+返回 wheel 编译时包含的架构，而不是设备实时 capability；NVIDIA 的
+[Ada compatibility guide](https://docs.nvidia.com/cuda/archive/12.9.0/ada-compatibility-guide/index.html)
+说明 Ampere binary 可向前兼容 Ada。因此运行兼容有证据，但计划中的 native
+`sm_89` 断言仍然没有通过。
 
-- M7 summary：`ba271c314973e2fec34e4d23a6f2801b68707b3eb42a0529b42ab7f7504114af`；contact sheet：`00a7d054461db1153b4cff8c1981d15248636510dde1c7c93935ab461df755db`。
-- M8 summary：`9650ca85d8b6fa1f7d53f535a975cef7454daed7883cf88ab54d87196a7b86ff`；teleop log：`2e591e3f10001d158507c2ea922d30260f65a761f4ab4a1717a55ca6ba2a566c`。
-- M9 RGB summary：`a42d99f6fa50aac78ed55aa9d35981ac5b906922f539ee142a909eee1647ab20`；contact sheet：`c6a68ff68c8b158dba04c321e820e34700ebc212c10cbac2c500f891985cb5df`。
+### 四元数和 QP 边界
 
-保留而不计为验收的诊断 artifact 包括 M6 的旧 10 秒 contact schedule 耗尽、M7
-的旧 RGB RSS 斜率超阈值，以及 M10 的 schema-v1 recorder。它们分别由 31 秒
-schedule、可复用 CPU staging buffer 和 schema-v2 provenance/离线 validator
-取代；未删除诊断证据。
+目标 Isaac Lab 3 public simulator-facing 数据在本迁移涉及的 articulation/camera
+边界为 **XYZW**。RAMBO 的历史 QP/checkpoint math 保留 WXYZ，只允许经
+`xyzw_to_wxyz` / `wxyz_to_xyzw` 做显式、局部转换；不得对 405/435D observation、
+18D action 或 checkpoint 作全局重排。
 
-## 冻结与容器边界
+### M7/M9 provenance 修复
 
-`requirements/isaacsim60.in` 表示直接意图；`requirements/isaacsim60.lock`
-包含 10 个直接 pin 与 242 个非 editable 精确 wheel pin。setup 先执行官方固定分段路径，再以
-`--no-deps` 消费 lock，不引入第二次依赖解析；verifier 会逐一比对 lock，验证
-Isaac Lab editable `direct_url` 来自固定 checkout，并严格检查已审阅的 8 项
-`pip check` metadata 差异。
+新的 `--third-person-diagnostic final` 会在创建 `AppLauncher` **之前**捕获并要求：
+RAMBO Git HEAD、porcelain clean status、完整 Python argv、Isaac Lab exact tag/HEAD/
+package version、Isaac Sim package version、Torch/CUDA/GPU。manifest 写入时再次检查
+clean source。下一批 M7/M9 3000-step artifact 只有满足此合同才可作为 final clean
+evidence。
 
-Dockerfile 是 fail-closed 的**延后规范**：它在没有 GPU 的 build 中只运行
-`--docker-build-metadata-only`，不得将它解释为 CUDA/RTX/PhysX 通过。未来容器
-必须在 `docker run --gpus all` 中先运行默认 verifier，再用 process-scoped
-`OMNI_KIT_ACCEPT_EULA=Y` 执行独立 PhysX artifact gate。当前 host 没有 Docker
-Engine 或 NVIDIA Container Toolkit，因此没有执行 Docker build/run/push。
+## 尚需完成的工作
 
-## 仍需人工完成的 GUI 检查
+1. 提交当前代码后，重跑 M3 inventory/quaternion scan、M7 quadruped 和 M9 biped 的
+   clean-source final PhysX diagnostics，并绑定 M4 provenance。
+2. 由真实操作者完成 M2.3 的 Direct Cartpole GUI 检查和 M8 physical-keyboard
+   teleoperation；不得使用 xdotool、pyautogui、重放或注入事件。
+3. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
+   具备输入/主机条件时恢复。
+4. 在上述自动化和人工 GUI 条件满足后再生成 M11 final native freeze。由于本地分支
+   尚无 remote tracking，push 仍须具备 GitHub 凭据/授权。
 
-唯一未认证的原生行为是 GUI 中的真实物理键盘 teleoperation。请按 README 的
-`--viz kit` 命令启动、点击 viewport，并实际操作 arrows/numpad、`Z/X`、
-`W/S`、`A/D`、`R/F`、`L`、`C`。不得用合成输入 trace 替代该检查或将其标记为通过。
+所有 artifact 保留历史失败和非验收尝试，以便审计；它们不会被删除或改写为成功。

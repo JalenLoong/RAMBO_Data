@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
+import platform
 import sys
+import time
 import traceback
 from typing import Any
 
@@ -16,13 +19,40 @@ TASK_ID = "Isaac-RAMBO-Quadruped-Button-Go2-v0"
 EE_MIN = np.array([0.1934, 0.0, 0.0], dtype=np.float32)
 EE_MAX = np.array([0.50, 0.20, 0.40], dtype=np.float32)
 EE_DEFAULT = np.array([0.1934, 0.142, 0.05], dtype=np.float32)
+GUI_ARTIFACT_ROOT = Path("/workspace/migration-output/isaac60/M8")
+GUI_ARTIFACT_MAX_STEPS = 3000
+
+
+def _utc_now() -> str:
+    """Return a compact, timezone-explicit evidence timestamp."""
+
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _fqn(value: Any) -> str:
+    """Return the stable fully-qualified identity of a config or runtime object."""
+
+    target = value if isinstance(value, type) else type(value)
+    return f"{target.__module__}.{target.__qualname__}"
 
 
 def _keyboard_event_name(event: Any) -> str:
-    """Normalize Carb keyboard inputs across native and synthetic 5.1 events."""
+    """Normalize Carb keyboard key values exposed as enums or strings."""
 
     raw_key = event.input
     return raw_key.name if hasattr(raw_key, "name") else str(raw_key)
+
+
+def _keyboard_event_type_name(event: Any) -> str:
+    """Normalize the two callback event types persisted by the GUI recorder."""
+
+    raw_type = event.type
+    name = raw_type.name if hasattr(raw_type, "name") else str(raw_type)
+    if name.endswith(".KEY_PRESS"):
+        return "KEY_PRESS"
+    if name.endswith(".KEY_RELEASE"):
+        return "KEY_RELEASE"
+    return name
 
 
 def _build_parser() -> tuple[argparse.ArgumentParser, type]:
@@ -39,6 +69,31 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=300.0)
     parser.add_argument("--max-steps", type=int, default=0, help="0 runs until the GUI closes")
+    parser.add_argument(
+        "--gui-artifact-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Explicitly opt in to a fresh, bounded M8 GUI keyboard artifact. "
+            "This mode requires --viz kit, a named operator, and an attestation."
+        ),
+    )
+    parser.add_argument(
+        "--operator-name",
+        default=None,
+        help="Named operator for --gui-artifact-dir; this is a self-attestation, not independent proof.",
+    )
+    parser.add_argument(
+        "--operator-attestation",
+        action="store_true",
+        help="Acknowledge that the named operator used a physical keyboard without injected input.",
+    )
+    parser.add_argument(
+        "--gui-arm-timeout-s",
+        type=float,
+        default=120.0,
+        help="Maximum wall-clock wait for the first native keyboard callback in GUI artifact mode.",
+    )
     parser.add_argument(
         "--telemetry-every",
         type=int,
@@ -87,6 +142,47 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
     for name in ("fl_x_speed", "fl_y_speed", "fl_z_speed"):
         if float(getattr(args, name)) <= 0.0:
             parser.error(f"--{name.replace('_', '-')} must be positive")
+
+
+def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Fail closed before AppLauncher when an auditable GUI run was requested."""
+
+    artifact_dir = getattr(args, "gui_artifact_dir", None)
+    operator_name = getattr(args, "operator_name", None)
+    operator_attestation = bool(getattr(args, "operator_attestation", False))
+    if artifact_dir is None:
+        if operator_name is not None or operator_attestation:
+            parser.error("--operator-name and --operator-attestation require --gui-artifact-dir")
+        return
+    if getattr(args, "rambo_visualizer", None) != ["kit"]:
+        parser.error("--gui-artifact-dir requires explicit --viz kit")
+    if any(
+        bool(getattr(args, name, False))
+        for name in ("smoke_walk", "smoke_press", "smoke_loco_manip")
+    ):
+        parser.error("--gui-artifact-dir forbids all scripted smoke modes")
+    if args.max_steps <= 0 or args.max_steps > GUI_ARTIFACT_MAX_STEPS:
+        parser.error(
+            f"--gui-artifact-dir requires finite --max-steps in [1, {GUI_ARTIFACT_MAX_STEPS}]"
+        )
+    if not isinstance(operator_name, str) or not operator_name.strip():
+        parser.error("--gui-artifact-dir requires a non-empty --operator-name")
+    if len(operator_name.strip()) > 160:
+        parser.error("--operator-name must be at most 160 characters")
+    if not operator_attestation:
+        parser.error("--gui-artifact-dir requires explicit --operator-attestation")
+    gui_arm_timeout_s = float(getattr(args, "gui_arm_timeout_s", 120.0))
+    if gui_arm_timeout_s <= 0.0 or gui_arm_timeout_s > 300.0:
+        parser.error("--gui-artifact-dir requires --gui-arm-timeout-s in (0, 300]")
+    output_dir = Path(artifact_dir).expanduser().resolve()
+    artifact_root = GUI_ARTIFACT_ROOT.resolve()
+    try:
+        output_dir.relative_to(artifact_root)
+    except ValueError:
+        parser.error(f"--gui-artifact-dir must be below the M8 artifact root {artifact_root}")
+    if output_dir.exists():
+        parser.error(f"Refusing to overwrite existing GUI artifact directory: {output_dir}")
+    args.gui_artifact_dir = output_dir
 
 
 def _extend_contact_schedule(env_cfg: Any, minimum_horizon_s: float) -> None:
@@ -163,7 +259,14 @@ def _prepare_smoke_press_start(base_env: Any, torch: Any) -> None:
     base_env.obs_buf = base_env._get_observations()
 
 
-def _make_keyboard(base_env: Any, args: argparse.Namespace):
+def _make_keyboard(base_env: Any, args: argparse.Namespace, *, event_observer: Any = None):
+    """Create the existing Carb-backed keyboard device, optionally observing callbacks.
+
+    ``event_observer`` receives a JSON-safe snapshot *after* the native callback
+    has updated its command state.  It is observation-only: this function does
+    not construct, replay, or inject keyboard events.
+    """
+
     import carb
     from isaaclab.devices import Se2Keyboard, Se2KeyboardCfg
 
@@ -180,6 +283,7 @@ def _make_keyboard(base_env: Any, args: argparse.Namespace):
         def __init__(self) -> None:
             self._held_leg_keys: set[str] = set()
             self._clear_success_requested = False
+            self._event_observer = event_observer
             self._fl_speeds = np.array(
                 [args.fl_x_speed, args.fl_y_speed, args.fl_z_speed], dtype=np.float32
             )
@@ -209,28 +313,54 @@ def _make_keyboard(base_env: Any, args: argparse.Namespace):
             self._clear_success_requested = False
             return requested
 
+        def _observe_keyboard_callback(self, event: Any, key: str) -> None:
+            if self._event_observer is None:
+                return
+            self._event_observer(
+                {
+                    "callback_monotonic_ns": time.monotonic_ns(),
+                    "source": "carb_keyboard_callback",
+                    "callback_observed_only": True,
+                    "key": key,
+                    "event_type": _keyboard_event_type_name(event),
+                    "handled_by_loco_manip": bool(
+                        key in self._LEG_KEYS
+                        or key == "C"
+                        or key == "L"
+                        or key in self._INPUT_KEY_MAPPING
+                        or key in self._additional_callbacks
+                    ),
+                    "held_leg_keys": sorted(self._held_leg_keys),
+                    "base_command": np.asarray(self._base_command, dtype=np.float32).tolist(),
+                    "clear_success_requested": bool(self._clear_success_requested),
+                }
+            )
+
         def _on_keyboard_event(self, event, *callback_args, **callback_kwargs):
             key = _keyboard_event_name(event)
-            if key in self._LEG_KEYS:
+            try:
+                if key in self._LEG_KEYS:
+                    if event.type == carb.input.KeyboardEventType.KEY_PRESS:
+                        self._held_leg_keys.add(key)
+                    elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
+                        self._held_leg_keys.discard(key)
+                    return True
+                if event.type == carb.input.KeyboardEventType.KEY_PRESS and key == "C":
+                    self._clear_success_requested = True
+                    return True
                 if event.type == carb.input.KeyboardEventType.KEY_PRESS:
-                    self._held_leg_keys.add(key)
+                    if key == "L":
+                        self.reset()
+                    elif key in self._INPUT_KEY_MAPPING:
+                        self._base_command += self._INPUT_KEY_MAPPING[key]
+                    if key in self._additional_callbacks:
+                        self._additional_callbacks[key]()
                 elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
-                    self._held_leg_keys.discard(key)
+                    if key in self._INPUT_KEY_MAPPING:
+                        self._base_command -= self._INPUT_KEY_MAPPING[key]
                 return True
-            if event.type == carb.input.KeyboardEventType.KEY_PRESS and key == "C":
-                self._clear_success_requested = True
-                return True
-            if event.type == carb.input.KeyboardEventType.KEY_PRESS:
-                if key == "L":
-                    self.reset()
-                elif key in self._INPUT_KEY_MAPPING:
-                    self._base_command += self._INPUT_KEY_MAPPING[key]
-                if key in self._additional_callbacks:
-                    self._additional_callbacks[key]()
-            elif event.type == carb.input.KeyboardEventType.KEY_RELEASE:
-                if key in self._INPUT_KEY_MAPPING:
-                    self._base_command -= self._INPUT_KEY_MAPPING[key]
-            return True
+            finally:
+                self._observe_keyboard_callback(event, key)
 
         def __str__(self) -> str:
             return (
@@ -259,8 +389,158 @@ class _HeadlessInput:
         return False
 
 
+def _gui_state_record(
+    base_env: Any,
+    *,
+    step_count: int,
+    base_command: np.ndarray,
+    leg_target: np.ndarray,
+    leg_velocity: np.ndarray,
+    callback_events_observed: int,
+) -> dict[str, Any]:
+    """Capture one post-step state for an explicitly requested GUI artifact."""
+
+    root_position = base_env._robot.data.root_link_pos_w.torch[0].detach().cpu().tolist()
+    return {
+        "action_step": step_count,
+        "monotonic_ns": time.monotonic_ns(),
+        "simulation_time_s": float(step_count * base_env.step_dt),
+        "base_command": np.asarray(base_command, dtype=np.float32).tolist(),
+        "leg_velocity": np.asarray(leg_velocity, dtype=np.float32).tolist(),
+        "leg_target": np.asarray(leg_target, dtype=np.float32).tolist(),
+        "root_position_m": root_position,
+        "button_displacement_m": float(base_env.button_displacement[0].item()),
+        "button_success": bool(base_env.button_success[0].item()),
+        "button_released": bool(base_env.button_released[0].item()),
+        "manipulator_ready": bool(base_env.manipulator_ready[0].item()),
+        "terminal": False,
+        "callback_events_observed": callback_events_observed,
+    }
+
+
+def _gui_m8_evidence(
+    *,
+    base_nonzero_state_count: int,
+    fl_nonzero_velocity_state_count: int,
+    unhandled_space_press_count: int,
+    max_fl_target_delta_m: float,
+    max_root_position_delta_m: float,
+    max_button_displacement_m: float,
+    button_press_threshold_seen: bool,
+    button_success_after_threshold_seen: bool,
+    first_button_success_action_step: int | None,
+    button_rebound_after_success_seen: bool,
+    first_button_rebound_action_step: int | None,
+) -> dict[str, Any]:
+    """Return the M8 GUI behavior facts that the offline validator recomputes."""
+
+    return {
+        "base_nonzero_state_count": base_nonzero_state_count,
+        "fl_nonzero_velocity_state_count": fl_nonzero_velocity_state_count,
+        "unhandled_space_press_count": unhandled_space_press_count,
+        "max_fl_target_delta_m": max_fl_target_delta_m,
+        "max_root_position_delta_m": max_root_position_delta_m,
+        "max_button_displacement_m": max_button_displacement_m,
+        "button_press_threshold_seen": button_press_threshold_seen,
+        "button_success_after_threshold_seen": button_success_after_threshold_seen,
+        "first_button_success_action_step": first_button_success_action_step,
+        "button_rebound_after_success_seen": button_rebound_after_success_seen,
+        "first_button_rebound_action_step": first_button_rebound_action_step,
+    }
+
+
+def _assert_complete_gui_m8_evidence(schema: Any, evidence: dict[str, Any]) -> None:
+    """Fail the runtime artifact instead of merely leaving an offline-rejected summary."""
+
+    missing: list[str] = []
+    if evidence["base_nonzero_state_count"] <= 0:
+        missing.append("non-zero base command")
+    if evidence["fl_nonzero_velocity_state_count"] <= 0:
+        missing.append("non-zero FL velocity")
+    if evidence["max_fl_target_delta_m"] < schema.FL_TARGET_MINIMUM_DELTA_M:
+        missing.append("FL target movement")
+    if evidence["unhandled_space_press_count"] <= 0:
+        missing.append("unhandled SPACE press")
+    if evidence["button_press_threshold_seen"] is not True:
+        missing.append("12-mm button press")
+    if evidence["button_success_after_threshold_seen"] is not True:
+        missing.append("button success after press")
+    if evidence["button_rebound_after_success_seen"] is not True:
+        missing.append("button rebound/released after success")
+    if missing:
+        raise RuntimeError("GUI artifact is incomplete: " + ", ".join(missing))
+
+
+def _gui_artifact_summary(
+    schema: Any,
+    *,
+    args: argparse.Namespace,
+    outcome: str,
+    executed_action_steps: int,
+    event_count: int,
+    state_count: int,
+    handled_key_press_count: int,
+    active_command_state_count: int,
+    configured_physics: dict[str, Any] | None,
+    backend_before: dict[str, Any] | None,
+    backend_after: dict[str, Any] | None,
+    checkpoint_sha256: str,
+    runtime: dict[str, Any],
+    m8_evidence: dict[str, Any],
+    failure: BaseException | None = None,
+) -> dict[str, Any]:
+    """Build a completion or failure summary without claiming physical proof."""
+
+    summary: dict[str, Any] = {
+        "schema_version": schema.SCHEMA_VERSION,
+        "artifact_kind": schema.ARTIFACT_KIND,
+        "task": schema.TASK_ID,
+        "outcome": outcome,
+        "visualizer": schema.VISUALIZER,
+        "smoke_mode": False,
+        "max_action_steps": args.max_steps,
+        "arm_timeout_s": float(args.gui_arm_timeout_s),
+        "executed_action_steps": executed_action_steps,
+        "event_count": event_count,
+        "state_count": state_count,
+        "handled_key_press_count": handled_key_press_count,
+        "active_command_state_count": active_command_state_count,
+        "configured_physics": configured_physics,
+        "backend_before": backend_before,
+        "backend_after": backend_after,
+        "checkpoint": {
+            "path": str(args.checkpoint.expanduser().resolve()),
+            "sha256": checkpoint_sha256,
+        },
+        "runtime": runtime,
+        "telemetry": {
+            "states_file": schema.STATES_FILENAME,
+            "interval_action_steps": 1,
+            "state_records": state_count,
+        },
+        "m8_evidence": m8_evidence,
+        "operator_attestation_required": True,
+        "physical_keyboard_independently_proven": False,
+        "limitation": schema.PHYSICALITY_LIMITATION,
+        "finished_at_utc": _utc_now(),
+        "finished_monotonic_ns": time.monotonic_ns(),
+    }
+    if failure is not None:
+        summary["failure"] = f"{type(failure).__name__}: {failure}"
+    return summary
+
+
 def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     from rambo.torch_runtime import ensure_cuda_linalg_loaded
+
+    gui_artifact_enabled = getattr(args, "gui_artifact_dir", None) is not None
+    if gui_artifact_enabled:
+        if getattr(args, "rambo_visualizer", None) != ["kit"]:
+            raise RuntimeError("GUI artifact mode requires the Kit visualizer")
+        if args.smoke_walk or args.smoke_press or args.smoke_loco_manip:
+            raise RuntimeError("GUI artifact mode forbids scripted smoke modes")
+        if args.max_steps <= 0 or args.max_steps > GUI_ARTIFACT_MAX_STEPS:
+            raise RuntimeError("GUI artifact mode requires a finite max-steps limit")
 
     ensure_cuda_linalg_loaded()
     import gymnasium as gym
@@ -269,8 +549,10 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     from crl2.algorithms import PPO
     from rambo.rl import Crl2VecEnvWrapper
     from rambo.utils.registry import load_cfg_from_registry, parse_env_cfg
-    from rambo.utils.physx import assert_physx_environment, configure_physx
+    from rambo.utils.physx import PHYSX_CFG_FQN, assert_physx_environment, configure_physx
     from rambo.validation.checkpoints import contract_for_task, load_verified_checkpoint, restore_runner
+    from rambo.validation import gui_keyboard_artifact as gui_artifact_schema
+    from rambo.validation.gui_keyboard_artifact import GuiKeyboardArtifactWriter
     from rambo.validation.rollout import seed_everything, validate_environment_contract
 
     rambo.register_tasks()
@@ -279,16 +561,48 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     env_cfg = parse_env_cfg(args.task, num_envs=1, use_fabric=not args.disable_fabric)
     _configure_environment(env_cfg, args)
     configure_physx(env_cfg)
+    configured_physics = {
+        "cfg": _fqn(env_cfg.sim.physics),
+        "use_newton_actuators": getattr(env_cfg.sim, "use_newton_actuators", None),
+    }
+    if configured_physics["cfg"] != PHYSX_CFG_FQN:
+        raise RuntimeError(f"Teleop config is not PhysxCfg: {configured_physics['cfg']}")
+    if configured_physics["use_newton_actuators"] is not False:
+        raise RuntimeError("Teleop requires use_newton_actuators=False")
     agent_cfg = load_cfg_from_registry(args.task, "crl2_cfg_entry_point")
     if not isinstance(agent_cfg, dict):
         raise RuntimeError("RAMBO CRL2 configuration must be a dictionary")
     agent_cfg["seed"] = args.seed
     agent_cfg["general"]["num_envs"] = 1
 
+    gui_artifact: GuiKeyboardArtifactWriter | None = None
+    gui_backend_before: dict[str, Any] | None = None
+    gui_backend_after: dict[str, Any] | None = None
+    gui_handled_key_presses = 0
+    gui_unhandled_space_presses = 0
+    gui_active_command_states = 0
+    gui_base_nonzero_states = 0
+    gui_fl_nonzero_velocity_states = 0
+    gui_max_fl_target_delta_m = 0.0
+    gui_max_root_position_delta_m = 0.0
+    gui_max_button_displacement_m = 0.0
+    gui_button_press_threshold_seen = False
+    gui_button_success_after_threshold_seen = False
+    gui_first_button_success_action_step: int | None = None
+    gui_button_rebound_after_success_seen = False
+    gui_first_button_rebound_action_step: int | None = None
+    gui_initial_root_position: np.ndarray | None = None
+    gui_runtime = {
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "torch": str(torch.__version__),
+    }
+    step_count = 0
     env = None
     try:
         env = Crl2VecEnvWrapper(gym.make(args.task, cfg=env_cfg))
         physics_evidence = assert_physx_environment(env)
+        gui_backend_before = physics_evidence
         print(
             "[PHYSX] "
             f"manager={physics_evidence['actual_manager']} "
@@ -311,7 +625,82 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
             observations, _ = env.get_observations()
 
         headless = getattr(args, "rambo_visualizer", None) == ["none"]
-        teleop = _HeadlessInput() if headless else _make_keyboard(base_env, args)
+        if gui_artifact_enabled and headless:
+            raise RuntimeError("GUI artifact mode cannot use the no-visualizer input path")
+        if gui_artifact_enabled:
+            gui_runtime["device"] = str(base_env.device)
+            gui_started_at_utc = _utc_now()
+            gui_started_monotonic_ns = time.monotonic_ns()
+            gui_manifest = {
+                "schema_version": gui_artifact_schema.SCHEMA_VERSION,
+                "artifact_kind": gui_artifact_schema.ARTIFACT_KIND,
+                "task": gui_artifact_schema.TASK_ID,
+                "mode": gui_artifact_schema.MODE,
+                "visualizer": gui_artifact_schema.VISUALIZER,
+                "smoke_mode": False,
+                "max_action_steps": args.max_steps,
+                "arm_timeout_s": float(args.gui_arm_timeout_s),
+                "initial_leg_target": EE_DEFAULT.tolist(),
+                "files": {
+                    "events": gui_artifact_schema.EVENTS_FILENAME,
+                    "states": gui_artifact_schema.STATES_FILENAME,
+                    "attestation": gui_artifact_schema.ATTESTATION_FILENAME,
+                },
+                "input_capture": {
+                    "source": "carb_keyboard_callback",
+                    "observed_only": True,
+                    "synthetic_input_injected": False,
+                    "physical_keyboard_independently_proven": False,
+                    "limitation": gui_artifact_schema.PHYSICALITY_LIMITATION,
+                },
+                "telemetry": {
+                    "states_file": gui_artifact_schema.STATES_FILENAME,
+                    "interval_action_steps": 1,
+                },
+                "configured_physics": configured_physics,
+                "backend_before": gui_backend_before,
+                "started_at_utc": gui_started_at_utc,
+                "started_monotonic_ns": gui_started_monotonic_ns,
+            }
+            gui_attestation = {
+                "schema_version": gui_artifact_schema.SCHEMA_VERSION,
+                "kind": "operator_attestation",
+                "operator_name": args.operator_name.strip(),
+                "operator_acknowledged": True,
+                "statement": gui_artifact_schema.OPERATOR_ATTESTATION_STATEMENT,
+                "limitation": gui_artifact_schema.PHYSICALITY_LIMITATION,
+                "physical_keyboard_independently_proven": False,
+                "recorded_at_utc": gui_started_at_utc,
+            }
+            gui_artifact = GuiKeyboardArtifactWriter(
+                args.gui_artifact_dir,
+                manifest=gui_manifest,
+                attestation=gui_attestation,
+            )
+
+        def observe_gui_keyboard_event(record: dict[str, Any]) -> None:
+            nonlocal gui_handled_key_presses, gui_unhandled_space_presses
+            if gui_artifact is None:
+                return
+            gui_artifact.record_event(record)
+            if record["event_type"] == "KEY_PRESS" and record["handled_by_loco_manip"]:
+                gui_handled_key_presses += 1
+            if (
+                record["key"] == "SPACE"
+                and record["event_type"] == "KEY_PRESS"
+                and record["handled_by_loco_manip"] is False
+            ):
+                gui_unhandled_space_presses += 1
+
+        teleop = (
+            _HeadlessInput()
+            if headless
+            else _make_keyboard(
+                base_env,
+                args,
+                event_observer=observe_gui_keyboard_event if gui_artifact is not None else None,
+            )
+        )
         teleop.reset()
         leg_target = EE_DEFAULT.copy()
         prior_success = False
@@ -343,6 +732,20 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
             print(teleop)
             print("[TELEOP] Click the Isaac Sim viewport before using the keyboard.", flush=True)
             print("LOCO_MANIP_TELEOP_READY", flush=True)
+        if gui_artifact is not None:
+            print(
+                "[GUI-ARTIFACT] Click the viewport, then press a supported keyboard key to arm "
+                f"the finite {max_steps}-step recording (timeout {args.gui_arm_timeout_s:.1f}s).",
+                flush=True,
+            )
+            arm_deadline = time.monotonic() + float(args.gui_arm_timeout_s)
+            while simulation_app.is_running() and gui_handled_key_presses == 0:
+                if time.monotonic() >= arm_deadline:
+                    raise RuntimeError("GUI artifact did not observe a supported native keyboard press before timeout")
+                simulation_app.update()
+            if gui_handled_key_presses == 0:
+                raise RuntimeError("GUI artifact closed before a supported native keyboard press armed the run")
+            print("[GUI-ARTIFACT] Native keyboard callback observed; recording action states.", flush=True)
 
         while simulation_app.is_running() and (max_steps == 0 or step_count < max_steps):
             with torch.inference_mode():
@@ -445,6 +848,56 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 ):
                     press_released = True
 
+                if gui_artifact is not None:
+                    state_record = _gui_state_record(
+                        base_env,
+                        step_count=step_count,
+                        base_command=base_command,
+                        leg_target=leg_target,
+                        leg_velocity=leg_velocity,
+                        callback_events_observed=gui_artifact.event_count,
+                    )
+                    gui_artifact.record_state(state_record)
+                    base_nonzero = bool(np.any(np.abs(base_command) > 1.0e-9))
+                    fl_nonzero_velocity = bool(np.any(np.abs(leg_velocity) > 1.0e-9))
+                    if base_nonzero or fl_nonzero_velocity:
+                        gui_active_command_states += 1
+                    if base_nonzero:
+                        gui_base_nonzero_states += 1
+                    if fl_nonzero_velocity:
+                        gui_fl_nonzero_velocity_states += 1
+                    gui_max_fl_target_delta_m = max(
+                        gui_max_fl_target_delta_m,
+                        float(np.linalg.norm(np.asarray(leg_target, dtype=np.float64) - EE_DEFAULT)),
+                    )
+                    root_position = np.asarray(state_record["root_position_m"], dtype=np.float64)
+                    if gui_initial_root_position is None:
+                        gui_initial_root_position = root_position.copy()
+                    gui_max_root_position_delta_m = max(
+                        gui_max_root_position_delta_m,
+                        float(np.linalg.norm(root_position - gui_initial_root_position)),
+                    )
+                    button_displacement_m = float(state_record["button_displacement_m"])
+                    gui_max_button_displacement_m = max(
+                        gui_max_button_displacement_m,
+                        button_displacement_m,
+                    )
+                    if button_displacement_m >= gui_artifact_schema.BUTTON_PRESS_THRESHOLD_M:
+                        gui_button_press_threshold_seen = True
+                    if bool(state_record["button_success"]) and gui_button_press_threshold_seen:
+                        gui_button_success_after_threshold_seen = True
+                        if gui_first_button_success_action_step is None:
+                            gui_first_button_success_action_step = step_count
+                    if (
+                        gui_first_button_success_action_step is not None
+                        and step_count > gui_first_button_success_action_step
+                        and bool(state_record["button_released"])
+                        and button_displacement_m <= gui_artifact_schema.BUTTON_REBOUND_THRESHOLD_M
+                    ):
+                        gui_button_rebound_after_success_seen = True
+                        if gui_first_button_rebound_action_step is None:
+                            gui_first_button_rebound_action_step = step_count
+
                 report_every = 50 if smoke_mode else args.telemetry_every
                 if report_every and step_count % report_every == 0:
                     report_label = "SMOKE" if smoke_mode else "STATE"
@@ -459,13 +912,35 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 if press_mode and press_succeeded and press_released and step_count >= retract_end:
                     break
 
+        if gui_artifact is not None and step_count != max_steps:
+            raise RuntimeError(
+                "GUI artifact run ended before its required finite --max-steps limit: "
+                f"executed {step_count}, expected {max_steps}"
+            )
         physics_evidence_after = assert_physx_environment(env)
+        gui_backend_after = physics_evidence_after
         print(
             "[PHYSX] post "
             f"manager={physics_evidence_after['actual_manager']} "
             f"use_newton_actuators={physics_evidence_after['use_newton_actuators']}",
             flush=True,
         )
+        gui_evidence: dict[str, Any] | None = None
+        if gui_artifact is not None:
+            gui_evidence = _gui_m8_evidence(
+                base_nonzero_state_count=gui_base_nonzero_states,
+                fl_nonzero_velocity_state_count=gui_fl_nonzero_velocity_states,
+                unhandled_space_press_count=gui_unhandled_space_presses,
+                max_fl_target_delta_m=gui_max_fl_target_delta_m,
+                max_root_position_delta_m=gui_max_root_position_delta_m,
+                max_button_displacement_m=gui_max_button_displacement_m,
+                button_press_threshold_seen=gui_button_press_threshold_seen,
+                button_success_after_threshold_seen=gui_button_success_after_threshold_seen,
+                first_button_success_action_step=gui_first_button_success_action_step,
+                button_rebound_after_success_seen=gui_button_rebound_after_success_seen,
+                first_button_rebound_action_step=gui_first_button_rebound_action_step,
+            )
+            _assert_complete_gui_m8_evidence(gui_artifact_schema, gui_evidence)
         if press_mode:
             if not press_succeeded:
                 raise RuntimeError("Physical button did not reach the 12-mm press threshold")
@@ -499,7 +974,68 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 flush=True,
             )
             print(f"LOCO_MANIP_STEPS={step_count}", flush=True)
+        if gui_artifact is not None:
+            gui_artifact.finalize(
+                _gui_artifact_summary(
+                    gui_artifact_schema,
+                    args=args,
+                    outcome="completed",
+                    executed_action_steps=step_count,
+                    event_count=gui_artifact.event_count,
+                    state_count=gui_artifact.state_count,
+                    handled_key_press_count=gui_handled_key_presses,
+                    active_command_state_count=gui_active_command_states,
+                    configured_physics=configured_physics,
+                    backend_before=gui_backend_before,
+                    backend_after=gui_backend_after,
+                    checkpoint_sha256=contract.sha256,
+                    runtime=gui_runtime,
+                    m8_evidence=gui_evidence,
+                )
+            )
+            gui_artifact = None
         return 0
+    except BaseException as error:
+        if gui_artifact is not None:
+            try:
+                gui_artifact.finalize(
+                    _gui_artifact_summary(
+                        gui_artifact_schema,
+                        args=args,
+                        outcome="failed",
+                        executed_action_steps=step_count,
+                        event_count=gui_artifact.event_count,
+                        state_count=gui_artifact.state_count,
+                        handled_key_press_count=gui_handled_key_presses,
+                        active_command_state_count=gui_active_command_states,
+                        configured_physics=configured_physics,
+                        backend_before=gui_backend_before,
+                        backend_after=gui_backend_after,
+                        checkpoint_sha256=contract.sha256,
+                        runtime=gui_runtime,
+                        m8_evidence=_gui_m8_evidence(
+                            base_nonzero_state_count=gui_base_nonzero_states,
+                            fl_nonzero_velocity_state_count=gui_fl_nonzero_velocity_states,
+                            unhandled_space_press_count=gui_unhandled_space_presses,
+                            max_fl_target_delta_m=gui_max_fl_target_delta_m,
+                            max_root_position_delta_m=gui_max_root_position_delta_m,
+                            max_button_displacement_m=gui_max_button_displacement_m,
+                            button_press_threshold_seen=gui_button_press_threshold_seen,
+                            button_success_after_threshold_seen=gui_button_success_after_threshold_seen,
+                            first_button_success_action_step=gui_first_button_success_action_step,
+                            button_rebound_after_success_seen=gui_button_rebound_after_success_seen,
+                            first_button_rebound_action_step=gui_first_button_rebound_action_step,
+                        ),
+                        failure=error,
+                    )
+                )
+            except BaseException as finalize_error:
+                print(
+                    f"[GUI-ARTIFACT] failed to finalize evidence: {type(finalize_error).__name__}: {finalize_error}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+        raise
     finally:
         if env is not None:
             env.close()
@@ -514,6 +1050,7 @@ def main() -> int:
     except ModuleNotFoundError as error:  # pragma: no cover - target-runtime guard.
         raise RuntimeError("Run this script through scripts/rambo/run.sh") from error
     args.rambo_visualizer = validate_rambo_visualizer_args(parser, args, sys.argv[1:])
+    _validate_gui_artifact_args(parser, args)
     app_launcher = app_launcher_type(args)
     simulation_app = app_launcher.app
     try:

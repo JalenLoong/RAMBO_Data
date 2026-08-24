@@ -102,9 +102,10 @@ uv pip install --python "${PYTHON}" \
     "torch==2.10.0+cu128" "torchvision==0.25.0+cu128" \
     --index-url https://download.pytorch.org/whl/cu128
 
-# The exact tag requires these source extensions.  ``isaaclab_newton`` and
-# ``isaaclab_ovphysx`` are bare transitive graph nodes only: no [all], [newton]
-# or other optional Newton extras are requested.
+# The exact tag's official core installation includes these bare source
+# extensions.  ``isaaclab_newton`` is an official core node here, not a RAMBO
+# backend selection; no [all], [newton], or other optional Newton extras are
+# requested.
 for extension in \
     isaaclab \
     isaaclab_ppisp \

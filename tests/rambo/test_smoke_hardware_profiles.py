@@ -24,6 +24,16 @@ def test_physx_smoke_launchers_fail_closed_before_starting_kit() -> None:
         assert "skip_cleanup" not in contents
         assert "os._exit" not in contents
     assert "PhysxCfg" in (root / "scripts" / "rambo" / "official_physx_smoke.py").read_text(encoding="utf-8")
+    official_smoke = (root / "scripts" / "rambo" / "official_physx_smoke.py").read_text(encoding="utf-8")
+    assert '"cartpole-direct"' in official_smoke
+    assert '"Isaac-Cartpole-Direct-v0"' in official_smoke
+    assert "--num-envs" in official_smoke
+    assert "num_envs=args_cli.num_envs" in official_smoke
+    assert 'env_cfg.seed = 42' in official_smoke
+    assert '"checksums.sha256"' in official_smoke
+    assert '"backend_before": backend_before' in official_smoke
+    assert '"backend_after": backend_after_steps' in official_smoke
+    assert "external_exit_code_required" in official_smoke
     assert "assert_physx_environment" in (root / "scripts" / "rambo" / "physx_task_smoke.py").read_text(
         encoding="utf-8"
     )
