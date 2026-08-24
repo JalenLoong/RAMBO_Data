@@ -34,8 +34,8 @@
   `10154c6d2f20d33f51e5e126801c507e6fe206db`。
 - Isaac Lab checkout：`/workspace/IsaacLab-3.0.0-beta2.patch1`。
 - target venv：`/workspace/venvs/rambo60`。
-- 日志：`/workspace/migration_logs/isaac60/M<n>/<UTC>-<slug>.log`。
-- 输出：`/workspace/migration-output/isaac60/M<n>/<UTC>-<slug>/`。每次运行新建目录，
+- 日志和输出：`/workspace/migration-output/isaac60/M<n>/<UTC>-<slug>/`。预设的
+  `/workspace/migration_logs` 对当前执行用户不可写，因此不再依赖它。每次运行新建目录，
   禁止覆盖；保存 command manifest、exit code、backend evidence、GPU evidence、summary
   及 SHA256 manifest。
 
