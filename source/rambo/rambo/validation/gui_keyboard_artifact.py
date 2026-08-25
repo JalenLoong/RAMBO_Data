@@ -40,6 +40,7 @@ POST_CLOSE_RUNNER = "scripts/rambo/run_gui_keyboard_artifact.sh"
 PROCESS_EXIT_SCHEMA_VERSION = 1
 ATTESTATION_CONFIRMATION_METHOD = "interactive_tty_exact_phrase_after_kit_close"
 TERMINAL_CONFIRMATION_PHRASE = "I OBSERVED THE M8 PHYSICAL KEYBOARD GUI"
+OBSERVED_CARB_EVENT_TYPES = frozenset({"KEY_PRESS", "KEY_RELEASE", "KEY_REPEAT", "CHAR"})
 
 OPERATOR_ATTESTATION_STATEMENT = (
     "I personally focused the Isaac Sim GUI viewport and operated my physical keyboard through "
@@ -418,7 +419,7 @@ def _validate_events(root: Path, *, started_monotonic_ns: int, finished_monotoni
         _require(record.get("source") == "carb_keyboard_callback", "Event source is invalid")
         _require(record.get("callback_observed_only") is True, "Event must be callback observation-only")
         _require(isinstance(record.get("key"), str) and record["key"], "Event key is required")
-        _require(record.get("event_type") in {"KEY_PRESS", "KEY_RELEASE"}, "Event type is invalid")
+        _require(record.get("event_type") in OBSERVED_CARB_EVENT_TYPES, "Event type is invalid")
         _require(isinstance(record.get("handled_by_loco_manip"), bool), "Event handled flag is invalid")
         _vector(record.get("base_command"), "event.base_command", length=3)
         held = record.get("held_leg_keys")

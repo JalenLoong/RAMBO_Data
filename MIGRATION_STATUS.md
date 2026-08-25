@@ -22,7 +22,7 @@
 | 阶段 | 状态 | 主要证据 |
 | --- | --- | --- |
 | P0、M0、M1 | 完成 | baseline 已保护；精确 venv/checkout 已安装 |
-| M2 官方 PhysX/RTX/Kit | M2.2/M2.3/M2.4 sealed 通过；M2 整体仍受 M2.1 原字面标准限制 | M2.2 `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`；M2.3 `M2/20260824T235256Z-cartpole-direct-kit/` + `*-attestation/` 完成 45.04 秒真人 GUI 观察、1083 steps、两次 RTX 4090/`rtx`/`omni.hydra.rtx` live sample、PhysX 前后 FQN、exit 0 与 post-close TTY 声明；M2.4 warm-up/restart `143007Z-*`、`143029Z-*` 完成官方 Go2/RTX RGB。M2.1 仍不满足原字面 `sm_89` 断言。 |
+| M2 官方 PhysX/RTX/Kit | 完成 | M2.1 `M2/20260824T135749Z-cuda-ada-compatible-contract/` 在 RTX 4090 capability 8.9 完成同步 CUDA 实机运算；用户已明确接受该实机标准，不强制 `get_arch_list()` 字面出现 `sm_89`。M2.2 `142949Z-*`、M2.3 `235256Z-*` + attestation、M2.4 `143007Z-*`/`143029Z-*` 均完成并封存。 |
 | M3 API inventory | 完成（clean-source 扫描） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 porcelain clean，quaternion scan 仅有两处已审计的 XYZW `[0,0,0,1]` identity 候选；checksums 已复核。 |
 | M4 API/空间 contract | 完成（sealed） | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/` 均为 1-env/5-step、显式 PhysX、前后 manager FQN 与 exit 0。 |
 | M5.1 qpth contract | 通过（范围受限） | CPU/CUDA toy-qpth forward/backward、KKT、残差与确定性：`M5/20260824T105302Z-qpth-contract/`；这不是旧版 RAMBO QP snapshot 对比 |
@@ -53,8 +53,8 @@ M2.1 的非模拟 CUDA artifact
 同步 CUDA 算术。该精确 wheel 的 `get_arch_list()` 没有 native `sm_89`，但有
 `sm_86`；artifact 同时保存这两个事实和成功算术，按 NVIDIA 的 Ampere→Ada
 forward-compatibility 解释为**运行兼容**，绝不把 native `sm_89` 伪报为存在。
-因此它不能满足原计划字面 `assert "sm_89" in torch.cuda.get_arch_list()`，除非验收
-标准被正式修订。
+用户已于 2026-08-25 明确接受 RTX 4090 实机 CUDA 成功作为 M2.1 标准，不强制
+`get_arch_list()` 字面出现 `sm_89`；因此 M2.1 按修订后的授权标准通过。
 
 M2.2 的 sealed 官方任务 wrapper artifact
 `/workspace/migration-output/isaac60/M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`
@@ -84,6 +84,5 @@ exit 0 均通过。固定 tag 的 `zero_agent.py` 被保留为非验收的上游
 
 ## 当前剩余项
 
-1. M2.1 仍未满足原计划的 native `sm_89` 字面断言；现有 artifact 只证明 CUDA/Ada 运行兼容，若要计为完整 M2.1，必须先正式修订该验收标准。
-2. M2.3 GUI 已由真实操作者完成并封存；M8 真实键盘 GUI 尚待同样在 `--viz kit` 下完成，绝不以日志、合成或注入输入替代。
-3. M5.2 历史 Isaac Sim 5.1 QP snapshot 比较和 M11 Docker 已批准延期；它们保留为后续工作，不写成已完成。
+1. M2.3 GUI 已由真实操作者完成并封存；M8 真实键盘 runtime 已完成，尚待 post-close TTY 声明与最终封存，绝不以日志、合成或注入输入替代。
+2. M5.2 历史 Isaac Sim 5.1 QP snapshot 比较和 M11 Docker 已批准延期；它们保留为后续工作，不写成已完成。

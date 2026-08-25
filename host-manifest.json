@@ -79,6 +79,16 @@
     "scope": "current native validation including accepted M2.3 GUI; M8 GUI, historical QP snapshot comparison, and Docker remain explicitly deferred",
     "sealed_runtime_source_commit": "358daa52260841cdfa8263adeee930144379c5fe",
     "m3_clean_inventory_artifact": "/workspace/migration-output/isaac60/M3/20260824T142802Z-api-inventory-clean",
+    "final_m2_1_cuda": {
+      "artifact": "/workspace/migration-output/isaac60/M2/20260824T135749Z-cuda-ada-compatible-contract",
+      "acceptance_policy": "successful synchronized CUDA arithmetic on the actual RTX 4090 Ada device; get_arch_list need not literally contain sm_89",
+      "user_accepted_policy_at_utc": "2026-08-25T00:17:00Z",
+      "device_capability": "8.9",
+      "compatible_compiled_arch": "sm_86",
+      "native_sm89_compiled": false,
+      "summary_sha256": "13f688c5157d77d4b103300d157ffca510fe456510c0f184d999d112e5c405ee",
+      "checksums_sha256": "21949784a1d154ea18922d79bd73b3bd842fed7b9b73ebf4a1d52f6101b282e6"
+    },
     "accepted_runtime_artifacts": [
       {
         "milestone": "M2.2",

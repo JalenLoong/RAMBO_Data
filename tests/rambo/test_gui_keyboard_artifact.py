@@ -133,6 +133,32 @@ def _write_valid_artifact(output_dir: Path, *, max_steps: int = 3, seal_post_clo
     )
     writer.record_event(
         {
+            "callback_monotonic_ns": 11,
+            "source": "carb_keyboard_callback",
+            "callback_observed_only": True,
+            "key": "W",
+            "event_type": "KEY_REPEAT",
+            "handled_by_loco_manip": True,
+            "held_leg_keys": ["W"],
+            "base_command": [0.4, 0.0, 0.0],
+            "clear_success_requested": False,
+        }
+    )
+    writer.record_event(
+        {
+            "callback_monotonic_ns": 11,
+            "source": "carb_keyboard_callback",
+            "callback_observed_only": True,
+            "key": "w",
+            "event_type": "CHAR",
+            "handled_by_loco_manip": False,
+            "held_leg_keys": ["W"],
+            "base_command": [0.4, 0.0, 0.0],
+            "clear_success_requested": False,
+        }
+    )
+    writer.record_event(
+        {
             "callback_monotonic_ns": 12,
             "source": "carb_keyboard_callback",
             "callback_observed_only": True,
@@ -249,7 +275,7 @@ def test_offline_validator_accepts_complete_callback_and_state_evidence(tmp_path
 
     result = schema.validate_gui_keyboard_artifact(artifact)
 
-    assert result["event_count"] == 3
+    assert result["event_count"] == 5
     assert result["state_count"] == 3
     assert result["checksum_count"] == 6
     assert result["process_exit_status"] == 0

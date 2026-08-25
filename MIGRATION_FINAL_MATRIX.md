@@ -10,7 +10,7 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | Gate | 当前结论 | Canonical evidence / 限制 |
 | --- | --- | --- |
 | M0–M1 | 完成 | 精确 target checkout、venv、requirements lock 与 host/checkpoint manifests 已建立。 |
-| M2.1 CUDA | **未按原字面标准通过** | Ada CUDA runtime contract 成功，但固定 Torch wheel 不列出 `sm_89`；不可写成完整通过。 |
+| M2.1 CUDA | 按用户修订标准通过 | RTX 4090 capability 8.9 同步 CUDA 实机运算成功；用户明确接受该标准，不强制固定官方 Torch wheel 的 `get_arch_list()` 字面包含 `sm_89`。artifact 仍如实记录 native `sm_89=false` 与兼容 arch `sm_86`。 |
 | M2.2 官方 Cartpole | sealed 通过 | `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`；有限 16 env/16 step、显式 PhysX、post-close exit 0。 |
 | M2.3 Kit GUI | sealed + 人工声明通过 | `M2/20260824T235256Z-cartpole-direct-kit/` 与 `*-attestation/`：45.04 秒、1083 steps、两次 live RTX 4090/`rtx`/`omni.hydra.rtx` sample、显式 PhysX、post-close exit 0 和真人 TTY 声明。 |
 | M2.4 官方 Go2 + RGB | sealed 通过 | warm-up/restart `M2/20260824T143007Z-*`、`M2/20260824T143029Z-*`；均为 RTX RGB、PhysX FQN 与 exit 0。 |
@@ -27,6 +27,6 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M11 native freeze | 先前 current-scope freeze 完成；最终刷新待 M8 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 生成于 M2.3 人工验收之前；待 M8 GUI 完成后一次性刷新并绑定两项 GUI 证据。 |
 | M11 Docker | **已延期** | 当前 host 没有 Docker Engine/NVIDIA Container Toolkit；不 build/run/push。 |
 
-因此，本迁移的完整 adaptation 仍未完成：M2.1 的字面标准、M8 GUI、M5.2
+因此，本迁移的完整 adaptation 仍未完成：M8 GUI 的 post-close 人工声明、M5.2
 历史 snapshot 以及 Docker 都没有被重写为通过。刷新 M11 native freeze 只会绑定当前
 source-clean non-GUI evidence，绝不改变这些 gate 的状态。

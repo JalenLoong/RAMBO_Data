@@ -90,6 +90,10 @@ M2 的脚本不得 import RAMBO。依次运行 CUDA tensor、有限 Cartpole、
 manager FQCN（必须为 `PhysxManager`）与该开关，并写入 summary。GPU evidence 必须证明 Kit
 使用 Vulkan GPU0 RTX 4090，而非 llvmpipe。
 
+M2.1 的最终用户授权验收标准是 RTX 4090 capability 8.9 上完成同步 CUDA 实机运算；
+固定官方 Torch wheel 的 `get_arch_list()` 不必字面包含 `sm_89`，但必须如实保留其
+实际 compiled arch 列表与 `native_sm89_compiled=false`。
+
 固定 Isaac Sim 6.0.1 的默认 `fast_shutdown=True` 必须保留：其 `False` 全扩展 teardown 路径
 在本 host 上会在工作成功后崩溃。脚本须在调用 `simulation_app.close(exit_code=...)` 前写入并
 flush summary；外层 exit code 与随后独立的 restart 共同证明关闭成功。RAMBO 代码不得直接

@@ -190,11 +190,11 @@ STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 ```
 
 This checks the actual CUDA device, capability, finite CUDA arithmetic, and
-the wheel's compiled architecture list without launching Kit. On the pinned
-wheel currently validated here, this proves Ada runtime compatibility via
-`sm_86` but does **not** make the plan's literal `sm_89` assertion true; see
-[MIGRATION_STATUS.md](MIGRATION_STATUS.md) before treating it as an M2.1
-acceptance result.
+the wheel's compiled architecture list without launching Kit. The user-approved
+M2.1 criterion is successful synchronized CUDA execution on the actual RTX 4090
+Ada device; `get_arch_list()` need not literally contain `sm_89`. The artifact
+still records the pinned wheel's actual compatible `sm_86` entry and
+`native_sm89_compiled=false` without relabelling either fact.
 
 Every acceptance artifact produced by a Kit child must use
 `run_runtime_artifact.sh`, not `run60.sh` directly. The wrapper records the

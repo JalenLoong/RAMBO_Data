@@ -35,7 +35,7 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | 门禁 | 严格状态 | 证据与限定 |
 | --- | --- | --- |
 | M0–M1 | 完成 | legacy baseline 已保护；目标 venv、固定 Isaac Sim/Isaac Lab checkout、host/checkpoint manifests 均已建立。 |
-| M2.1 CUDA | **未按原计划通过** | `M2/20260824T135749Z-cuda-ada-compatible-contract/` 成功证明 Torch CUDA 12.8 可在 RTX 4090 `(8,9)` 做同步 CUDA 算术；但该 fixed wheel 的 `torch.cuda.get_arch_list()` 没有 `sm_89`（有 `sm_86`），故原计划的字面 `assert "sm_89" ...` 未满足。它只能称运行兼容性证据，除非正式修改验收标准。 |
+| M2.1 CUDA | 按用户修订标准通过 | `M2/20260824T135749Z-cuda-ada-compatible-contract/` 证明 Torch CUDA 12.8 在 RTX 4090 `(8,9)` 完成同步 CUDA 算术。用户已明确接受实机成功，不强制 `get_arch_list()` 字面包含 `sm_89`；artifact 仍如实记录 native `sm_89=false`、兼容 arch `sm_86`。 |
 | M2.2 官方 Cartpole | sealed 通过 | `M2/20260824T142949Z-official-cartpole-direct-16-physx-sealed/`：官方 `Isaac-Cartpole-Direct-v0`、16 env、16 step、显式 PhysX、前后 `PhysxManager` 与 post-close exit 0。literal `zero_agent.py --viz none` 仍无有限退出路径，不能伪称 literal 命令通过。 |
 | M2.3 Kit GUI | sealed + 人工声明通过 | `M2/20260824T235256Z-cartpole-direct-kit/` + `*-attestation/`：真实操作者完成 45.04 秒观察；runtime 记录 1083 steps、两次 live RTX 4090/`rtx`/`omni.hydra.rtx` evidence、PhysX 前后 FQN 与 exit 0，post-close TTY 声明已 checksum 绑定。 |
 | M2.4 官方 Go2 + RGB | sealed 通过 | warm-up `M2/20260824T143007Z-official-go2-rgb-1000-warmup-sealed/` 与 clean restart `M2/20260824T143029Z-official-go2-rgb-1000-restart-sealed/`：单 Go2、1000 tick、640×480 Isaac RTX RGB、PhysX 前后 manager、checksums 与 exit 0。 |
@@ -61,8 +61,8 @@ artifact 记录 Torch `2.10.0+cu128`、CUDA 12.8、RTX 4090 capability `(8,9)`�
 [`get_arch_list`](https://docs.pytorch.org/docs/stable/generated/torch.cuda.get_arch_list.html)
 返回 wheel 编译时包含的架构，而不是设备实时 capability；NVIDIA 的
 [Ada compatibility guide](https://docs.nvidia.com/cuda/archive/12.9.0/ada-compatibility-guide/index.html)
-说明 Ampere binary 可向前兼容 Ada。因此运行兼容有证据，但计划中的 native
-`sm_89` 断言仍然没有通过。
+说明 Ampere binary 可向前兼容 Ada。用户已明确接受 RTX 4090 实机 CUDA 成功作为
+验收标准，因此 M2.1 通过；这不改变或掩盖 wheel 未列出 native `sm_89` 的事实。
 
 ### 四元数和 QP 边界
 
@@ -90,11 +90,9 @@ RAMBO 的生产 RGB 是单个挂在 Go2 base 前方的前视相机；因此 cont
 
 ## 尚需完成的工作
 
-1. M2.1 的原字面 `sm_89` 断言仍未满足；当前只有 Ada runtime compatibility evidence，
-   需先正式决定是否修订验收标准。
-2. M2.3 GUI 已由真实操作者完成并封存；M8 physical-keyboard GUI 仍须由真实操作者在
-   `--viz kit` 完成，绝不允许 xdotool、pyautogui、重放或事件注入。
-3. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
+1. M2.3 GUI 已由真实操作者完成并封存；M8 physical-keyboard runtime 已完成，尚待
+   post-close TTY 声明与最终封存，绝不允许 xdotool、pyautogui、重放或事件注入。
+2. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
    具备输入/主机条件时恢复。
 
 所有 artifact 保留历史失败和非验收尝试，以便审计；它们不会被删除或改写为成功。
