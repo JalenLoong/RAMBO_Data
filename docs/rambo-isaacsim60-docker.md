@@ -1,10 +1,18 @@
 # RAMBO Isaac Sim 6 Docker specification (deferred)
 
 本文档记录未来可复现的容器化路径；它**不是**已完成的 Docker 验收报告。截至
-2026-08-24，原生 RTX 4090 验收主机没有 Docker Engine 或 NVIDIA Container
+2026-08-25，原生 RTX 4090 验收主机没有 Docker Engine 或 NVIDIA Container
 Toolkit，因此本仓库没有执行 `docker build`、`docker run` 或发布镜像。原生
 PhysX 验收仍是唯一有效的运行证据，状态以
 [`MIGRATION_STATUS.md`](../MIGRATION_STATUS.md) 为准。
+
+Native runtime migration 已在 commit
+`5d7745994358280b001b78ed6b5484248f630c8c` 完成验证，并由 annotated tag
+`rambo-isaac60-native-r1` 固定。`Dockerfile.rambo60`、`.dockerignore`、本文件、
+精确 requirements lock 与 runtime wrappers 已完成静态收尾；实际 build/runtime
+仍明确延期至具备 Docker Engine、BuildKit、NVIDIA Container Toolkit 和 GPU
+passthrough 的 **x86_64 Linux host 或 CI runner**。Docker 只是 reproducibility /
+deployment layer，不属于已接受 native runtime gate，也不能替代它。
 
 `Dockerfile.rambo60` 是 fail-closed 模板。没有给出已验证的 Ubuntu base
 digest 时，它会直接拒绝 build；不要为了让 build 继续而改用可变 tag。
@@ -27,6 +35,11 @@ Isaac Sim / Isaac Lab 依赖图所要求的裸 Newton 相关 package（包括 pi
 官方 core install 的 `isaaclab_newton`）可以存在，但
 RAMBO config、smoke、validation、recorder 和 production execution 都必须在
 运行前后记录实际 `PhysxManager`，不能选择或执行 Newton backend。
+
+未来 packaging 必须逐项消费本表的 exact native dependency contract，不得在 image
+中静默升级或替换 Isaac Sim、Isaac Lab、Torch/CUDA、qpth、RAMBO checkpoint contract
+或 solver。image build 成功也只证明 packaging；build 后仍必须在目标 GPU host 内运行
+CUDA、Isaac RTX 与实际 PhysX manager validation，才能形成独立 container evidence。
 
 base image 还必须是 x86_64、以 root 构建、没有继承的 `PYTHONPATH`，并提供
 Ubuntu 的 `libEGL`、`libGL` 与 Vulkan loader userspace。Dockerfile 对前 3 项

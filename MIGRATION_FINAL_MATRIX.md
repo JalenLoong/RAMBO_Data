@@ -17,15 +17,18 @@ freeze 都必须同时 checksum 本文件、这两个文档和 runtime launch/se
 | M3 | 完成 | clean-source inventory `M3/20260824T142802Z-api-inventory-clean/`。 |
 | M4 | sealed 通过 | 四足/双足 space contract：`M4/20260824T143107Z-*`、`M4/20260824T143117Z-*`。 |
 | M5.1 | 通过（范围受限） | qpth contract 仅证明 toy qpth，不等于历史 RAMBO QP 数值对比。 |
-| M5.2 | **已延期** | Isaac Sim 5.1 历史 QP snapshot 缺失；不以新端数据伪造比较。 |
+| M5.2 | **历史输入不可用；当前验收不要求** | 最终 Isaac Sim 5.1 machine-readable QP snapshot 缺失；未重建、推断或把 4.5 artifact 改标为 5.1。 |
+| Isaac 6 QP forward regression | 完成 | `qp_reference/isaac601-go2-seed42-r1/` 保存单环境 seed 42 的 exact first-step QP problem/solution、metadata、tolerances、residual 与 checksum；只用于未来 regression，不声称 5.1 parity。 |
 | M6 | sealed 通过 | 3000-step/first-transition `M6/20260824T143140Z-*` 与 current-source 16-env/16-step `M6/20260824T151140Z-*`；零动作诊断仅补充，不能替代 production walking。 |
 | M7 | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：生产前视流证明 sensor/cadence/scene，绑定同 rollout final third-person RGBD 证明 robot + scene。 |
 | M8 non-interactive | sealed 通过 | M10 Button recorder 覆盖 30 秒 deterministic episode。 |
 | M8 GUI 真实键盘 | sealed + 真人声明通过 | `M8/20260825T000552Z-gui-keyboard/`：3000 states、5324 callbacks、base/FL 命令、18.06 mm button press、成功后回弹、SPACE、显式 PhysX、post-close exit 0、Selkies 真人声明与 checksum 均通过。 |
 | M9 | sealed clean-source 通过 | 3000-step RGB、current-source 16-env/16-step 与 FL/FR independent artifacts：`M9/20260824T143926Z-*`、`M9/20260824T151210Z-*`、`M9/20260824T144321Z-*`；RGB visibility 采用 M7 的组合证据。 |
 | M10 | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB 与 acceptance。 |
-| M11 native freeze | current-scope 最终完成 | `M11/20260825T002300Z-native-freeze-final-gui-v7/` 绑定干净最终 commit、31 项 canonical inputs、17 项接受工件索引与 M2.1/M2.3/M8 最终 hashes。 |
+| M11 native freeze | 最终完成 | accepted v7 保持不变；`M11/20260825T004800Z-native-closeout-freeze-v8/` 额外绑定 QP hook/validator 与 closeout 文档的干净源码。Native tag `rambo-isaac60-native-r1` 严格指向 `5d7745994358280b001b78ed6b5484248f630c8c`。 |
 | M11 Docker | **已延期** | 当前 host 没有 Docker Engine/NVIDIA Container Toolkit；不 build/run/push。 |
 
-因此，当前用户批准的 native adaptation scope 已完成。M5.2 历史 snapshot 与 Docker
-仍按批准延期保留，既未执行，也没有被重写为通过。
+因此，RAMBO Isaac Sim 6 native migration 为 **COMPLETE**。历史 5.1 QP parity 因
+缺失 snapshot 而 unavailable/deferred，Docker build/runtime validation 继续延期至
+Docker-capable x86_64 Linux host 或 CI；二者都没有被重写为通过。主项目已可进入
+LingBot-VA → RAMBO adaptation dataset synthesis，但本 closeout 不自动启动该阶段。

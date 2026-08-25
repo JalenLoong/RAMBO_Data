@@ -1,6 +1,6 @@
 # RAMBO Isaac Sim 6 迁移状态
 
-最后更新：2026-08-24 UTC。详细验收见 [migration-report.md](migration-report.md)，
+最后更新：2026-08-25 UTC。详细验收见 [migration-report.md](migration-report.md)，
 环境与 checkpoint 冻结见 [host-manifest.json](host-manifest.json) 和
 [checkpoint-manifest.json](checkpoint-manifest.json)。
 
@@ -17,6 +17,20 @@
 - EULA 仅作为每个 Isaac Sim 命令的
   `OMNI_KIT_ACCEPT_EULA=Y` 前缀传递；不 export、不写 marker、不进入 Docker image。
 
+## 最终收尾状态
+
+- Native migration：**COMPLETE / VALIDATED**。
+- Native validated commit：`5d7745994358280b001b78ed6b5484248f630c8c`。
+- Native release tag：`rambo-isaac60-native-r1`，严格指向上述 commit；后续
+  closeout commits 不移动该标签。
+- 历史 Isaac Sim 5.1 machine-readable QP 数值比较：**NOT AVAILABLE / NOT
+  REQUIRED FOR CURRENT ACCEPTANCE**。最终 5.1 QP snapshot 未保存，且没有把 Isaac
+  4.5 历史数据改标为 5.1。替代物是下面的新 Isaac 6 forward-regression snapshot。
+- Docker build/runtime：**DEFERRED**。当前 Vast instance 不是合适的 Docker build
+  环境；下一执行位置为具备 Docker Engine、BuildKit、NVIDIA Container Toolkit
+  与 RTX GPU passthrough 的 x86_64 Linux host 或 CI runner。
+- 主项目：**Ready to proceed to LingBot-VA → RAMBO adaptation dataset synthesis**。
+
 ## 里程碑
 
 | 阶段 | 状态 | 主要证据 |
@@ -26,14 +40,15 @@
 | M3 API inventory | 完成（clean-source 扫描） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 porcelain clean，quaternion scan 仅有两处已审计的 XYZW `[0,0,0,1]` identity 候选；checksums 已复核。 |
 | M4 API/空间 contract | 完成（sealed） | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/` 均为 1-env/5-step、显式 PhysX、前后 manager FQN 与 exit 0。 |
 | M5.1 qpth contract | 通过（范围受限） | CPU/CUDA toy-qpth forward/backward、KKT、残差与确定性：`M5/20260824T105302Z-qpth-contract/`；这不是旧版 RAMBO QP snapshot 对比 |
-| M5.2 RAMBO 5.1 QP 数值对比 | **已批准延期** | 计划要求的旧 baseline mass/Jacobian/contact/desired-force/constraint 及 solution/torque/contact/residual snapshot 未保存，当前主机不能诚实重建或以新端数据代替；按当前用户范围，它不阻断本轮后续自动化工作。 |
+| M5.2 RAMBO 5.1 QP 数值对比 | **历史输入不可用；当前验收不要求** | 最终 5.1 machine-readable snapshot 未保存，无法 post-hoc 计算精确 5.1→6.0 parity；未重建、推断或把 4.5 数据改标为 5.1。新 Isaac 6 canonical snapshot 仅用于未来 forward regression，不声称历史 parity。 |
+| Isaac 6 canonical QP regression | 完成 | `/workspace/migration-output/isaac60/qp_reference/isaac601-go2-seed42-r1/`：单 Go2、seed 42、released checkpoint、首次真实 policy→QP→PhysX step；20 个输入数组、8 个输出数组、显式 tolerance、residual、metadata 与 checksum。runtime 封存在同级 `runtime-isaac601-go2-seed42-r1/`。 |
 | M6 四足 | 完成（sealed） | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000 步真实 policy→QP rollout 与首转换；`151140Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、405/18）sealed gate；`143407Z-*`/`143422Z-*` 是额外 100/1000-step 全支撑零动作诊断，明确不替代 production walking。所有列出的 gate 均 exit 0/PhysX 前后 FQN。 |
 | M7 四足 RGB 3000 steps | 完成（sealed clean-source） | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/` 绑定 clean source `358daa5`：3000 policy steps、15,000 physics ticks、375 base-mounted 前视 RGB、终态独立 RGBD、checksum 与 exit 0 均通过。前视流证明 cadence/scene；同一封存 rollout 的 third-person RGBD 证明 robot + scene，绝不伪称机器人在每张前视帧内可见。 |
 | M8 Button non-interactive | 完成（由 M10 sealed recorder 覆盖） | 30 秒 deterministic Button 运行在 `M10/20260824T144344Z-button-episode-3000-sealed/` 中完成并通过 acceptance。 |
 | M8 GUI 真实键盘 | sealed + 真人声明通过 | `M8/20260825T000552Z-gui-keyboard/`：3000 states、5324 Carb callbacks、239 base-command states、363 FL-velocity states、18.06 mm button travel、成功后回弹、2 次 SPACE、PhysX 前后 FQN、exit 0、Selkies 真人 TTY 声明与 6 文件 checksum 全部通过。 |
 | M9 双足 | 完成（sealed clean-source） | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`151210Z-*` 补齐 current-source 的 16-env/16-step（256 env-steps、435/18）sealed gate；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 在 clean source 上完成 FL/FR 两步独立性。前视流/third-person RGBD 的 visibility 解释与 M7 相同；所有列出的 gate 均 PhysX 前后 FQN、checksum 与 exit 0。 |
 | M10 30 秒 Button recorder | 完成（sealed） | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button success/rebound 与 motion acceptance、382 个封存文件、exit 0 均通过。 |
-| M11 native freeze | current-scope 最终完成 | `M11/20260825T002300Z-native-freeze-final-gui-v7/` 绑定干净最终 commit、gpu-required verifier、242-wheel lock、无 optional Newton extras、31 项 canonical source inputs、17 项接受工件索引，以及 M2.1/M2.3/M8 最终 evidence hashes。 |
+| M11 native freeze | 最终完成 | 原始验收 freeze `M11/20260825T002300Z-native-freeze-final-gui-v7/` 保持不变；closeout freeze `M11/20260825T004800Z-native-closeout-freeze-v8/` 额外绑定 QP forward-regression hook/validator、最终文档、gpu-required verifier、精确 lock 与无 optional Newton extras 的干净源码。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push image |
 
 ## 最终 M10 摘要
@@ -82,7 +97,33 @@ exit 0 均通过。固定 tag 的 `zero_agent.py` 被保留为非验收的上游
 `/workspace/migration-output/isaac60/M3/20260824T142802Z-api-inventory-clean/` 取代。
 新扫描中的两处 identity 都是已审计的 **XYZW** `[0,0,0,1]`，不得误标为 WXYZ。
 
-## 当前剩余项
+## Isaac 6 canonical QP forward regression
 
-当前用户要求的 native migration scope 已完成。M5.2 历史 Isaac Sim 5.1 QP snapshot
-比较和 M11 Docker 已批准延期；它们保留为后续工作，不写成已完成。
+canonical reference 是
+`/workspace/migration-output/isaac60/qp_reference/isaac601-go2-seed42-r1/`，绑定
+RAMBO closeout hook commit `3b7171b7f31b88c6b19c56bf2373c1306ed240f3`、checkpoint
+SHA-256 `1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706`、
+task `Isaac-RAMBO-Quadruped-Go2-v0` 与 seed 42。它保存 exact QP problem、mass/Jacobian、
+contact mask、desired acceleration/force、空 equality contract、inequality contract、primal、
+joint torque、post-step PhysX contact force及 residual。RAMBO 没有独立 desired-wrench
+tensor，qpth 也不保留 dual variables，因此 artifact 如实记录这两项不可用，不伪造
+wrench 或 stationarity residual。
+
+离线回归命令（不启动 Kit，也不选择 physics backend）：
+
+```bash
+scripts/rambo/run.sh scripts/rambo/qp_reference.py \
+  --reference-dir /workspace/migration-output/isaac60/qp_reference/isaac601-go2-seed42-r1 \
+  --candidate-dir /path/to/future/qp-reference
+```
+
+默认 tolerance 为 exact mask/done `rtol=atol=0`、input `rtol=1e-5` /
+`atol=1e-6`、output `rtol=1e-4` / `atol=1e-5`、residual `rtol=1e-4` /
+`atol=1e-7`。该 artifact 是 Isaac 6 forward-looking reference，绝不证明 Isaac 5.1 parity。
+
+## 当前剩余边界
+
+Native migration 与 closeout 已完成。仅历史 5.1 snapshot comparison（因输入缺失而
+不可用）和 Docker build/runtime validation（待 Docker-capable host/CI）维持明确延期；
+二者都不是当前 native acceptance 的失败。下一项目阶段可以开始 LingBot-VA → RAMBO
+adaptation dataset synthesis，但本 closeout 不自动启动该实现。

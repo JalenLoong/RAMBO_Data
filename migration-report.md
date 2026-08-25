@@ -1,8 +1,8 @@
 # RAMBO Isaac Sim 6 / Isaac Lab 3 迁移报告
 
-生成时间：2026-08-24（UTC）
+生成时间：2026-08-25（UTC）
 状态来源：[MIGRATION_STATUS.md](MIGRATION_STATUS.md)。本报告是证据状态记录，
-不是“全部迁移完成”的声明。
+是最终 native migration 与 closeout 的持久证据记录。
 
 ## 当前结论
 
@@ -19,8 +19,10 @@ smoke、validation 和 recorder 都显式配置 `PhysxCfg`、
 安装输入和 canonical setup 均不请求可选 Newton extras。EULA 只由每条 Kit
 启动命令的 `OMNI_KIT_ACCEPT_EULA=Y` 前缀传递，不写入环境、marker 或镜像。
 
-本轮已批准延期两项：M5.2 的 Isaac Sim 5.1 历史 QP snapshot 比较，以及 M11
-Docker 验收。它们保留为后续工作，不作为当前自动化 PhysX 交付的阻断条件。非 GUI
+Native migration 已在 commit `5d7745994358280b001b78ed6b5484248f630c8c`
+完成验证，并以 annotated tag `rambo-isaac60-native-r1` 固定。两项明确延期为
+Isaac Sim 5.1 历史 QP snapshot 比较与 Docker build/runtime 验收；它们不作为当前
+PhysX native 交付的阻断条件。非 GUI
 long-runtime 已在 clean source `358daa5` 上封存，新增短门禁绑定 `078bfa2`；M11
 current-scope native freeze 已绑定完整 canonical input list，所有这些路径都不选择或执行
 Newton。
@@ -42,14 +44,15 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M3 API inventory | 完成（clean-source） | `M3/20260824T142802Z-api-inventory-clean/` 绑定 `e449b1d`，源码 clean、checksums 已复核；扫描仅保留两处已审计 XYZW `[0,0,0,1]` identity 候选。 |
 | M4 API/空间合同 | sealed 通过 | 四足 `M4/20260824T143107Z-quadruped-space-contract-sealed/` 与双足 `M4/20260824T143117Z-biped-space-contract-sealed/`：各 1 env/5 step，PhysX 前后 FQN 与 exit 0。 |
 | M5.1 qpth | 通过（范围受限） | `M5/20260824T105302Z-qpth-contract/` 覆盖 CPU/CUDA toy qpth forward/backward、KKT、残差与确定性；不等于历史 RAMBO QP 对比。 |
-| M5.2 RAMBO 5.1 QP 数值比较 | **已批准延期** | 所需旧端 snapshot 未保存；本轮不以其阻断后续自动化工作。 |
+| M5.2 RAMBO 5.1 QP 数值比较 | **不可用 / 当前验收不要求** | 最终 5.1 machine-readable snapshot 未保存，不能 post-hoc 计算 exact parity；没有重建旧环境、推断 tensor 或把 Isaac 4.5 artifact 改标为 5.1。 |
+| Isaac 6 canonical QP | 完成 | `qp_reference/isaac601-go2-seed42-r1/`：单环境 seed 42 的首次 released-policy→QP→PhysX step，保存 20 个 input 与 8 个 output tensor、版本/顺序 metadata、明确 tolerances、residual 与 checksum；它是未来 regression reference，不是 5.1 parity 证据。 |
 | M6 四足 | sealed 通过 | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000-step production policy→QP rollout 和 first transition；`M6/20260824T151140Z-quadruped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（405/18、256 env-steps、PhysX 前后 FQN、exit 0）；独立 `143407Z-*`/`143422Z-*` 100/1000-step 全支撑零动作诊断也通过，但不替代 production schedule。 |
 | M7 四足 RGB | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：3000 policy step、15,000 physics tick、375 base-mounted 前视 RGB、终态独立 RGBD、PhysX 前后 FQN、checksum 与 exit 0。前视流证明生产 sensor/cadence/scene；绑定同一 final state 的 third-person RGBD 证明 robot + scene，不伪称机器人在每个前视像素帧中可见。 |
 | M8 Button 非交互 | sealed 通过 | M10 current artifact 覆盖 deterministic Button press/hold/release 且满足 30 秒数据合同。 |
 | M8 GUI 真实键盘 | sealed + 真人声明通过 | `M8/20260825T000552Z-gui-keyboard/`：3000 states、5324 Carb callbacks、239 base-command states、363 FL-velocity states、18.06 mm max press、成功后回弹、2 次 SPACE、PhysX 前后 FQN、exit 0、Selkies 真人声明与 checksum 均通过。 |
 | M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`M9/20260824T151210Z-biped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（435/18、256 env-steps、PhysX 前后 FQN、exit 0）；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。RGB visibility 的前视流 + 同 rollout third-person 解释与 M7 相同。 |
 | M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
-| M11 native freeze | current-scope 最终完成 | `M11/20260825T002300Z-native-freeze-final-gui-v7/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、31 项 canonical inputs、17 项接受工件索引和 M2.1/M2.3/M8 hashes 全部绑定。 |
+| M11 native freeze | 最终完成 | 原始 accepted freeze `M11/20260825T002300Z-native-freeze-final-gui-v7/` 保持不变；closeout freeze `M11/20260825T004800Z-native-closeout-freeze-v8/` 将 QP hook/validator 与最终文档纳入 canonical inputs。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明
@@ -71,6 +74,23 @@ artifact 记录 Torch `2.10.0+cu128`、CUDA 12.8、RTX 4090 capability `(8,9)`�
 `xyzw_to_wxyz` / `wxyz_to_xyzw` 做显式、局部转换；不得对 405/435D observation、
 18D action 或 checkpoint 作全局重排。
 
+### Canonical QP forward-regression artifact
+
+新 reference 位于
+`/workspace/migration-output/isaac60/qp_reference/isaac601-go2-seed42-r1/`，其
+runtime exit evidence 位于同级 `runtime-isaac601-go2-seed42-r1/`。capture hook 仅在
+第一次正常 QP call 周围临时复制输入/输出，并在同一 `env.step` 后立即恢复；额外 policy
+call、env step、QP solve 和 RNG/controller mutation 都是 0。保存项包括 centroidal mass
+mapping、foot/full-body Jacobian、contact mask、desired spatial acceleration 与 FL force、
+qpth `P/q/G/h/A/b`、primal GRF、solved acceleration、QP cost、joint torque、post-step
+PhysX foot contact force及 observation/reward/done。
+
+RAMBO controller 没有独立 desired-wrench tensor；qpth 当前接口只返回 primal、未保留
+dual，因此 artifact 不伪造 desired wrench 或 stationarity residual。最大 inequality
+positive violation 为 `4.4214971239853185e-07`，equality contract 为空且 residual 为 0。
+input/output/residual tolerances 分别记录在 `metadata.json` 与 `summary.json`，离线工具为
+`scripts/rambo/qp_reference.py`。
+
 ### M7/M9 provenance 修复
 
 新的 `--third-person-diagnostic final` 会在创建 `AppLauncher` **之前**捕获并要求：
@@ -88,10 +108,13 @@ RAMBO 的生产 RGB 是单个挂在 Go2 base 前方的前视相机；因此 cont
 与连续性；绑定的 third-person RGBD 证明 robot + scene 可见。这保持单前视相机的既有语义，
 不以改相机或重跑来掩盖证据边界。
 
-## 尚需完成的工作
+## 最终项目状态
 
-当前用户批准的 native migration scope 已完成。M5.2 历史 snapshot 和 M11 Docker
-已批准延期，保留其现有证据与 runbook，待后续
-   具备输入/主机条件时恢复。
+- RAMBO Isaac Sim 6 native migration：**COMPLETE**。
+- Historical Isaac 5.1 QP numerical parity：**DEFERRED / unavailable due to missing
+  historical snapshot**。
+- Docker build/runtime validation：**DEFERRED**，下一位置为 Docker-capable x86_64
+  Linux host 或 CI runner。
+- LingBot-VA → RAMBO adaptation dataset synthesis：**READY TO START**。
 
 所有 artifact 保留历史失败和非验收尝试，以便审计；它们不会被删除或改写为成功。

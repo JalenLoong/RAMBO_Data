@@ -77,8 +77,25 @@
   },
   "evidence": {
     "artifact_root": "/workspace/migration-output/isaac60",
-    "scope": "current native validation including accepted M2.3 and M8 GUI gates; historical QP snapshot comparison and Docker remain explicitly deferred",
+    "scope": "completed native validation plus Isaac 6 canonical QP forward regression; historical Isaac 5.1 QP parity is unavailable and Docker build/runtime remains explicitly deferred",
     "sealed_runtime_source_commit": "358daa52260841cdfa8263adeee930144379c5fe",
+    "native_validated_commit": "5d7745994358280b001b78ed6b5484248f630c8c",
+    "native_release_tag": "rambo-isaac60-native-r1",
+    "canonical_qp_reference": {
+      "purpose": "Isaac 6 forward regression only; not evidence of Isaac 5.1 numerical parity",
+      "path": "/workspace/migration-output/isaac60/qp_reference/isaac601-go2-seed42-r1",
+      "runtime_artifact": "/workspace/migration-output/isaac60/qp_reference/runtime-isaac601-go2-seed42-r1",
+      "capture_source_commit": "3b7171b7f31b88c6b19c56bf2373c1306ed240f3",
+      "task": "Isaac-RAMBO-Quadruped-Go2-v0",
+      "seed": 42,
+      "metadata_sha256": "e444f007143905060ffd566f20ca46cb7acd270415998c55186f3db4f4e52de8",
+      "input_snapshot_sha256": "9f1c2421086e87d89311919fd2d84089b9a16f9cc785658686542c847ddce0a8",
+      "output_snapshot_sha256": "5b3e844c6efa50b07c766f7c179e2fc6a668206095349e897c8d6bedfaf635a2",
+      "summary_sha256": "5f308b89fce8823273d1bce52685136e009316e984692ca74f1c2d4c60c3ad83",
+      "checksums_sha256": "4f5ada00244e8a5b2628b4588b7143c996b8c43fa76017347e249f79dba6f160",
+      "runtime_summary_sha256": "5a063f8cbe82f49d4bcc62b227f7e8a326c59d2afb68c7f6dd6021ad343b649f",
+      "runtime_process_exit_sha256": "5b6fed7be3c8e97dd7faaaed7d643c2098321995f6627150e7ebe810467218a4"
+    },
     "m3_clean_inventory_artifact": "/workspace/migration-output/isaac60/M3/20260824T142802Z-api-inventory-clean",
     "final_m2_1_cuda": {
       "artifact": "/workspace/migration-output/isaac60/M2/20260824T135749Z-cuda-ada-compatible-contract",
@@ -154,6 +171,10 @@
       {
         "milestone": "M8 GUI physical keyboard",
         "path": "/workspace/migration-output/isaac60/M8/20260825T000552Z-gui-keyboard"
+      },
+      {
+        "milestone": "Isaac 6 canonical QP reference runtime",
+        "path": "/workspace/migration-output/isaac60/qp_reference/runtime-isaac601-go2-seed42-r1"
       }
     ],
     "final_m2_3_gui": {
