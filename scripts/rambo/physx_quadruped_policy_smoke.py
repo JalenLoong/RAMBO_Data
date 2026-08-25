@@ -25,6 +25,8 @@ from typing import Any
 
 
 TASK = "Isaac-RAMBO-Quadruped-Go2-v0"
+ISAAC_LAB_RELEASE = "v3.0.0-beta2.patch1"
+ISAAC_LAB_COMMIT = "ffff603eafc6b74264a5261cc0183d6a65390d78"
 DEFAULT_STEPS = 16
 MEMORY_MONITOR_INTERVAL_STEPS = 100
 MEMORY_ANALYSIS_START_STEP = 1000
@@ -71,6 +73,14 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
         help=(
             "Opt-in M6 artifact: record the reset policy observation, its first policy action, "
             "and the existing QP outputs after that exact first env.step."
+        ),
+    )
+    parser.add_argument(
+        "--qp-reference-dir",
+        type=Path,
+        help=(
+            "Fresh canonical Isaac 6 QP reference directory. Requires one environment and passively "
+            "copies the exact first QP problem/solution without another solve."
         ),
     )
     parser.add_argument(
@@ -598,6 +608,297 @@ def _cpu_numpy_copy(tensor: Any, label: str, torch: Any) -> Any:
     return tensor.detach().contiguous().cpu().numpy().copy()
 
 
+class _ExactQpCapture:
+    """Temporarily observe one normal RAMBO qpth call without changing its values."""
+
+    def __init__(self, base_env: Any, torch: Any):
+        self.base_env = base_env
+        self.torch = torch
+        self.inputs: dict[str, Any] = {}
+        self.outputs: dict[str, Any] = {}
+        self.solve_calls = 0
+        self.qpth_calls = 0
+        self._module = None
+        self._original_solve = None
+        self._original_factory = None
+
+    def _copy(self, value: Any, name: str) -> Any:
+        return _cpu_numpy_copy(value, f"qp_reference.{name}", self.torch)
+
+    def install(self, module: Any | None = None) -> None:
+        if self._module is not None:
+            raise PolicySmokeError("QP reference capture is already installed")
+        if module is None:
+            from rambo.tasks.direct.rambo_quadruped.modules import qp_torque_optimizer as module
+
+        self._module = module
+        self._original_solve = module.solve_grf_qpth
+        self._original_factory = module.QPFunction
+
+        def capturing_factory(*args: Any, **kwargs: Any) -> Any:
+            solver = self._original_factory(*args, **kwargs)
+
+            def capturing_solver(P: Any, q: Any, G: Any, h: Any, A: Any, b: Any) -> Any:
+                self.qpth_calls += 1
+                if self.qpth_calls != 1:
+                    raise PolicySmokeError("Canonical QP capture observed more than one qpth solve")
+                self.inputs.update(
+                    {
+                        "qp_quadratic_matrix": self._copy(P, "qp_quadratic_matrix"),
+                        "qp_linear_vector": self._copy(q, "qp_linear_vector"),
+                        "inequality_matrix": self._copy(G, "inequality_matrix"),
+                        "inequality_rhs": self._copy(h, "inequality_rhs"),
+                        "equality_matrix": self._copy(A, "equality_matrix"),
+                        "equality_rhs": self._copy(b, "equality_rhs"),
+                    }
+                )
+                return solver(P, q, G, h, A, b)
+
+            return capturing_solver
+
+        def capturing_solve(
+            mass_mat: Any,
+            desired_acc: Any,
+            desired_ee_force_fl: Any,
+            Wq: Any,
+            Wf: Any,
+            Wfe: Any,
+            base_rot_mat_rp: Any,
+            foot_friction_coef: float,
+            foot_contact_state: Any,
+            device: str = "cuda",
+        ) -> Any:
+            self.solve_calls += 1
+            if self.solve_calls != 1:
+                raise PolicySmokeError("Canonical QP capture observed more than one controller solve")
+            self.inputs.update(
+                {
+                    "centroidal_inverse_dynamics_matrix": self._copy(
+                        mass_mat, "centroidal_inverse_dynamics_matrix"
+                    ),
+                    "desired_spatial_acceleration_body": self._copy(
+                        desired_acc, "desired_spatial_acceleration_body"
+                    ),
+                    "desired_ee_force_fl_body": self._copy(
+                        desired_ee_force_fl, "desired_ee_force_fl_body"
+                    ),
+                    "desired_ee_reaction_force_fl_body": self._copy(
+                        -desired_ee_force_fl, "desired_ee_reaction_force_fl_body"
+                    ),
+                    "weight_spatial_acceleration": self._copy(Wq, "weight_spatial_acceleration"),
+                    "weight_ground_reaction_force": self._copy(Wf, "weight_ground_reaction_force"),
+                    "weight_ee_force": self._copy(Wfe, "weight_ee_force"),
+                    "base_rotation_roll_pitch": self._copy(base_rot_mat_rp, "base_rotation_roll_pitch"),
+                    "foot_friction_coefficient": self._copy(
+                        self.torch.as_tensor(foot_friction_coef), "foot_friction_coefficient"
+                    ),
+                    "contact_mask": self._copy(foot_contact_state, "contact_mask"),
+                    "all_foot_jacobian": self._copy(
+                        self.base_env.all_foot_jacobian, "all_foot_jacobian"
+                    ),
+                    "full_body_com_jacobian_world": self._copy(
+                        self.base_env.jacobian, "full_body_com_jacobian_world"
+                    ),
+                }
+            )
+            result = self._original_solve(
+                mass_mat,
+                desired_acc,
+                desired_ee_force_fl,
+                Wq,
+                Wf,
+                Wfe,
+                base_rot_mat_rp,
+                foot_friction_coef,
+                foot_contact_state,
+                device=device,
+            )
+            grf, solved_acc, qp_cost = result
+            self.outputs.update(
+                {
+                    "qp_primal_ground_reaction_force": self._copy(
+                        grf, "qp_primal_ground_reaction_force"
+                    ),
+                    "solved_spatial_acceleration_body": self._copy(
+                        solved_acc, "solved_spatial_acceleration_body"
+                    ),
+                    "qp_cost": self._copy(qp_cost, "qp_cost"),
+                }
+            )
+            return result
+
+        module.QPFunction = capturing_factory
+        module.solve_grf_qpth = capturing_solve
+
+    def restore(self) -> None:
+        if self._module is None:
+            return
+        self._module.QPFunction = self._original_factory
+        self._module.solve_grf_qpth = self._original_solve
+        self._module = None
+
+    def require_complete(self) -> None:
+        if self.solve_calls != 1 or self.qpth_calls != 1:
+            raise PolicySmokeError(
+                "Canonical QP capture requires exactly one controller/qpth solve; "
+                f"observed {self.solve_calls}/{self.qpth_calls}"
+            )
+
+
+def _package_version(*names: str) -> str | None:
+    import importlib.metadata
+
+    for name in names:
+        try:
+            return importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            continue
+    return None
+
+
+def _git_head() -> str:
+    import subprocess
+
+    repo_root = Path(__file__).resolve().parents[2]
+    result = subprocess.run(
+        ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def _gpu_runtime_metadata(torch: Any) -> dict[str, Any]:
+    import subprocess
+
+    if not torch.cuda.is_available():
+        raise PolicySmokeError("Canonical QP reference requires the validated CUDA runtime")
+    query = subprocess.run(
+        [
+            "nvidia-smi",
+            "--query-gpu=name,driver_version",
+            "--format=csv,noheader",
+            "--id=0",
+        ],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ).stdout.strip()
+    fields = [field.strip() for field in query.split(",", maxsplit=1)]
+    if len(fields) != 2 or not all(fields):
+        raise PolicySmokeError(f"Unexpected nvidia-smi GPU metadata: {query!r}")
+    return {
+        "gpu_model": fields[0],
+        "nvidia_driver_version": fields[1],
+        "torch_cuda_runtime": str(torch.version.cuda),
+        "cuda_device_name": str(torch.cuda.get_device_name(0)),
+        "cuda_compute_capability": list(torch.cuda.get_device_capability(0)),
+    }
+
+
+def _write_qp_reference(
+    destination: Path,
+    *,
+    capture: _ExactQpCapture,
+    initial_policy_observations: Any,
+    first_actions: Any,
+    post_step_observations: Any,
+    post_step_rewards: Any,
+    post_step_dones: Any,
+    base_env: Any,
+    checkpoint_sha256: str,
+    contract: Any,
+    seed: int,
+    torch: Any,
+) -> dict[str, Any]:
+    """Finish one passive first-step capture and serialize its canonical bundle."""
+
+    capture.require_complete()
+    capture.inputs.update(
+        {
+            "policy_observation": _cpu_numpy_copy(
+                initial_policy_observations, "qp_reference.policy_observation", torch
+            ),
+            "policy_action": _cpu_numpy_copy(first_actions, "qp_reference.policy_action", torch),
+        }
+    )
+    capture.outputs.update(
+        {
+            "desired_joint_torque": _cpu_numpy_copy(
+                base_env.desired_tor, "qp_reference.desired_joint_torque", torch
+            ),
+            "physx_foot_contact_force_world": _cpu_numpy_copy(
+                base_env.foot_contact_forces, "qp_reference.physx_foot_contact_force_world", torch
+            ),
+            "post_step_policy_observation": _cpu_numpy_copy(
+                post_step_observations, "qp_reference.post_step_policy_observation", torch
+            ),
+            "post_step_reward": _cpu_numpy_copy(
+                post_step_rewards, "qp_reference.post_step_reward", torch
+            ),
+            "post_step_done": post_step_dones.detach().cpu().to(dtype=torch.bool).numpy().copy(),
+        }
+    )
+    from rambo.utils.articulation import GO2_BODY_ORDER, GO2_FOOT_BODY_NAMES, GO2_JOINT_ORDER
+
+    robot_data = _public_robot_data(base_env)
+    gpu_metadata = _gpu_runtime_metadata(torch)
+    metadata = {
+        "task": TASK,
+        "seed": seed,
+        "rambo_git_commit": _git_head(),
+        "checkpoint_sha256": checkpoint_sha256,
+        "checkpoint_iteration": int(contract.iteration),
+        "isaac_sim_version": _package_version("isaacsim"),
+        "isaac_lab_version": ISAAC_LAB_RELEASE,
+        "isaac_lab_source_commit": ISAAC_LAB_COMMIT,
+        "isaac_lab_package_version": _package_version("isaaclab"),
+        "torch_version": str(torch.__version__),
+        "qpth_version": _package_version("qpth"),
+        "python_version": sys.version.split()[0],
+        "device": str(base_env.device),
+        "simulation_dt_s": float(base_env.cfg.sim.dt),
+        "decimation": int(base_env.cfg.decimation),
+        "policy_step_dt_s": float(base_env.step_dt),
+        "observation_dim": int(contract.observation_dim),
+        "action_dim": int(contract.action_dim),
+        "joint_order": list(GO2_JOINT_ORDER),
+        "foot_order": list(GO2_FOOT_BODY_NAMES),
+        "qp_body_order": list(GO2_BODY_ORDER),
+        "physical_joint_order": [str(name) for name in robot_data.joint_names],
+        "physical_body_order": [str(name) for name in robot_data.body_names],
+        "qp_solver": "qpth.qp.QPSolvers.PDIPM_BATCHED",
+        "qp_dtype": "float64 problem/solution internally, float32 controller outputs",
+        "snapshot_transition": "first reset -> released policy -> first real PhysX env.step",
+        **gpu_metadata,
+    }
+    from qp_reference import write_qp_reference_bundle
+
+    result = write_qp_reference_bundle(
+        destination,
+        metadata=metadata,
+        inputs=capture.inputs,
+        outputs=capture.outputs,
+    )
+    return {
+        "requested": True,
+        "recorded": True,
+        "directory": str(destination),
+        "rambo_git_commit": metadata["rambo_git_commit"],
+        "checkpoint_sha256": checkpoint_sha256,
+        "residual_metrics": result["residual_metrics"],
+        "diagnostic_side_effects": {
+            "additional_policy_calls": 0,
+            "additional_env_steps": 0,
+            "additional_qp_solves": 0,
+            "controller_or_rng_mutation": False,
+        },
+    }
+
+
 def _record_first_transition(
     output_dir: Path,
     *,
@@ -765,10 +1066,17 @@ def main() -> int:
         parser.error("--num-envs must be positive")
     if args_cli.steps <= 0:
         parser.error("--steps must be positive")
+    if args_cli.qp_reference_dir is not None and args_cli.num_envs != 1:
+        parser.error("--qp-reference-dir requires --num-envs 1")
     output_dir = args_cli.output_dir.expanduser().resolve()
     if output_dir.exists():
         raise RuntimeError(f"Refusing to overwrite existing output directory: {output_dir}")
     output_dir.mkdir(parents=True)
+    qp_reference_dir = None
+    if args_cli.qp_reference_dir is not None:
+        qp_reference_dir = args_cli.qp_reference_dir.expanduser().resolve()
+        if qp_reference_dir.exists():
+            raise RuntimeError(f"Refusing to overwrite existing QP reference directory: {qp_reference_dir}")
 
     summary: dict[str, Any] = {
         "schema_version": 1,
@@ -787,11 +1095,19 @@ def main() -> int:
             "recorded": False,
             "reason": "awaiting first reset-to-policy-to-env.step transition",
         }
+    if qp_reference_dir is not None:
+        summary["qp_reference"] = {
+            "requested": True,
+            "recorded": False,
+            "directory": str(qp_reference_dir),
+            "reason": "awaiting the exact first policy-to-QP-to-PhysX transition",
+        }
     simulation_app = None
     env = None
     runtime: dict[str, Any] | None = None
     trace_writer: _StateTraceWriter | None = None
     first_transition_paths: tuple[Path, Path] = ()
+    qp_capture: _ExactQpCapture | None = None
     memory_samples: list[dict[str, int]] = []
     rollout_progress: dict[str, Any] = {
         "steps_completed": 0,
@@ -901,6 +1217,8 @@ def main() -> int:
                 "CRL2 empirical-normalizer count did not restore from the verified checkpoint"
             )
         policy = runner.get_inference_policy(device=env.unwrapped.device)
+        if qp_reference_dir is not None:
+            qp_capture = _ExactQpCapture(base_env, runtime["torch"])
 
         trace_writer = _StateTraceWriter(output_dir / "public_state_trace.jsonl")
         memory_samples.append(_memory_sample(0, runtime["torch"], env.device))
@@ -913,7 +1231,7 @@ def main() -> int:
         for step in range(args_cli.steps):
             with runtime["torch"].inference_mode():
                 first_transition_input = None
-                if args_cli.record_first_transition and step == 0:
+                if (args_cli.record_first_transition or qp_reference_dir is not None) and step == 0:
                     # This is the exact tensor subsequently passed to the real
                     # released policy; the clone avoids retaining a mutable
                     # environment observation buffer for evidence writing.
@@ -928,7 +1246,13 @@ def main() -> int:
                 action_max = max(action_max, action_metrics["max"])
                 action_abs_max = max(action_abs_max, action_metrics["abs_max"])
                 action_mean_total += action_metrics["mean"]
-                observations, rewards, dones, _ = env.step(actions)
+                if qp_capture is not None and step == 0:
+                    qp_capture.install()
+                try:
+                    observations, rewards, dones, _ = env.step(actions)
+                finally:
+                    if qp_capture is not None and step == 0:
+                        qp_capture.restore()
                 _tensor_metrics(observations, f"policy_observations_{step}")
                 _tensor_metrics(rewards, f"rewards_{step}")
                 rollout_progress["reward_total"] += float(rewards.detach().sum().cpu())
@@ -953,6 +1277,24 @@ def main() -> int:
                         torch=runtime["torch"],
                     )
                     summary["first_transition"] = first_transition_summary
+
+                if qp_reference_dir is not None and step == 0:
+                    if qp_capture is None or first_transition_input is None:
+                        raise PolicySmokeError("QP reference input/capture was not initialized")
+                    summary["qp_reference"] = _write_qp_reference(
+                        qp_reference_dir,
+                        capture=qp_capture,
+                        initial_policy_observations=first_transition_input,
+                        first_actions=actions.detach().clone(),
+                        post_step_observations=observations.detach().clone(),
+                        post_step_rewards=rewards.detach().clone(),
+                        post_step_dones=dones.detach().clone(),
+                        base_env=base_env,
+                        checkpoint_sha256=summary["checkpoint"]["sha256"],
+                        contract=contract,
+                        seed=args_cli.seed,
+                        torch=runtime["torch"],
+                    )
 
                 state_record, state_extrema = _collect_public_robot_state(
                     base_env,
@@ -1047,6 +1389,16 @@ def main() -> int:
                     "requested": True,
                     "recorded": False,
                     "reason": "rollout did not reach the first completed policy transition",
+                },
+            )
+        if qp_reference_dir is not None:
+            summary.setdefault(
+                "qp_reference",
+                {
+                    "requested": True,
+                    "recorded": False,
+                    "directory": str(qp_reference_dir),
+                    "reason": "rollout did not complete the canonical first QP transition",
                 },
             )
         summary.setdefault(

@@ -183,6 +183,75 @@ def test_record_first_transition_writes_hashed_existing_qp_outputs_without_a_sec
     assert "get_grf(" not in inspect.getsource(module._existing_qp_outputs)
 
 
+def test_exact_qp_capture_observes_one_original_solve_and_restores_module() -> None:
+    torch = pytest.importorskip("torch")
+    module = _load_smoke_module()
+
+    fake_qp_module = SimpleNamespace()
+
+    def original_factory(*args, **kwargs):
+        del args, kwargs
+
+        def solver(P, q, G, h, A, b):
+            del P, G, h, A, b
+            return torch.ones_like(q)
+
+        return solver
+
+    fake_qp_module.QPFunction = original_factory
+
+    def original_solve(
+        mass_mat,
+        desired_acc,
+        desired_force,
+        Wq,
+        Wf,
+        Wfe,
+        rotation,
+        friction,
+        contact,
+        device="cpu",
+    ):
+        del desired_force, Wq, Wf, Wfe, rotation, friction, contact, device
+        P = torch.eye(12, dtype=torch.float64).unsqueeze(0)
+        q = torch.zeros((1, 12), dtype=torch.float64)
+        G = torch.zeros((1, 18, 12), dtype=torch.float64)
+        h = torch.ones((1, 18), dtype=torch.float64)
+        empty = torch.empty(0)
+        primal = fake_qp_module.QPFunction()(P, q, G, h, empty, empty).float()
+        solved = torch.bmm(mass_mat, primal.unsqueeze(-1)).squeeze(-1)
+        return primal, solved, torch.square(solved - desired_acc).sum(dim=1)
+
+    fake_qp_module.solve_grf_qpth = original_solve
+    base_env = SimpleNamespace(
+        all_foot_jacobian=torch.zeros((1, 12, 12)),
+        jacobian=torch.zeros((1, 17, 6, 18)),
+    )
+    capture = module._ExactQpCapture(base_env, torch)
+    capture.install(fake_qp_module)
+    result = fake_qp_module.solve_grf_qpth(
+        torch.zeros((1, 6, 12)),
+        torch.zeros((1, 6)),
+        torch.zeros((1, 3)),
+        torch.ones(6),
+        torch.ones(3),
+        torch.ones(3),
+        torch.eye(3).unsqueeze(0),
+        0.4,
+        torch.tensor([[True, True, True, True]]),
+        device="cpu",
+    )
+    capture.restore()
+
+    capture.require_complete()
+    assert result[0].shape == (1, 12)
+    assert capture.inputs["qp_quadratic_matrix"].shape == (1, 12, 12)
+    assert capture.inputs["full_body_com_jacobian_world"].shape == (1, 17, 6, 18)
+    assert capture.outputs["qp_primal_ground_reaction_force"].shape == (1, 12)
+    assert fake_qp_module.QPFunction is original_factory
+    assert fake_qp_module.solve_grf_qpth is original_solve
+
+
 def test_long_smoke_extends_a_copied_contact_schedule_to_its_required_span() -> None:
     module = _load_smoke_module()
     original_contact_config = {

@@ -103,6 +103,8 @@ def test_canonical_freeze_inputs_cover_wrappers_and_migration_records() -> None:
         "scripts/rambo/run_runtime_artifact.sh",
         "scripts/rambo/finalize_runtime_artifact.py",
         "scripts/rambo/validate_runtime_artifact.py",
+        "scripts/rambo/physx_quadruped_policy_smoke.py",
+        "scripts/rambo/qp_reference.py",
         "migration-report.md",
         "MIGRATION_STATUS.md",
         "MIGRATION_FINAL_MATRIX.md",

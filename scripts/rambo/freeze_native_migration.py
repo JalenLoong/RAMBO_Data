@@ -53,6 +53,10 @@ FREEZE_INPUT_GROUPS: dict[str, tuple[str, ...]] = {
         "scripts/rambo/validate_button_physx_episode.py",
         "scripts/rambo/validate_gui_keyboard_artifact.py",
     ),
+    "qp_forward_regression": (
+        "scripts/rambo/physx_quadruped_policy_smoke.py",
+        "scripts/rambo/qp_reference.py",
+    ),
     "deferred_gui_gate_contracts": (
         "README.md",
         "scripts/rambo/official_physx_smoke.py",
