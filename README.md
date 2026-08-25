@@ -378,6 +378,13 @@ never use xdotool, pyautogui, scripted or replayed events, automation, or any
 injected input source. Retain a failed artifact for diagnosis and use a new
 output directory for the next genuine attempt.
 
+The accepted M8 GUI artifact is
+`/workspace/migration-output/isaac60/M8/20260825T000552Z-gui-keyboard/`.
+It contains 3000 state records, 5324 observed Carb callbacks, successful base
+and FL commands, an 18.06-mm button press followed by rebound, two observed
+SPACE presses, exact PhysX evidence before and after execution, a zero
+post-close exit, and the named Selkies operator's checksum-bound attestation.
+
 The recorder writes actions, observations, post-step state, 375 RGB frames,
 timestamps, runtime/checkpoint/PhysX evidence, memory samples, and a checksum
 manifest. The offline validator never launches Kit and therefore never selects

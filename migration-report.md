@@ -46,10 +46,10 @@ artifact 取代需要接受的非 GUI runtime 证据。
 | M6 四足 | sealed 通过 | `M6/20260824T143140Z-quadruped-policy-3000-first-transition-sealed/` 完成 3000-step production policy→QP rollout 和 first transition；`M6/20260824T151140Z-quadruped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（405/18、256 env-steps、PhysX 前后 FQN、exit 0）；独立 `143407Z-*`/`143422Z-*` 100/1000-step 全支撑零动作诊断也通过，但不替代 production schedule。 |
 | M7 四足 RGB | sealed clean-source 通过 | `M7/20260824T143537Z-quadruped-3000-rgb-thirdperson-final-sealed/`：3000 policy step、15,000 physics tick、375 base-mounted 前视 RGB、终态独立 RGBD、PhysX 前后 FQN、checksum 与 exit 0。前视流证明生产 sensor/cadence/scene；绑定同一 final state 的 third-person RGBD 证明 robot + scene，不伪称机器人在每个前视像素帧中可见。 |
 | M8 Button 非交互 | sealed 通过 | M10 current artifact 覆盖 deterministic Button press/hold/release 且满足 30 秒数据合同。 |
-| M8 GUI 真实键盘 | **待执行** | `run_gui_keyboard_artifact.sh` 仅接受带 EULA 前缀、非空 `DISPLAY` 的 `--viz kit`；真实操作者须用本人实体键盘经当前 Selkies WebRTC 会话实时操作。Kit child post-close 后封存 exit sidecar、要求真人 TTY 精确声明再离线验证；合成、脚本、重放、自动化与注入输入不计通过。 |
+| M8 GUI 真实键盘 | sealed + 真人声明通过 | `M8/20260825T000552Z-gui-keyboard/`：3000 states、5324 Carb callbacks、239 base-command states、363 FL-velocity states、18.06 mm max press、成功后回弹、2 次 SPACE、PhysX 前后 FQN、exit 0、Selkies 真人声明与 checksum 均通过。 |
 | M9 双足 | sealed clean-source 通过 | `M9/20260824T143926Z-biped-3000-rgb-thirdperson-final-sealed/` 完成 3000/15,000/375/RGBD；`M9/20260824T151210Z-biped-policy-16env-16step-sealed/` 在 current source 上补齐 16-env/16-step（435/18、256 env-steps、PhysX 前后 FQN、exit 0）；`144321Z-biped-front-leg-independence-physx-schema-v2-sealed/` 通过 FL/FR 独立性。RGB visibility 的前视流 + 同 rollout third-person 解释与 M7 相同。 |
 | M10 Button recorder | sealed 通过 | `M10/20260824T144344Z-button-episode-3000-sealed/`：3000 action/observation/post-state、375 RGB、Button acceptance、382 文件 checksum 与 exit 0。 |
-| M11 native freeze | 先前 current-scope freeze 完成；最终刷新待 M8 | `M11/20260824T234827Z-native-freeze-viewport-rtx-v6/` 生成在 M2.3 人工验收之前；待 M8 完成后一次性刷新，绑定两项 GUI 证据、接受工件索引与 canonical inputs。 |
+| M11 native freeze | current-scope 最终完成 | `M11/20260825T002300Z-native-freeze-final-gui-v7/`：gpu-required verifier、242 wheel lock、无 optional Newton extras、31 项 canonical inputs、17 项接受工件索引和 M2.1/M2.3/M8 hashes 全部绑定。 |
 | M11 Docker | **已批准延期** | 当前 host 无 Docker Engine/NVIDIA Container Toolkit；本轮不 build/run/push。 |
 
 ## 关键技术说明
@@ -90,9 +90,8 @@ RAMBO 的生产 RGB 是单个挂在 Go2 base 前方的前视相机；因此 cont
 
 ## 尚需完成的工作
 
-1. M2.3 GUI 已由真实操作者完成并封存；M8 physical-keyboard runtime 已完成，尚待
-   post-close TTY 声明与最终封存，绝不允许 xdotool、pyautogui、重放或事件注入。
-2. M5.2 历史 snapshot 和 M11 Docker 已批准延期，保留其现有证据与 runbook，待后续
+当前用户批准的 native migration scope 已完成。M5.2 历史 snapshot 和 M11 Docker
+已批准延期，保留其现有证据与 runbook，待后续
    具备输入/主机条件时恢复。
 
 所有 artifact 保留历史失败和非验收尝试，以便审计；它们不会被删除或改写为成功。
