@@ -11,8 +11,8 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
-readonly VENV_DIR="${RAMBO_VENV:-/workspace/venvs/rambo60}"
-readonly ISAACLAB_SOURCE="${RAMBO_ISAACLAB_SOURCE:-/workspace/IsaacLab-3.0.0-beta2.patch1}"
+readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
+readonly ISAACLAB_SOURCE="${RAMBO_ISAACLAB_SOURCE:-/workspace/third_party/IsaacLab/3.0.0-beta2.patch1}"
 readonly ISAACLAB_COMMIT="ffff603eafc6b74264a5261cc0183d6a65390d78"
 readonly REQUIREMENTS_INPUT="${REPO_ROOT}/requirements/isaacsim60.in"
 readonly REQUIREMENTS_LOCK="${REPO_ROOT}/requirements/isaacsim60.lock"
@@ -23,7 +23,7 @@ usage() {
 Usage: bash scripts/setup_isaacsim60.sh [--docker-build-metadata-only]
 
 Environment:
-  RAMBO_VENV              Override /workspace/venvs/rambo60.
+  RAMBO_VENV              Override /workspace/envs/rambo-isaac60-py312.
   RAMBO_ISAACLAB_SOURCE   Override the exact tagged Isaac Lab checkout.
 
 Options:

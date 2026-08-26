@@ -9,7 +9,7 @@
 set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly VENV_DIR="${RAMBO_VENV:-/workspace/venvs/rambo60}"
+readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
 readonly ARTIFACT_ROOT="/workspace/migration-output/isaac60/M2"
 
 usage() {

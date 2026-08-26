@@ -18,7 +18,7 @@ from rambo.validation.checkpoints import (  # noqa: E402
 )
 
 
-_POLICY_ROOT = Path(os.environ.get("RAMBO_CHECKPOINT_ROOT", "/workspace/rambo-go2-policies"))
+_POLICY_ROOT = Path(os.environ.get("RAMBO_CHECKPOINT_ROOT", "/workspace/checkpoints/rambo/go2"))
 
 
 @pytest.mark.parametrize(
@@ -53,7 +53,14 @@ def test_contracts_keep_both_modes_as_explicit_first_class_entries() -> None:
     loco_manip = contract_for_task("Isaac-RAMBO-Quadruped-Button-Go2-v0")
     biped = contract_for_task("Isaac-RAMBO-Biped-Go2-v0")
 
-    assert set(CHECKPOINT_CONTRACTS) == {quadruped.task, loco_manip.task, biped.task}
+    assert set(CHECKPOINT_CONTRACTS) == {
+        quadruped.task,
+        loco_manip.task,
+        "Isaac-RAMBO-Quadruped-Lift-Basket-Go2-v0",
+        "Isaac-RAMBO-Quadruped-Pull-Object-Into-Basket-Go2-v0",
+        "Isaac-RAMBO-Quadruped-Shoot-Ball-Into-Goal-Go2-v0",
+        biped.task,
+    }
     assert (quadruped.mode, quadruped.observation_dim, quadruped.action_dim) == ("quadruped", 405, 18)
     assert (loco_manip.mode, loco_manip.observation_dim, loco_manip.action_dim) == (
         "quadruped_loco_manip",

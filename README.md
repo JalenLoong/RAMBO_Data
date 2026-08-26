@@ -86,13 +86,13 @@ Isaac Lab source checkout, then let the setup script verify its detached commit:
 
 ```bash
 git clone --branch v3.0.0-beta2.patch1 https://github.com/isaac-sim/IsaacLab.git \
-  /workspace/IsaacLab-3.0.0-beta2.patch1
-git -C /workspace/IsaacLab-3.0.0-beta2.patch1 checkout --detach \
+  /workspace/third_party/IsaacLab/3.0.0-beta2.patch1
+git -C /workspace/third_party/IsaacLab/3.0.0-beta2.patch1 checkout --detach \
   ffff603eafc6b74264a5261cc0183d6a65390d78
-git -C /workspace/IsaacLab-3.0.0-beta2.patch1 rev-parse HEAD
+git -C /workspace/third_party/IsaacLab/3.0.0-beta2.patch1 rev-parse HEAD
 
 bash scripts/setup_isaacsim60.sh
-source /workspace/venvs/rambo60/bin/activate
+source /workspace/envs/rambo-isaac60-py312/bin/activate
 ```
 
 `scripts/setup_isaacsim60.sh` installs only the pinned official path:
@@ -128,7 +128,7 @@ stack from RAMBO task issues:
 
 ```bash
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-OUT="/workspace/migration-output/isaac60/M2/${STAMP}-official-cartpole-direct-16"
+OUT="/workspace/runs/audit/isaac60/M2/${STAMP}-official-cartpole-direct-16"
 
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/official_physx_smoke.py \
@@ -153,8 +153,8 @@ does not use xdotool, pyautogui, replayed input, or a synthetic UI substitute.
 
 ```bash
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-M2_GUI_OUT="/workspace/migration-output/isaac60/M2/${STAMP}-cartpole-direct-kit"
-M2_GUI_ATTEST="/workspace/migration-output/isaac60/M2/${STAMP}-cartpole-direct-kit-attestation"
+M2_GUI_OUT="/workspace/runs/audit/isaac60/M2/${STAMP}-cartpole-direct-kit"
+M2_GUI_ATTEST="/workspace/runs/audit/isaac60/M2/${STAMP}-cartpole-direct-kit-attestation"
 
 # Run from the visible desktop session (for example DISPLAY=:20). During the
 # 45-second window, personally observe the viewport and exercise Play/Stop.
@@ -176,7 +176,7 @@ for diagnosis but cannot receive an attestation; use fresh runtime and sidecar
 directories for a genuine retry.
 
 The accepted run is
-`/workspace/migration-output/isaac60/M2/20260824T235256Z-cartpole-direct-kit/`
+`/workspace/runs/audit/isaac60/M2/20260824T235256Z-cartpole-direct-kit/`
 with its sibling `*-attestation/` sidecar. It completed 45.04 seconds and 1083
 steps with two live RTX 4090 samples, exact PhysX evidence, exit status zero,
 and a checksum-bound post-close operator acknowledgement.
@@ -185,8 +185,8 @@ For the separate, non-simulator CUDA/Ada compatibility record, run:
 
 ```bash
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-/workspace/venvs/rambo60/bin/python scripts/rambo/verify_cuda_m2.py \
-  --output-dir "/workspace/migration-output/isaac60/M2/${STAMP}-cuda-ada-compatible-contract"
+/workspace/envs/rambo-isaac60-py312/bin/python scripts/rambo/verify_cuda_m2.py \
+  --output-dir "/workspace/runs/audit/isaac60/M2/${STAMP}-cuda-ada-compatible-contract"
 ```
 
 This checks the actual CUDA device, capability, finite CUDA arithmetic, and
@@ -204,15 +204,15 @@ exit sidecar is only pre-close workload evidence. Verify a non-RGB artifact
 without starting Kit:
 
 ```bash
-/workspace/venvs/rambo60/bin/python scripts/rambo/validate_runtime_artifact.py \
+/workspace/envs/rambo-isaac60-py312/bin/python scripts/rambo/validate_runtime_artifact.py \
   --artifact-dir "$OUT"
 ```
 
 Pure Python contract tests do not start Kit or need EULA consent:
 
 ```bash
-PYTHONPATH=source/rambo:source/crl2 \
-  /workspace/venvs/rambo60/bin/python -m pytest -q tests/rambo
+\
+  /workspace/envs/rambo-isaac60-py312/bin/python -m pytest -q tests/rambo
 ```
 
 ## Checkpoints and finite policy validation
@@ -234,26 +234,26 @@ GPU/RSS growth.
 # Quadruped: finite PhysX-only policy replay without a camera.
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/physx_quadruped_policy_smoke.py \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --num-envs 1 --steps 3000 --seed 42 \
-  --output-dir /workspace/migration-output/isaac60/M6/$(date -u +%Y%m%dT%H%M%SZ)-quadruped \
+  --output-dir /workspace/runs/audit/isaac60/M6/$(date -u +%Y%m%dT%H%M%SZ)-quadruped \
   --viz none
 
 # Quadruped: 3,000 steps plus the required 375 RTX RGB frames.
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/validate.py \
   --task Isaac-RAMBO-Quadruped-Go2-v0 \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --seed 42 --steps 3000 \
-  --output-dir /workspace/migration-output/isaac60/M7/$(date -u +%Y%m%dT%H%M%SZ)-quadruped-rgb \
+  --output-dir /workspace/runs/audit/isaac60/M7/$(date -u +%Y%m%dT%H%M%SZ)-quadruped-rgb \
   --viz none
 
 # Biped: its dedicated gate fixes the 19.6-second validation phase.
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
   scripts/rambo/physx_biped_policy_smoke.py \
-  --checkpoint /workspace/rambo-go2-policies/biped/model_4000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/biped/model_4000.pt \
   --num-envs 1 --steps 3000 --seed 42 \
-  --output-dir /workspace/migration-output/isaac60/M9/$(date -u +%Y%m%dT%H%M%SZ)-biped \
+  --output-dir /workspace/runs/audit/isaac60/M9/$(date -u +%Y%m%dT%H%M%SZ)-biped \
   --viz none
 ```
 
@@ -267,20 +267,20 @@ the same 3,000-step/375-frame policy rollout has passed.
 ```bash
 # M7: checkpoint rollout plus a final independent robot-and-scene RGBD view.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-M7_OUT="/workspace/migration-output/isaac60/M7/${STAMP}-quadruped-3000-rgb-thirdperson-final"
+M7_OUT="/workspace/runs/audit/isaac60/M7/${STAMP}-quadruped-3000-rgb-thirdperson-final"
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh scripts/rambo/validate.py \
   --task Isaac-RAMBO-Quadruped-Go2-v0 \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --seed 42 --steps 3000 --third-person-diagnostic final \
   --output-dir "$M7_OUT" \
   --viz none
 
 # M9: the same evidence for the released biped checkpoint.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-M9_OUT="/workspace/migration-output/isaac60/M9/${STAMP}-biped-3000-rgb-thirdperson-final"
+M9_OUT="/workspace/runs/audit/isaac60/M9/${STAMP}-biped-3000-rgb-thirdperson-final"
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh scripts/rambo/validate.py \
   --task Isaac-RAMBO-Biped-Go2-v0 \
-  --checkpoint /workspace/rambo-go2-policies/biped/model_4000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/biped/model_4000.pt \
   --seed 42 --steps 3000 --third-person-diagnostic final \
   --output-dir "$M9_OUT" \
   --viz none
@@ -299,9 +299,9 @@ being represented as final acceptance evidence.
 After the wrapper returns zero, verify this stronger final contract offline:
 
 ```bash
-PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+/workspace/envs/rambo-isaac60-py312/bin/python \
   scripts/rambo/validate_final_third_person_artifact.py --artifact-dir "$M7_OUT"
-PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+/workspace/envs/rambo-isaac60-py312/bin/python \
   scripts/rambo/validate_final_third_person_artifact.py --artifact-dir "$M9_OUT"
 ```
 
@@ -325,7 +325,7 @@ GUI keyboard check from a synthetic input trace.
 # Use the dedicated audited command below for the actual GUI gate.
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
   scripts/rambo/teleop_loco_manip.py \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --seed 42 --viz kit
 
 # The only accepted M8 GUI path. Run from the visible desktop session (for
@@ -334,9 +334,9 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run60.sh \
 # command, move FL, press SPACE once, press the button to at least 12 mm, then
 # retract until it reports released.
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-M8_GUI_OUT="/workspace/migration-output/isaac60/M8/${STAMP}-gui-keyboard"
+M8_GUI_OUT="/workspace/runs/audit/isaac60/M8/${STAMP}-gui-keyboard"
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_gui_keyboard_artifact.sh \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --seed 42 --max-steps 3000 --viz kit \
   --gui-artifact-dir "$M8_GUI_OUT" \
   --operator-name "<your-name>" \
@@ -345,21 +345,21 @@ OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_gui_keyboard_artifact.sh \
 # The dedicated runner has already run this offline-only validator after the
 # post-close TTY acknowledgement. It reads immutable evidence only and never
 # launches Kit, so it is safe to repeat separately when reviewing an artifact.
-PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
+/workspace/envs/rambo-isaac60-py312/bin/python \
   scripts/rambo/validate_gui_keyboard_artifact.py --artifact-dir "$M8_GUI_OUT"
 
 # Non-interactive deterministic Button evidence and independent offline audit.
-M10_OUT="/workspace/migration-output/isaac60/M10/$(date -u +%Y%m%dT%H%M%SZ)-button"
+M10_OUT="/workspace/runs/audit/isaac60/M10/$(date -u +%Y%m%dT%H%M%SZ)-button"
 OMNI_KIT_ACCEPT_EULA=Y scripts/rambo/run_runtime_artifact.sh \
-  scripts/rambo/record_button_physx_episode.py \
-  --checkpoint /workspace/rambo-go2-policies/quadruped/model_2000.pt \
+  -m wam_rambo.legacy_v1.record_button \
+  --checkpoint /workspace/checkpoints/rambo/go2/quadruped/model_2000.pt \
   --seed 42 --steps 3000 --output-dir "$M10_OUT" --viz none
 
-PYTHONPATH=source/rambo:source/crl2 /workspace/venvs/rambo60/bin/python \
-  scripts/rambo/validate_button_physx_episode.py \
+/workspace/envs/rambo-isaac60-py312/bin/python \
+  -m wam_data.legacy_v1.validate_button_artifact \
   --artifact-dir "$M10_OUT" --require-acceptance
 
-/workspace/venvs/rambo60/bin/python scripts/rambo/validate_runtime_artifact.py \
+/workspace/envs/rambo-isaac60-py312/bin/python scripts/rambo/validate_runtime_artifact.py \
   --artifact-dir "$M10_OUT"
 ```
 
@@ -379,7 +379,7 @@ injected input source. Retain a failed artifact for diagnosis and use a new
 output directory for the next genuine attempt.
 
 The accepted M8 GUI artifact is
-`/workspace/migration-output/isaac60/M8/20260825T000552Z-gui-keyboard/`.
+`/workspace/runs/audit/isaac60/M8/20260825T000552Z-gui-keyboard/`.
 It contains 3000 state records, 5324 observed Carb callbacks, successful base
 and FL commands, an 18.06-mm button press followed by rebound, two observed
 SPACE presses, exact PhysX evidence before and after execution, a zero

@@ -70,12 +70,12 @@ def _provenance(*, clean: bool = True) -> dict:
         "schema_version": PROVENANCE_SCHEMA_VERSION,
         "collection_phase": "pre_app_launcher_source_then_runtime",
         "command": [
-            "/workspace/venvs/rambo60/bin/python",
-            "/workspace/rambo60/scripts/rambo/validate.py",
+            "/workspace/envs/rambo-isaac60-py312/bin/python",
+            "/workspace/repos/rambo-sim/scripts/rambo/validate.py",
             "--task",
             "Isaac-RAMBO-Quadruped-Go2-v0",
             "--checkpoint",
-            "/workspace/rambo-go2-policies/quadruped/model_2000.pt",
+            "/workspace/checkpoints/rambo/go2/quadruped/model_2000.pt",
             "--steps",
             "3000",
             "--output-dir",
@@ -84,22 +84,22 @@ def _provenance(*, clean: bool = True) -> dict:
             "final",
         ],
         "rambo": {
-            "module_path": "/workspace/rambo60/source/rambo/rambo/__init__.py",
-            "git_root": "/workspace/rambo60",
+            "module_path": "/workspace/repos/rambo-sim/source/rambo/rambo/__init__.py",
+            "git_root": "/workspace/repos/rambo-sim",
             "git_head": "a" * 40,
             "pre_run_worktree_clean": clean,
             "pre_run_status_porcelain_v1": status,
-            "runtime_module_path": "/workspace/rambo60/source/rambo/rambo/__init__.py",
-            "runtime_git_root": "/workspace/rambo60",
+            "runtime_module_path": "/workspace/repos/rambo-sim/source/rambo/rambo/__init__.py",
+            "runtime_git_root": "/workspace/repos/rambo-sim",
             "runtime_git_head": "a" * 40,
             "runtime_worktree_clean": clean,
             "runtime_status_porcelain_v1": status,
         },
         "isaaclab": {
-            "module_path": "/workspace/IsaacLab-3.0.0-beta2.patch1/source/isaaclab/isaaclab/__init__.py",
+            "module_path": "/workspace/third_party/IsaacLab/3.0.0-beta2.patch1/source/isaaclab/isaaclab/__init__.py",
             "package_version": "6.1.14",
             "module_version": "3.0.0-beta2.patch1",
-            "git_root": "/workspace/IsaacLab-3.0.0-beta2.patch1",
+            "git_root": "/workspace/third_party/IsaacLab/3.0.0-beta2.patch1",
             "git_head": TARGET_ISAACLAB_COMMIT,
             "git_exact_tag": TARGET_ISAACLAB_TAG,
         },
@@ -108,7 +108,7 @@ def _provenance(*, clean: bool = True) -> dict:
         },
         "runtime": {
             "python_version": "3.12.3",
-            "python_executable": "/workspace/venvs/rambo60/bin/python",
+            "python_executable": "/workspace/envs/rambo-isaac60-py312/bin/python",
             "platform": "Linux-6.8-x86_64",
             "torch_version": "2.10.0+cu128",
             "cuda_runtime": "12.8",
@@ -180,7 +180,7 @@ def test_prelaunch_collector_records_dirty_status_without_starting_kit(monkeypat
 
     def fake_git_output(_cwd: Path, *arguments: str) -> str:
         if arguments == ("rev-parse", "--show-toplevel"):
-            return "/workspace/rambo60"
+            return "/workspace/repos/rambo-sim"
         if arguments == ("status", "--porcelain=v1", "--untracked-files=all"):
             return " M scripts/rambo/validate.py\n?? tests/rambo/test_third_person_diagnostic.py"
         if arguments == ("rev-parse", "HEAD"):
@@ -192,7 +192,7 @@ def test_prelaunch_collector_records_dirty_status_without_starting_kit(monkeypat
         sys,
         "argv",
         [
-            "/workspace/rambo60/scripts/rambo/validate.py",
+            "/workspace/repos/rambo-sim/scripts/rambo/validate.py",
             "--steps=3000",
             "--third-person-diagnostic=final",
         ],

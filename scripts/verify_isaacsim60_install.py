@@ -332,7 +332,7 @@ def verify(
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--isaaclab-source", type=Path, default=Path("/workspace/IsaacLab-3.0.0-beta2.patch1")
+        "--isaaclab-source", type=Path, default=Path("/workspace/third_party/IsaacLab/3.0.0-beta2.patch1")
     )
     parser.add_argument(
         "--requirements-input", type=Path, default=Path("requirements/isaacsim60.in")

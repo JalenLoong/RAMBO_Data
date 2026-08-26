@@ -117,8 +117,8 @@ def _summary() -> dict[str, object]:
         "provenance": {
             "schema_version": 1,
             "collection_phase": "pre_app_launcher_source",
-            "module_path": "/workspace/rambo60/source/rambo/rambo/__init__.py",
-            "git_root": "/workspace/rambo60",
+            "module_path": "/workspace/repos/rambo-sim/source/rambo/rambo/__init__.py",
+            "git_root": "/workspace/repos/rambo-sim",
             "git_head": "a" * 40,
             "pre_run_worktree_clean": True,
             "pre_run_status_porcelain_v1": [],

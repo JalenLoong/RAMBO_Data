@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-readonly VENV_DIR="${RAMBO_VENV:-/workspace/venvs/rambo60}"
+readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
 readonly PYTHON="${VENV_DIR}/bin/python"
 
 if [[ "$#" -eq 0 ]]; then

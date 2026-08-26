@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import sys
 
 import pytest
 
@@ -115,7 +116,7 @@ def test_runtime_artifact_wrapper_seals_a_real_child_exit_without_starting_kit(t
     )
     artifact = tmp_path / "artifact"
     environment = dict(os.environ)
-    environment["RAMBO_VENV"] = "/workspace/venvs/rambo60"
+    environment["RAMBO_VENV"] = sys.prefix
     environment["OMNI_KIT_ACCEPT_EULA"] = "Y"
     result = subprocess.run(
         [

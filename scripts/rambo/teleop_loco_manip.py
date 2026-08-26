@@ -19,7 +19,7 @@ TASK_ID = "Isaac-RAMBO-Quadruped-Button-Go2-v0"
 EE_MIN = np.array([0.1934, 0.0, 0.0], dtype=np.float32)
 EE_MAX = np.array([0.50, 0.20, 0.40], dtype=np.float32)
 EE_DEFAULT = np.array([0.1934, 0.142, 0.05], dtype=np.float32)
-GUI_ARTIFACT_ROOT = Path("/workspace/migration-output/isaac60/M8")
+GUI_ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M8")
 GUI_ARTIFACT_MAX_STEPS = 3000
 
 
@@ -172,7 +172,7 @@ def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.
         output_dir.relative_to(artifact_root)
     except ValueError:
         parser.error(f"--gui-artifact-dir must be below the M8 artifact root {artifact_root}")
-    if output_dir.exists():
+    if output_dir == artifact_root or output_dir.exists():
         parser.error(f"Refusing to overwrite existing GUI artifact directory: {output_dir}")
     args.gui_artifact_dir = output_dir
 
