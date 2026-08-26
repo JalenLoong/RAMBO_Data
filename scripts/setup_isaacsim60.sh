@@ -85,7 +85,9 @@ for required_file in "${REQUIREMENTS_INPUT}" "${REQUIREMENTS_LOCK}" "${VERIFIER}
 done
 
 if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
-    uv venv --python 3.12 "${VENV_DIR}"
+    # Seed pip so the locked wheel set can be installed sequentially without
+    # retaining an aggregate download cache on the constrained workspace disk.
+    UV_NO_CACHE=1 uv venv --seed --python 3.12 "${VENV_DIR}"
 fi
 readonly PYTHON="${VENV_DIR}/bin/python"
 "${PYTHON}" - <<'PY'
@@ -97,16 +99,20 @@ PY
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH || true
 
-# Keep Isaac Sim and its extension cache transaction isolated from the pinned
-# PyTorch override.  Do not add Isaac Lab Newton extras to either transaction.
-uv pip install --no-cache --python "${PYTHON}" \
-    "isaacsim[all,extscache]==6.0.1.0" \
-    --extra-index-url https://pypi.nvidia.com \
-    --index-strategy unsafe-best-match --prerelease=allow
-uv pip uninstall --python "${PYTHON}" torch torchvision torchaudio
-uv pip install --no-cache --python "${PYTHON}" \
-    "torch==2.10.0+cu128" "torchvision==0.25.0+cu128" \
-    --index-url https://download.pytorch.org/whl/cu128
+# The frozen lock enumerates every non-editable wheel.  Install each exact
+# pin in an independent no-cache transaction: pip's aggregate ``-r`` mode
+# still retains the full Isaac Sim wheel set while resolving metadata.  The
+# one-line transactions cap peak disk use at the installed target plus one
+# wheel and invoke no dependency resolver.
+while IFS= read -r requirement || [[ -n "${requirement}" ]]; do
+    case "${requirement}" in
+        ""|\#*|--*) continue ;;
+    esac
+    "${PYTHON}" -m pip install --no-cache-dir --no-deps \
+        --extra-index-url https://pypi.nvidia.com \
+        --extra-index-url https://download.pytorch.org/whl/cu128 \
+        "${requirement}"
+done < "${REQUIREMENTS_LOCK}"
 
 # The exact tag's official core installation includes these bare source
 # extensions.  ``isaaclab_newton`` is an official core node here, not a RAMBO
@@ -121,29 +127,13 @@ for extension in \
     isaaclab_ovphysx \
     isaaclab_physx \
     isaaclab_tasks; do
-    uv pip install --no-cache --python "${PYTHON}" --no-deps --editable "${ISAACLAB_SOURCE}/source/${extension}"
+    "${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${ISAACLAB_SOURCE}/source/${extension}"
 done
-uv pip install --no-cache --python "${PYTHON}" --no-deps --editable "${ISAACLAB_SOURCE}/source/isaaclab_visualizers[kit]"
+"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${ISAACLAB_SOURCE}/source/isaaclab_visualizers[kit]"
 
-# ``isaaclab_tasks`` imports Hydra at runtime without declaring it in the
-# minimal source metadata.  qpth is installed without its unconstrained
-# resolver dependencies, then supplied with the tested non-Newton runtime.
-uv pip install --no-cache --python "${PYTHON}" \
-    "numpy==2.3.1" "hydra-core==1.3.2" "omegaconf==2.3.1"
-uv pip install --no-cache --python "${PYTHON}" --no-deps "qpth==0.0.18"
-uv pip install --no-cache --python "${PYTHON}" "cvxpy==1.6.7" "clarabel==0.11.1" "scs==3.2.11"
-
-uv pip install --no-cache --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/crl2"
-uv pip install --no-cache --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/rambo"
-uv pip install --no-cache --python "${PYTHON}" --no-deps --editable "${WAM_POLICY_ROOT}"
-
-# The first transaction follows the official tagged install order.  The frozen
-# non-editable snapshot then pins every resolved wheel to the validated state
-# without invoking a resolver or adding optional Isaac Lab extras.  Isaac Lab,
-# CRL2, RAMBO, and WAM editables deliberately remain under the explicit exact-source
-# commands above and are checked by direct_url provenance in the verifier.
-uv pip install --no-cache --python "${PYTHON}" --no-deps --prerelease=allow \
-    --requirements "${REQUIREMENTS_LOCK}"
+"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${REPO_ROOT}/source/crl2"
+"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${REPO_ROOT}/source/rambo"
+"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${WAM_POLICY_ROOT}"
 
 # This read-only verifier does not launch Kit or any physics backend.  It
 # records the exact expected metadata conflicts from the vendor wheel graph
