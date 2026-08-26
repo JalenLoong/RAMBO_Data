@@ -79,7 +79,7 @@ def _provenance(*, clean: bool = True) -> dict:
             "--steps",
             "3000",
             "--output-dir",
-            "/workspace/migration-output/isaac60/M7/synthetic",
+            "/workspace/runs/audit/isaac60/M7/synthetic",
             "--third-person-diagnostic",
             "final",
         ],

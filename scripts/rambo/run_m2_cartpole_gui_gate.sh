@@ -10,7 +10,7 @@ set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
-readonly ARTIFACT_ROOT="/workspace/migration-output/isaac60/M2"
+readonly ARTIFACT_ROOT="/workspace/runs/audit/isaac60/M2"
 
 usage() {
     echo "Usage: $0 --output-dir <fresh M2 runtime dir> --attestation-dir <fresh M2 sidecar dir> --operator-name <name> [--gui-observation-seconds 45]" >&2

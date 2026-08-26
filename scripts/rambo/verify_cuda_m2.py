@@ -17,7 +17,7 @@ import traceback
 from typing import Any
 
 
-ARTIFACT_ROOT = Path("/workspace/migration-output/isaac60/M2")
+ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M2")
 EXPECTED_CAPABILITY = (8, 9)
 REQUIRED_ARCH = "sm_89"
 # NVIDIA documents that Ampere-native SASS (including sm_86) is forward

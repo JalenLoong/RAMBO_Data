@@ -44,7 +44,7 @@ from rambo.validation.biped_independence import (
 )
 
 
-ARTIFACT_ROOT = Path("/workspace/migration-output/isaac60/M9")
+ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M9")
 FL_POSITION_COMMAND = (0.22, 0.10, 0.48)
 FR_POSITION_COMMAND = (0.24, -0.10, 0.50)
 FL_FORCE_COMMAND = (0.0, 0.0, 0.0)

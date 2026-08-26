@@ -23,7 +23,7 @@ import traceback
 from typing import Any
 
 
-ARTIFACT_ROOT = Path("/workspace/migration-output/isaac60/M2")
+ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M2")
 DEFAULT_STEPS = 1000
 PHYSICS_DT_S = 0.002
 IMAGE_WIDTH = 640
