@@ -1,0 +1,16 @@
+{
+  "version": "lift-basket-xy-v1",
+  "reference_episode": "episode_000001",
+  "reference_primary_position": [0.75, 0.15, 0.11],
+  "x_range_m": [0.72, 0.78],
+  "y_range_m": [0.12, 0.18],
+  "z_fixed_m": 0.11,
+  "orientation_fixed_xyzw": [0.0, 0.0, 0.0, 1.0],
+  "minimum_xy_separation_m": 0.01,
+  "constraints": {
+    "primary": "rigid basket with FL-hookable U handle",
+    "randomized_fields": ["basket.position.x", "basket.position.y"],
+    "runtime_seed": 42,
+    "fixed_cameras": ["ego", "left", "right"]
+  }
+}

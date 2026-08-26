@@ -1,0 +1,16 @@
+{
+  "version": "pull-object-into-basket-xy-v1",
+  "reference_episode": "episode_000001",
+  "reference_primary_position": [0.84, 0.14, 0.51],
+  "x_range_m": [0.80, 0.88],
+  "y_range_m": [0.10, 0.18],
+  "z_fixed_m": 0.51,
+  "orientation_fixed_xyzw": [0.0, 0.0, 0.0, 1.0],
+  "minimum_xy_separation_m": 0.01,
+  "constraints": {
+    "primary": "dynamic table object",
+    "randomized_fields": ["table_object.position.x", "table_object.position.y"],
+    "runtime_seed": 42,
+    "fixed_cameras": ["ego", "left", "right"]
+  }
+}

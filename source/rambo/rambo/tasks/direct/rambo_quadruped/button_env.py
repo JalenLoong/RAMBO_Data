@@ -79,6 +79,7 @@ class ButtonQPEnvCfg(QPEnvCfg):
     button_hold_steps = 5
     button_contact_guard_m = 0.002
     button_indicator_pos = (0.99, 0.142, 0.46)
+    button_status_marker_enabled = True
     ee_default_command = (0.1934, 0.142, 0.05)
 
 
@@ -353,7 +354,7 @@ class ButtonQPEnv(QPEnv):
         self.extras["log"]["Button/success"] = self._button_success.float().mean()
 
     def _update_status_marker(self) -> None:
-        visible = bool(torch.any(self._button_success))
+        visible = bool(self.cfg.button_status_marker_enabled and torch.any(self._button_success))
         if visible:
             self._button_status_marker.MakeVisible()
         else:

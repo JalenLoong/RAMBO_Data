@@ -26,3 +26,18 @@ gym.register(
         "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml",
     },
 )
+
+for _task_id, _cfg_name in (
+    ("Isaac-RAMBO-Quadruped-Lift-Basket-Go2-v0", "LiftBasketQPEnvCfg"),
+    ("Isaac-RAMBO-Quadruped-Pull-Object-Into-Basket-Go2-v0", "PullObjectQPEnvCfg"),
+    ("Isaac-RAMBO-Quadruped-Shoot-Ball-Into-Goal-Go2-v0", "ShootBallQPEnvCfg"),
+):
+    gym.register(
+        id=_task_id,
+        entry_point=f"{__name__}.object_tasks_env:ObjectTaskQPEnv",
+        disable_env_checker=True,
+        kwargs={
+            "env_cfg_entry_point": f"{__name__}.object_tasks_env:{_cfg_name}",
+            "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml",
+        },
+    )

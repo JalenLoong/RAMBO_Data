@@ -1,0 +1,25 @@
+{
+  "version": "press-button-xy-v3",
+  "compatible_config_versions": ["press-button-xy-v1", "press-button-xy-v2", "press-button-xy-v3"],
+  "reference_episode": "episode_000001",
+  "reference_button_pose": {
+    "position": [0.99, 0.142, 0.3],
+    "orientation_xyzw": [0.0, 0.0, 0.0, 1.0]
+  },
+  "x_range_m": [0.98, 0.99],
+  "y_range_m": [0.152, 0.158],
+  "z_fixed_m": 0.3,
+  "orientation_fixed_xyzw": [0.0, 0.0, 0.0, 1.0],
+  "minimum_xy_separation_m": 0.002,
+  "golden_checksums_sha256": "562d6e39d8639fe7fde5f29eda5bdb13c5600b81c299b2f8b28d76eefdd6d6a8",
+  "constraints": {
+    "robot_initial_xy_m": [0.0, 0.0],
+    "minimum_robot_to_button_xy_distance_m": 0.4,
+    "button_cap_half_extent_y_m": 0.06,
+    "scripted_fl_target_y_m": 0.142,
+    "scripted_fl_target_y_tolerance_m": 0.02,
+    "button_panel_translation_follows_cap_delta": true,
+    "fixed_cameras": ["ego", "left", "right"],
+    "visibility_safe_region_rationale": "V3 is an empirical conservative refinement. It keeps the cap on the verified side of the golden X coordinate (X <= 0.990 m) and in the Y band spanned by the two already validated randomized successes (approximately 0.154-0.156 m), with a small margin. It preserves fixed Z, orientation, robot, controller, cameras, illumination, PhysX, and checkpoint. The 2 mm minimum pairwise XY separation supplies controlled positional diversity in this deliberately small reachable/viewable region while allowing ten total samples."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": "shoot-ball-into-goal-xy-v1",
+  "reference_episode": "episode_000001",
+  "reference_primary_position": [0.73, 0.14, 0.10],
+  "x_range_m": [0.68, 0.78],
+  "y_range_m": [0.08, 0.20],
+  "z_fixed_m": 0.10,
+  "orientation_fixed_xyzw": [0.0, 0.0, 0.0, 1.0],
+  "minimum_xy_separation_m": 0.01,
+  "constraints": {
+    "primary": "dynamic ball",
+    "randomized_fields": ["ball.position.x", "ball.position.y"],
+    "runtime_seed": 42,
+    "fixed_cameras": ["ego", "left", "right"]
+  }
+}
