@@ -2,7 +2,7 @@
   "schema_version": 1,
   "generated_at_utc": "2026-08-25T00:22:29Z",
   "repository": {
-    "worktree": "/workspace/rambo60",
+    "worktree": "/workspace/repos/rambo-sim",
     "branch": "adapt/isaacsim60-isaaclab30b2",
     "runtime_validation_commit": "358daa52260841cdfa8263adeee930144379c5fe",
     "sealed_short_gate_commit": "078bfa2d14c68ef0f91f6d1224e20a7ae07a279c",
@@ -64,7 +64,7 @@
     "direct_input_pins_verified": 10,
     "setup_script_sha256": "fa11c29a05a2571919e0bf34aa5fbc142958655942cb9edf77a0be059123c40e",
     "verifier_sha256": "1859240950cf0e464375cd46c20e93ac293e67276595a65d2459265c9544b7fc",
-    "verified_editable_source": "/workspace/IsaacLab-3.0.0-beta2.patch1",
+    "verified_editable_source": "/workspace/third_party/IsaacLab/3.0.0-beta2.patch1",
     "pip_check": {
       "status": "only the reviewed eight findings are present",
       "allowlist_size": 8

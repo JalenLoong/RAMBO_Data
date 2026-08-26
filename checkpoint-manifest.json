@@ -13,7 +13,7 @@
     {
       "task": "Isaac-RAMBO-Quadruped-Go2-v0",
       "button_task": "Isaac-RAMBO-Quadruped-Button-Go2-v0",
-      "path": "/workspace/rambo-go2-policies/quadruped/model_2000.pt",
+      "path": "/workspace/checkpoints/rambo/go2/quadruped/model_2000.pt",
       "sha256": "1cc5f68fe15e37ccabae26060d79a26a8c078ed465a81f6f729c2009b67ca706",
       "size_bytes": 8986805,
       "iteration": 2000,
@@ -22,7 +22,7 @@
     },
     {
       "task": "Isaac-RAMBO-Biped-Go2-v0",
-      "path": "/workspace/rambo-go2-policies/biped/model_4000.pt",
+      "path": "/workspace/checkpoints/rambo/go2/biped/model_4000.pt",
       "sha256": "c16e64bf1ca2dc16878c386b742cd303e65040f52e8744cd0c96c540c595b2a6",
       "size_bytes": 9355829,
       "iteration": 4000,
