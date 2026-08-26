@@ -1,5 +1,7 @@
 # RAMBO Isaac Sim 5.1 / Isaac Lab 2.3.2 Blackwell 迁移实现与复现手册
 
+> **历史预切换记录。** 本文中的旧根路径、旧 runtime 与旧 checkout 仅供审计或复现历史证据，不能作为当前 workspace 命令。当前 canonical 路径以根 `README.workspace.md`、`workspace.env` 与 `workspace.lock.yaml` 为准。
+
 ## 0. 文档定位
 
 本文记录 RAMBO 从旧 Isaac Sim 4.5 栈迁移到 Isaac Sim 5.1 / Isaac Lab 2.3.2 的**实际实现过程、失败诊断、最终代码契约和验收结果**。目标是在另一台 NVIDIA Blackwell 宿主机上，从干净 shell 开始，尽快复现以下三个已有闭环：

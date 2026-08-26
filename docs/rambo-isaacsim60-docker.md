@@ -1,5 +1,7 @@
 # RAMBO Isaac Sim 6 Docker specification (deferred)
 
+> **历史预切换记录。** 本文中的旧根路径、旧 runtime 与旧 checkout 仅供审计或复现历史证据，不能作为当前 workspace 命令。当前 canonical 路径以根 `README.workspace.md`、`workspace.env` 与 `workspace.lock.yaml` 为准。
+
 本文档记录未来可复现的容器化路径；它**不是**已完成的 Docker 验收报告。截至
 2026-08-25，原生 RTX 4090 验收主机没有 Docker Engine 或 NVIDIA Container
 Toolkit，因此本仓库没有执行 `docker build`、`docker run` 或发布镜像。原生

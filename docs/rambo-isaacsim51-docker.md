@@ -1,5 +1,7 @@
 # RAMBO Isaac Sim 5.1 Blackwell Docker image
 
+> **历史预切换记录。** 本文中的旧根路径、旧 runtime 与旧 checkout 仅供审计或复现历史证据，不能作为当前 workspace 命令。当前 canonical 路径以根 `README.workspace.md`、`workspace.env` 与 `workspace.lock.yaml` 为准。
+
 本文说明如何构建和验证 `rambo-isaac51-blackwell:r1`。镜像用于把已经在 Vast.ai RTX 5080 上验证的 RAMBO / Isaac Sim 5.1 runtime 固化下来；checkpoint、dataset、验证输出和凭据不进入镜像。
 
 ## Runtime contract

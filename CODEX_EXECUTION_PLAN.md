@@ -1,5 +1,7 @@
 # RAMBO → Isaac Sim 6.0.1 / Isaac Lab 3.0 Beta 2 Patch 1：执行计划
 
+> **历史预切换记录。** 本文中的旧根路径、旧 runtime 与旧 checkout 仅供审计或复现历史证据，不能作为当前 workspace 命令。当前 canonical 路径以根 `README.workspace.md`、`workspace.env` 与 `workspace.lock.yaml` 为准。
+
 本文件是长时间自主执行的恢复点。权威行为契约仍以
 `rambo-isaacsim60-isaaclab30b2-adaptation-plan.md` 为准；本文件补充已核实的
 精确依赖事务、PhysX 门禁、命令顺序、产物和恢复规则。

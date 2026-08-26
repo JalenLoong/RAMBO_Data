@@ -1,5 +1,7 @@
 # RAMBO → Isaac Sim 6.0.1 / Isaac Lab 3.0 Beta 2 Patch 1 迁移计划
 
+> **历史预切换记录。** 本文中的旧根路径、旧 runtime 与旧 checkout 仅供审计或复现历史证据，不能作为当前 workspace 命令。当前 canonical 路径以根 `README.workspace.md`、`workspace.env` 与 `workspace.lock.yaml` 为准。
+
 > 目标：在当前 Vast.ai RTX 4090 + R595 实例上，将已经在 Isaac Sim 5.1 / Isaac Lab 2.3.2 上验证通过的 RAMBO 迁移到新版 Isaac 栈，同时保持原 RAMBO policy / checkpoint / action / observation / QP 语义不变，为后续 LingBot-VA → RAMBO adaptation 数据合成建立稳定运行基线。
 
 ## 0. 当前目标主机
