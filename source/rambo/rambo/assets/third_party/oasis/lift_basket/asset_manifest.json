@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "asset": {
+    "name": "OASIS basket",
+    "provider": "TeleHuman/OASIS",
+    "archive_path": "objects/basket/basket.usd",
+    "source_up_axis": "Y",
+    "source_meters_per_unit": 1.0,
+    "upright_dimensions_m": [0.2746245, 0.2454756, 0.2914938],
+    "authored_mass_kg": 0.53,
+    "runtime_task_mass_kg": 0.53,
+    "runtime_mass_rationale": "preserve_source_authored_mass",
+    "render_mesh_faces": 1458826,
+    "runtime_role": "visual_and_source_authored_physics"
+  },
+  "source": {
+    "repository": "https://github.com/TeleHuman/OASIS",
+    "project_page": "https://oasis-humanoid.github.io/",
+    "scene_config": "https://github.com/TeleHuman/OASIS/blob/main/tasks/teleop/scenes/base_scene_pickplace_basket.py",
+    "archive_download_url": "https://drive.usercontent.google.com/download?id=1Q5izkCbbEV-ke2BSn_fZu2KI9ZeBn1ul&export=download&confirm=t",
+    "archive_size_bytes": 524713527,
+    "archive_sha256": "b1cb314229468ceac5c235a442528ee27e87b60cbd3d5b7090a0eb87746b2ec8"
+  },
+  "files": {
+    "basket.usd": {
+      "size_bytes": 105758868,
+      "sha256": "6f11c58d0765abe69e9974258227c4febe1727710f43b76afb7897b58b497b94"
+    },
+    "textures/texture_pbr_20250901.png": {
+      "size_bytes": 21873305,
+      "sha256": "e0358bb1d577cdbe8c25e7d53e511762dfefc063a2a8c8e813d3d3a9b1f485d1"
+    },
+    "textures/texture_pbr_20250901_metallic-texture_pbr_20250901_roughness.png": {
+      "size_bytes": 15791988,
+      "sha256": "38f3229c9bd89aa315914cf1ea758a86a87c7a40a4eacf85d0e251686ea36b42"
+    },
+    "textures/texture_pbr_20250901_normal.png": {
+      "size_bytes": 13241569,
+      "sha256": "584e9df1cc87cfc5e1111176ba56663a9a893b08af2ccdb560f3f81377f6c7bc"
+    }
+  },
+  "rambo_wrapper": {
+    "version": 2,
+    "up_axis": "Z",
+    "visual_rotation_xyzw": [0.5, 0.5, 0.5, 0.5],
+    "task_yaw_deg": 90.0,
+    "rigid_body_count": 1,
+    "collision_strategy": "source_convex_decomposition",
+    "source_collision_enabled": true,
+    "source_static_friction": 0.8,
+    "source_dynamic_friction": 0.6,
+    "source_restitution": 0.05,
+    "root_height_above_physical_bottom_m": 0.0,
+    "visual_translation_from_root_m": [0.0, 0.0, 0.0],
+    "origin": "source_authored_bottom_surface"
+  }
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keyboard loco-manip teleoperation for Go2 walking and FL button pressing."""
+"""Keyboard loco-manip teleoperation for Go2 FL manipulation tasks."""
 
 from __future__ import annotations
 
@@ -16,6 +16,7 @@ import numpy as np
 
 
 TASK_ID = "Isaac-RAMBO-Quadruped-Button-Go2-v0"
+LIFT_BASKET_TASK_ID = "Isaac-RAMBO-Quadruped-Lift-Basket-Go2-v0"
 EE_MIN = np.array([0.1934, 0.0, 0.0], dtype=np.float32)
 EE_MAX = np.array([0.50, 0.20, 0.40], dtype=np.float32)
 EE_DEFAULT = np.array([0.1934, 0.142, 0.05], dtype=np.float32)
@@ -62,9 +63,9 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
         raise RuntimeError("Run this script through scripts/rambo/run.sh") from error
 
     parser = argparse.ArgumentParser(
-        description="Teleoperate RAMBO Go2 locomotion and its FL button-pressing leg."
+        description="Teleoperate RAMBO Go2 locomotion and its FL manipulation leg."
     )
-    parser.add_argument("--task", choices=(TASK_ID,), default=TASK_ID)
+    parser.add_argument("--task", choices=(TASK_ID, LIFT_BASKET_TASK_ID), default=TASK_ID)
     parser.add_argument("--checkpoint", type=Path, required=True, help="Trusted quadruped model_2000.pt")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=300.0)
@@ -137,6 +138,11 @@ def _validate_args(parser: argparse.ArgumentParser, args: argparse.Namespace) ->
     for name in ("fl_x_speed", "fl_y_speed", "fl_z_speed"):
         if float(getattr(args, name)) <= 0.0:
             parser.error(f"--{name.replace('_', '-')} must be positive")
+    if args.task != TASK_ID and any(
+        bool(getattr(args, name, False))
+        for name in ("smoke_walk", "smoke_press", "smoke_loco_manip")
+    ):
+        parser.error("Scripted teleop smoke modes currently require the Button task")
 
 
 def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
@@ -148,6 +154,8 @@ def _validate_gui_artifact_args(parser: argparse.ArgumentParser, args: argparse.
         if operator_name is not None:
             parser.error("--operator-name requires --gui-artifact-dir")
         return
+    if args.task != TASK_ID:
+        parser.error("--gui-artifact-dir is currently defined only for the Button task")
     if getattr(args, "rambo_visualizer", None) != ["kit"]:
         parser.error("--gui-artifact-dir requires explicit --viz kit")
     if any(
@@ -200,6 +208,11 @@ def _configure_environment(env_cfg: Any, args: argparse.Namespace) -> None:
     env_cfg.viewer.lookat = [0.70, 0.10, 0.28]
     env_cfg.viewer.origin_type = "world"
     env_cfg.viewer.asset_name = None
+    if args.task == LIFT_BASKET_TASK_ID:
+        # Calf/thigh contact is a useful fail-fast condition for training, but
+        # it is too strict for interactive leg manipulation around the source
+        # basket handle. Keep fall, orientation, and body/head safety gates.
+        env_cfg.terminate_on_limb_contact = False
 
 
 def _validate_button_environment(base_env: Any) -> None:
@@ -216,6 +229,73 @@ def _validate_button_environment(base_env: Any) -> None:
         raise RuntimeError("Button task is missing loco-manip interfaces: " + ", ".join(missing))
     if not callable(base_env.set_loco_manip_commands):
         raise RuntimeError("Button task set_loco_manip_commands interface is not callable")
+
+
+def _validate_loco_manip_environment(base_env: Any) -> None:
+    required = ("set_loco_manip_commands", "manipulator_ready", "task_metrics", "task_success")
+    missing = [name for name in required if not hasattr(base_env, name)]
+    if missing:
+        raise RuntimeError("Object task is missing loco-manip interfaces: " + ", ".join(missing))
+    if not callable(base_env.set_loco_manip_commands):
+        raise RuntimeError("Object task set_loco_manip_commands interface is not callable")
+
+
+def _validate_lift_basket_source_physics() -> dict[str, Any]:
+    """Fail if the runtime stage reintroduces proxy collision or motion constraints."""
+
+    import math
+    import omni.usd
+    from pxr import Usd, UsdPhysics
+
+    stage = omni.usd.get_context().get_stage()
+    basket_path = "/World/envs/env_0/LingBotTask/basket"
+    basket = stage.GetPrimAtPath(basket_path)
+    if not basket.IsValid() or not basket.HasAPI(UsdPhysics.RigidBodyAPI):
+        raise RuntimeError("Lift basket source rigid body is missing")
+    mass = float(UsdPhysics.MassAPI(basket).GetMassAttr().Get())
+    if not math.isclose(mass, 0.53, abs_tol=1.0e-6):
+        raise RuntimeError(f"Lift basket source mass changed: {mass}")
+    collisions = [
+        prim
+        for prim in Usd.PrimRange(basket)
+        if prim.HasAPI(UsdPhysics.CollisionAPI)
+    ]
+    enabled = [
+        prim
+        for prim in collisions
+        if bool(UsdPhysics.CollisionAPI(prim).GetCollisionEnabledAttr().Get())
+    ]
+    approximations = [
+        UsdPhysics.MeshCollisionAPI(prim).GetApproximationAttr().Get()
+        for prim in enabled
+        if prim.HasAPI(UsdPhysics.MeshCollisionAPI)
+    ]
+    if len(enabled) != 1 or approximations != ["convexDecomposition"]:
+        raise RuntimeError(
+            "Lift basket must use exactly its source convex-decomposition collision: "
+            f"enabled={len(enabled)} approximations={approximations}"
+        )
+    if stage.GetPrimAtPath(f"{basket_path}/CollisionProxy").IsValid():
+        raise RuntimeError("Lift basket runtime contains a forbidden collision proxy")
+    task_root = stage.GetPrimAtPath("/World/envs/env_0/LingBotTask")
+    joints = [
+        str(prim.GetPath())
+        for prim in Usd.PrimRange(task_root)
+        if prim.IsA(UsdPhysics.PrismaticJoint)
+        or prim.IsA(UsdPhysics.FixedJoint)
+        or prim.IsA(UsdPhysics.RevoluteJoint)
+        or prim.IsA(UsdPhysics.SphericalJoint)
+    ]
+    if joints:
+        raise RuntimeError(f"Lift basket runtime contains forbidden task joints: {joints}")
+    evidence = {
+        "mass_kg": mass,
+        "collision_paths": [str(prim.GetPath()) for prim in enabled],
+        "collision_approximations": approximations,
+        "task_joints": joints,
+    }
+    print(f"[LIFT-PHYSICS] {evidence}", flush=True)
+    return evidence
 
 
 def _prepare_smoke_press_start(base_env: Any, torch: Any) -> None:
@@ -355,14 +435,16 @@ def _make_keyboard(base_env: Any, args: argparse.Namespace, *, event_observer: A
                 self._observe_keyboard_callback(event, key)
 
         def __str__(self) -> str:
-            return (
+            description = (
                 super().__str__()
                 + "\n\tFL forward/back: W / S"
                 + "\n\tFL lateral +/-: A / D"
                 + "\n\tFL up/down: R / F"
                 + "\n\tStop and reset all commands: L"
-                + "\n\tClear released-button success: C"
             )
+            if args.task == TASK_ID:
+                description += "\n\tClear released-button success: C"
+            return description
 
     return ManipulatorKeyboard()
 
@@ -532,6 +614,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
     from rambo.torch_runtime import ensure_cuda_linalg_loaded
 
     gui_artifact_enabled = getattr(args, "gui_artifact_dir", None) is not None
+    button_task = args.task == TASK_ID
     if gui_artifact_enabled:
         if getattr(args, "rambo_visualizer", None) != ["kit"]:
             raise RuntimeError("GUI artifact mode requires the Kit visualizer")
@@ -611,7 +694,12 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
         observations, _ = env.reset()
         validate_environment_contract(env, contract)
         base_env = env.unwrapped
-        _validate_button_environment(base_env)
+        if button_task:
+            _validate_button_environment(base_env)
+        else:
+            _validate_loco_manip_environment(base_env)
+            _validate_lift_basket_source_physics()
+        base_env._record_termination_diagnostics = True
 
         runner = PPO(task=args.task, env=env, agent_cfg=agent_cfg, train=False, device=env.device)
         restore_runner(runner, checkpoint, load_values=False, verify=True)
@@ -701,8 +789,12 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
         )
         teleop.reset()
         leg_target = EE_DEFAULT.copy()
-        prior_success = False
-        prior_released = bool(base_env.button_released[0].item())
+        prior_success = bool(
+            base_env.button_success[0].item()
+            if button_task
+            else base_env.task_success[0].item()
+        )
+        prior_released = bool(base_env.button_released[0].item()) if button_task else False
         release_announced = False
         was_ready = False
         press_succeeded = False
@@ -748,13 +840,21 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
         while simulation_app.is_running() and (max_steps == 0 or step_count < max_steps):
             with torch.inference_mode():
                 ready = bool(base_env.manipulator_ready[0].item())
-                displacement = float(base_env.button_displacement[0].item())
-                success = bool(base_env.button_success[0].item())
+                displacement = float(base_env.button_displacement[0].item()) if button_task else 0.0
+                success = bool(
+                    base_env.button_success[0].item()
+                    if button_task
+                    else base_env.task_success[0].item()
+                )
                 if ready and not was_ready:
                     print("[FL] ready: FL is in swing/manipulator mode.", flush=True)
                 was_ready = ready
 
-                if teleop.consume_clear_success_request() and bool(base_env.button_released[0].item()):
+                if (
+                    button_task
+                    and teleop.consume_clear_success_request()
+                    and bool(base_env.button_released[0].item())
+                ):
                     cleared = base_env.clear_button_success()
                     if bool(cleared[0].item()):
                         release_announced = False
@@ -792,9 +892,9 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     base_command = np.asarray(base_command_raw, dtype=np.float32).copy()
                     leg_velocity = teleop.leg_velocity()
 
-                if displacement >= base_env.cfg.button_contact_guard_m:
+                if button_task and displacement >= base_env.cfg.button_contact_guard_m:
                     base_command[0] = min(base_command[0], 0.0)
-                if success:
+                if button_task and success:
                     base_command.fill(0.0)
                     leg_velocity[0] = min(leg_velocity[0], 0.0)
                 if ready:
@@ -814,10 +914,51 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 if bool(torch.any(dones)):
                     teleop.reset()
                     mode = "smoke test" if smoke_mode else "teleoperation"
-                    raise RuntimeError(f"Environment terminated during {mode} at step {step_count}")
+                    diagnostics = {
+                        name: value.detach().cpu().tolist()
+                        for name, value in getattr(
+                            base_env,
+                            "_last_termination_diagnostics",
+                            {},
+                        ).items()
+                    }
+                    print(
+                        f"[TERMINATION] mode={mode} step={step_count} diagnostics={diagnostics}",
+                        flush=True,
+                    )
+                    if not smoke_mode and gui_artifact is None:
+                        # DirectRLEnv has already reset the terminated single
+                        # environment before returning the new observations.
+                        # Reset only the operator-side command state and keep
+                        # the interactive Kit window alive.
+                        leg_target = EE_DEFAULT.copy()
+                        prior_success = bool(
+                            base_env.button_success[0].item()
+                            if button_task
+                            else base_env.task_success[0].item()
+                        )
+                        prior_released = (
+                            bool(base_env.button_released[0].item())
+                            if button_task
+                            else False
+                        )
+                        release_announced = False
+                        was_ready = False
+                        print(
+                            "[TELEOP] Safety termination auto-reset; GUI remains active.",
+                            flush=True,
+                        )
+                        continue
+                    raise RuntimeError(
+                        f"Environment terminated during {mode} at step {step_count}"
+                    )
 
-                new_success = bool(base_env.button_success[0].item())
-                if new_success and not prior_success:
+                new_success = bool(
+                    base_env.button_success[0].item()
+                    if button_task
+                    else base_env.task_success[0].item()
+                )
+                if button_task and new_success and not prior_success:
                     press_succeeded = press_succeeded or press_mode
                     release_announced = False
                     print(
@@ -827,9 +968,17 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                         f"sustained_steps>={base_env.cfg.button_hold_steps}",
                         flush=True,
                     )
+                elif not button_task and new_success and not prior_success:
+                    metrics = base_env.task_metrics
+                    print(
+                        "[LIFT] SUCCESS: "
+                        f"clearance={float(metrics['clearance_m'][0]):.3f}m "
+                        f"tilt={float(metrics['tilt_rad'][0]):.3f}rad",
+                        flush=True,
+                    )
                 prior_success = new_success
-                new_released = bool(base_env.button_released[0].item())
-                if new_success and not release_announced and not prior_released and new_released:
+                new_released = bool(base_env.button_released[0].item()) if button_task else False
+                if button_task and new_success and not release_announced and not prior_released and new_released:
                     print(
                         "[BUTTON] RELEASED: "
                         f"travel={float(base_env.button_displacement[0].item()) * 1000.0:.1f} mm "
@@ -839,7 +988,8 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                     release_announced = True
                 prior_released = new_released
                 if (
-                    press_mode
+                    button_task
+                    and press_mode
                     and press_succeeded
                     and bool(base_env.button_released[0].item())
                     and step_count >= retract_start
@@ -899,14 +1049,24 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 report_every = 50 if smoke_mode else args.telemetry_every
                 if report_every and step_count % report_every == 0:
                     report_label = "SMOKE" if smoke_mode else "STATE"
-                    print(
+                    prefix = (
                         f"[{report_label}] step={step_count} "
                         f"root_x={float(base_env._robot.data.root_link_pos_w.torch[0, 0]):.3f} "
                         f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
-                        f"button={float(base_env.button_displacement[0]) * 1000.0:.1f}mm "
-                        f"success={int(new_success)} released={int(new_released)}",
-                        flush=True,
                     )
+                    if button_task:
+                        detail = (
+                            f"button={float(base_env.button_displacement[0]) * 1000.0:.1f}mm "
+                            f"success={int(new_success)} released={int(new_released)}"
+                        )
+                    else:
+                        metrics = base_env.task_metrics
+                        detail = (
+                            f"clearance={float(metrics['clearance_m'][0]):.3f}m "
+                            f"tilt={float(metrics['tilt_rad'][0]):.3f}rad "
+                            f"success={int(new_success)}"
+                        )
+                    print(prefix + detail, flush=True)
                 if press_mode and press_succeeded and press_released and step_count >= retract_end:
                     break
 
@@ -963,14 +1123,24 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
                 raise RuntimeError("Walking smoke test did not produce measurable base and joint motion")
             print("LOCO_MANIP_SMOKE_WALK_SUCCESS", flush=True)
         else:
-            print(
+            prefix = (
                 f"[FINAL] root_x={float(base_env._robot.data.root_link_pos_w.torch[0, 0].item()):.3f} "
                 f"fl=({leg_target[0]:.3f},{leg_target[1]:.3f},{leg_target[2]:.3f}) "
-                f"button={float(base_env.button_displacement[0].item()) * 1000.0:.1f}mm "
-                f"success={int(bool(base_env.button_success[0].item()))} "
-                f"released={int(bool(base_env.button_released[0].item()))}",
-                flush=True,
             )
+            if button_task:
+                detail = (
+                    f"button={float(base_env.button_displacement[0].item()) * 1000.0:.1f}mm "
+                    f"success={int(bool(base_env.button_success[0].item()))} "
+                    f"released={int(bool(base_env.button_released[0].item()))}"
+                )
+            else:
+                metrics = base_env.task_metrics
+                detail = (
+                    f"clearance={float(metrics['clearance_m'][0]):.3f}m "
+                    f"tilt={float(metrics['tilt_rad'][0]):.3f}rad "
+                    f"success={int(bool(base_env.task_success[0].item()))}"
+                )
+            print(prefix + detail, flush=True)
             print(f"LOCO_MANIP_STEPS={step_count}", flush=True)
         if gui_artifact is not None:
             gui_artifact.finalize(

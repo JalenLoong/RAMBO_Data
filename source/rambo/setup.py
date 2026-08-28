@@ -24,7 +24,14 @@ setup(
     python_requires=">=3.12,<3.13",
     install_requires=["numpy==2.3.1", "gymnasium==1.2.0", "qpth==0.0.18"],
     packages=find_packages(include=["rambo", "rambo.*"]),
-    package_data={"rambo": ["tasks/direct/*/agents/*.yaml"]},
+    package_data={
+        "rambo": [
+            "tasks/direct/*/agents/*.yaml",
+            "assets/third_party/oasis/lift_basket/*.json",
+            "assets/third_party/oasis/lift_basket/*.usd",
+            "assets/third_party/oasis/lift_basket/textures/*.png",
+        ]
+    },
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3.12",

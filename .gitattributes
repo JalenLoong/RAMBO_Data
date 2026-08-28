@@ -1,0 +1,2 @@
+source/rambo/rambo/assets/third_party/oasis/lift_basket/basket.usd filter=lfs diff=lfs merge=lfs -text
+source/rambo/rambo/assets/third_party/oasis/lift_basket/textures/*.png filter=lfs diff=lfs merge=lfs -text

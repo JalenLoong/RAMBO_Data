@@ -10,15 +10,14 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import numpy as np
-import omni.usd
 import torch
-from pxr import Gf, Sdf, UsdPhysics
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObject, RigidObjectCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 
+from rambo.assets import spawn_lift_basket_asset
 from rambo.utils.physx import assert_physx_environment
 
 from .button_env import ButtonQPEnvCfg
@@ -42,7 +41,8 @@ class ObjectTaskQPEnvCfg(ButtonQPEnvCfg):
 @configclass
 class LiftBasketQPEnvCfg(ObjectTaskQPEnvCfg):
     task_kind = "lift_basket"
-    primary_position = (0.75, 0.15, 0.11)
+    # The source USD rigid-body origin is on the physical bottom surface.
+    primary_position = (0.75, 0.15, 0.02)
     basket_clearance_m = 0.06
     basket_hold_steps = 25
     basket_max_tilt_deg = 35.0
@@ -136,6 +136,12 @@ class ObjectTaskQPEnv(QPEnv):
                 raise ValueError(f"{name} contains NaN or Inf")
             storage.index_copy_(0, indices, command)
 
+    @property
+    def manipulator_ready(self) -> torch.Tensor:
+        """Report when the FL contact schedule has entered swing/manipulation."""
+
+        return self.contact_generator.desired_contact_mode[:, 0] <= -0.5
+
     def _setup_post_clone_task_assets(self) -> None:
         self._root = "/World/envs/env_0/LingBotTask"
         kind = self.cfg.task_kind
@@ -155,46 +161,10 @@ class ObjectTaskQPEnv(QPEnv):
         self.scene.rigid_objects[name] = asset
         return asset
 
-    def _fixed_joint(self, name: str, parent: str, child: str, child_pos: tuple[float, float, float]) -> None:
-        stage = omni.usd.get_context().get_stage()
-        joint = UsdPhysics.FixedJoint.Define(stage, f"{self._root}/{name}")
-        joint.CreateBody0Rel().SetTargets([Sdf.Path(parent)])
-        joint.CreateBody1Rel().SetTargets([Sdf.Path(child)])
-        joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*child_pos))
-        joint.CreateLocalRot0Attr().Set(Gf.Quatf(1.0))
-        joint.CreateLocalPos1Attr().Set(Gf.Vec3f(0.0, 0.0, 0.0))
-        joint.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
-
-    def _vertical_guide(self, name: str, child: str, rest_pos: tuple[float, float, float]) -> None:
-        """Constrain the lift basket to an upright physical Z rail."""
-
-        stage = omni.usd.get_context().get_stage()
-        joint = UsdPhysics.PrismaticJoint.Define(stage, f"{self._root}/{name}")
-        joint.CreateAxisAttr().Set("Z")
-        joint.CreateLowerLimitAttr().Set(0.0)
-        joint.CreateUpperLimitAttr().Set(0.35)
-        joint.CreateBody1Rel().SetTargets([Sdf.Path(child)])
-        joint.CreateLocalPos0Attr().Set(Gf.Vec3f(*rest_pos))
-        joint.CreateLocalRot0Attr().Set(Gf.Quatf(1.0))
-        joint.CreateLocalPos1Attr().Set(Gf.Vec3f(0.0, 0.0, 0.0))
-        joint.CreateLocalRot1Attr().Set(Gf.Quatf(1.0))
-
     def _spawn_lift_basket(self) -> None:
         center = tuple(self.cfg.primary_position)
-        self._primary = self._add_rigid("basket", _rigid_cfg(size=(0.34, 0.28, 0.18), color=(0.68, 0.32, 0.42), mass=0.10), center)
-        self._vertical_guide("basket_vertical_guide", f"{self._root}/basket", center)
-        # The FL reaches the front crossbar at the same height as the Button
-        # cap.  A real fixed joint makes it a load-bearing U-handle, rather
-        # than a visual cue or a scripted pose change.
-        handle_pos = (center[0] - 0.17, center[1], center[2] + 0.20)
-        self._handle = self._add_rigid(
-            "basket_u_handle_crossbar",
-            _rigid_cfg(size=(0.35, 0.18, 0.035), color=(0.85, 0.55, 0.62), mass=0.03),
-            handle_pos,
-        )
-        self._fixed_joint(
-            "basket_u_handle_fixed", f"{self._root}/basket", f"{self._root}/basket_u_handle_crossbar", (-0.17, 0.0, 0.20)
-        )
+        self._primary = spawn_lift_basket_asset(f"{self._root}/basket", center)
+        self.scene.rigid_objects["basket"] = self._primary
 
     def _spawn_open_basket(self, center: tuple[float, float, float]) -> None:
         # Fixed compound basket: floor plus three walls, opening faces robot (-X).
@@ -251,11 +221,12 @@ class ObjectTaskQPEnv(QPEnv):
     def __init__(self, cfg: ObjectTaskQPEnvCfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
         self._physx_evidence = assert_physx_environment(self)
-        self._primary_rest_pose = self._primary.data.default_root_pose.torch.clone()
+        # Capture the initialized actor-frame pose reported by PhysX. Imported
+        # USDs may have a computed actor-frame offset from their authored Xform
+        # origin, so their config-space default pose is not necessarily the
+        # runtime root-link pose used by reset and task displacement metrics.
+        self._primary_rest_pose = self.primary_pose_w.clone()
         self._primary_rest_vel = self._primary.data.default_root_vel.torch.clone()
-        if hasattr(self, "_handle"):
-            self._handle_rest_pose = self._handle.data.default_root_pose.torch.clone()
-            self._handle_rest_vel = self._handle.data.default_root_vel.torch.clone()
         self._success = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
         self._hold = torch.zeros(self.num_envs, dtype=torch.long, device=self.device)
         self._fl_contact_seen = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
@@ -296,11 +267,20 @@ class ObjectTaskQPEnv(QPEnv):
         foot = self._robot.data.body_link_pos_w.torch[:, self.feet_ids[0], :]
         distance = torch.linalg.vector_norm(pos - foot, dim=-1)
         if self.cfg.task_kind == "lift_basket":
-            # The basket body is 180 mm high, so the true clearance is its
-            # lowest physical point above the ground plane, not its COM lift.
-            clearance = pos[:, 2] - 0.09
+            # PhysX reports the source actor at its computed rigid-body frame,
+            # not at the USD's bottom-surface Xform origin. Measure vertical
+            # lift relative to the reset pose and retain the configured 20-mm
+            # initial bottom clearance.
+            clearance = (
+                float(self.cfg.primary_position[2])
+                + pos[:, 2]
+                - self._primary_rest_pose[:, 2]
+            )
             quat = self.primary_pose_w[:, 3:7]
-            tilt = 2.0 * torch.asin(torch.clamp(torch.linalg.vector_norm(quat[:, :2], dim=-1), 0.0, 1.0))
+            # The source basket's local +Y is its physical up axis. For XYZW
+            # quaternions, R[2, 1] is that axis' world-Z component.
+            local_up_world_z = 2.0 * (quat[:, 1] * quat[:, 2] + quat[:, 3] * quat[:, 0])
+            tilt = torch.acos(torch.clamp(local_up_world_z, -1.0, 1.0))
             return {"clearance_m": clearance, "tilt_rad": tilt, "fl_distance_m": distance, "hold_steps": self._hold.float()}
         if self.cfg.task_kind == "pull_object_into_basket":
             basket = torch.as_tensor(self.cfg.basket_center, device=self.device, dtype=pos.dtype)
@@ -359,14 +339,6 @@ class ObjectTaskQPEnv(QPEnv):
         self._primary.write_root_velocity_to_sim_index(
             root_velocity=self._primary_rest_vel.index_select(0, env_ids), env_ids=sim_env_ids
         )
-        if hasattr(self, "_handle_rest_pose"):
-            self._handle.reset(env_ids=env_ids)
-            self._handle.write_root_pose_to_sim_index(
-                root_pose=self._handle_rest_pose.index_select(0, env_ids), env_ids=sim_env_ids
-            )
-            self._handle.write_root_velocity_to_sim_index(
-                root_velocity=self._handle_rest_vel.index_select(0, env_ids), env_ids=sim_env_ids
-            )
         self._success[env_ids] = False
         self._hold[env_ids] = 0
         self._fl_contact_seen[env_ids] = False
