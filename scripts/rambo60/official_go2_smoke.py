@@ -17,13 +17,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path
+import os
 import sys
 import traceback
+from pathlib import Path
 from typing import Any
 
-
-ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M2")
+ARTIFACT_ROOT = Path(os.environ.get("RUNS_ROOT", "/workspace/runs")) / "audit" / "isaac60" / "M2"
 DEFAULT_STEPS = 1000
 PHYSICS_DT_S = 0.002
 IMAGE_WIDTH = 640
@@ -241,9 +241,8 @@ def _runtime_imports() -> dict[str, Any]:
     """Load only official simulator APIs after AppLauncher initialized Kit."""
 
     import imageio.v3 as imageio
-    import torch
-
     import isaaclab.sim as sim_utils
+    import torch
     from isaaclab.assets import Articulation
     from isaaclab.sensors import Camera, CameraCfg
     from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG

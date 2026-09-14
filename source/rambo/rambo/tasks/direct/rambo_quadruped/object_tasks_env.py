@@ -41,6 +41,8 @@ class ObjectTaskQPEnvCfg(ButtonQPEnvCfg):
 @configclass
 class LiftBasketQPEnvCfg(ObjectTaskQPEnvCfg):
     task_kind = "lift_basket"
+    # Opt-in UI/preview layout; legacy collection keeps its original cameras.
+    lift_camera_setup = "legacy"
     # The source USD rigid-body origin is on the physical bottom surface.
     primary_position = (0.75, 0.15, 0.02)
     basket_clearance_m = 0.06
@@ -153,6 +155,9 @@ class ObjectTaskQPEnv(QPEnv):
             self._spawn_shoot_task()
         else:  # pragma: no cover - configuration error
             raise ValueError(f"unsupported task kind: {kind}")
+        if getattr(self.cfg, "lift_camera_setup", "legacy") in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+            from rambo.tasks.common.lift_camera_rig import spawn
+            spawn(self)
 
     def _add_rigid(self, name: str, cfg: object, position: tuple[float, float, float]) -> RigidObject:
         path = f"{self._root}/{name}"
@@ -277,9 +282,9 @@ class ObjectTaskQPEnv(QPEnv):
                 - self._primary_rest_pose[:, 2]
             )
             quat = self.primary_pose_w[:, 3:7]
-            # The source basket's local +Y is its physical up axis. For XYZW
-            # quaternions, R[2, 1] is that axis' world-Z component.
-            local_up_world_z = 2.0 * (quat[:, 1] * quat[:, 2] + quat[:, 3] * quat[:, 0])
+            # Stage up is Y, but the source root authors an X rotation: the
+            # rigid-local physical up axis is -Z. Use -R[2, 2] for XYZW.
+            local_up_world_z = 2.0 * (quat[:, 0].square() + quat[:, 1].square()) - 1.0
             tilt = torch.acos(torch.clamp(local_up_world_z, -1.0, 1.0))
             return {"clearance_m": clearance, "tilt_rad": tilt, "fl_distance_m": distance, "hold_steps": self._hold.float()}
         if self.cfg.task_kind == "pull_object_into_basket":

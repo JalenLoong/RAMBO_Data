@@ -64,6 +64,7 @@ def test_official_go2_gate_has_bounded_rgb_and_artifact_contracts() -> None:
     assert "IsaacRtxRendererCfg" in contents
     assert "go2_rgb.png" in contents
     assert "checksums.sha256" in contents
+    assert "RUNS_ROOT" in contents
     assert "Refusing to overwrite existing artifact directory" in contents
     assert "STATE_TENSOR_FIELDS" in contents
     assert "state_finite_checks" in contents

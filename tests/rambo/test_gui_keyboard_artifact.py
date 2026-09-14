@@ -6,13 +6,12 @@ import ast
 import importlib.util
 import json
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 from rambo.validation import gui_keyboard_artifact as schema
 
 
@@ -536,6 +535,7 @@ class _Parser:
 
 def _gui_args(teleop, **overrides):
     values = {
+        "task": teleop.TASK_ID,
         "gui_artifact_dir": teleop.GUI_ARTIFACT_ROOT / "pytest-fresh-artifact",
         "operator_name": "operator",
         "rambo_visualizer": ["kit"],

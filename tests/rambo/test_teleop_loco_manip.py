@@ -153,6 +153,10 @@ def test_lift_teleop_relaxes_only_limb_contact_and_keeps_gui_alive_on_reset() ->
                 for name in ("FL", "FR", "RL", "RR")
             }
         },
+        front_camera=SimpleNamespace(
+            offset=SimpleNamespace(rot=(0.0, 0.0, 0.0, 1.0)),
+            spawn=SimpleNamespace(focal_length=18.0),
+        ),
         scene=SimpleNamespace(env_spacing=0.0),
         viewer=SimpleNamespace(eye=None, lookat=None, origin_type=None, asset_name="robot"),
         terminate_on_limb_contact=True,
@@ -176,6 +180,72 @@ def test_lift_teleop_relaxes_only_limb_contact_and_keeps_gui_alive_on_reset() ->
         Path(__file__).resolve().parents[2] / "scripts/rambo/teleop_loco_manip.py"
     ).read_text(encoding="utf-8")
     assert "Safety termination auto-reset; GUI remains active" in source
+
+
+def test_ego_view_requires_kit_and_enables_only_the_existing_front_camera() -> None:
+    teleop = _load_teleop_module()
+
+    class Parser:
+        def error(self, message: str) -> None:
+            raise ValueError(message)
+
+    parser = Parser()
+    with pytest.raises(ValueError, match="--view ego requires explicit --viz kit"):
+        teleop._validate_view_args(
+            parser,
+            SimpleNamespace(view=teleop.VIEW_EGO, rambo_visualizer=["none"]),
+        )
+    teleop._validate_view_args(
+        parser,
+        SimpleNamespace(view=teleop.VIEW_EGO, rambo_visualizer=["kit"]),
+    )
+    launcher_args = SimpleNamespace(view=teleop.VIEW_EGO, enable_cameras=False)
+    teleop._configure_ego_view_launcher(launcher_args)
+    assert launcher_args.enable_cameras is True
+
+    cfg = SimpleNamespace(
+        seed=None,
+        events=object(),
+        obs_noise=True,
+        randomize_episode_progress=True,
+        randomize_initial_state=True,
+        enable_sampled_velocity_commands=True,
+        enable_sampled_pos_commands=True,
+        enable_sampled_force_commands=True,
+        enable_rgb_camera=False,
+        episode_length_s=0.0,
+        contact_generator_config={
+            "contact_sequence": {
+                name: [["stance", 1.0], ["swing", 1.0]]
+                for name in ("FL", "FR", "RL", "RR")
+            }
+        },
+        front_camera=SimpleNamespace(
+            offset=SimpleNamespace(rot=(0.0, 0.0, 0.0, 1.0)),
+            spawn=SimpleNamespace(focal_length=18.0),
+        ),
+        scene=SimpleNamespace(env_spacing=0.0),
+        viewer=SimpleNamespace(eye=None, lookat=None, origin_type=None, asset_name="robot"),
+        terminate_on_limb_contact=True,
+    )
+    teleop._configure_environment(
+        cfg,
+        SimpleNamespace(
+            task=teleop.LIFT_BASKET_TASK_ID,
+            seed=42,
+            episode_length_s=600.0,
+            view=teleop.VIEW_EGO,
+        ),
+    )
+
+    assert cfg.enable_rgb_camera is True
+    assert cfg.front_camera.offset.rot == teleop.LIFT_BASKET_EGO_OFFSET_ROT_XYZW
+    assert cfg.front_camera.spawn.focal_length == teleop.LIFT_BASKET_EGO_FOCAL_LENGTH_MM
+    source = (
+        Path(__file__).resolve().parents[2] / "scripts/rambo/teleop_loco_manip.py"
+    ).read_text(encoding="utf-8")
+    assert 'EGO_VIEW_CAMERA_PRIM_PATH = "/World/envs/env_0/Robot/base/front_camera"' in source
+    assert "ViewportManager.set_camera(EGO_VIEW_CAMERA_PRIM_PATH)" in source
 
 
 def test_button_source_uses_physx_checked_proxy_and_index_writer_apis() -> None:

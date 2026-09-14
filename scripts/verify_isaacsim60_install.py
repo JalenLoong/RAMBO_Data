@@ -15,16 +15,16 @@ from __future__ import annotations
 import argparse
 import importlib.metadata as metadata
 import json
-from pathlib import Path
 import platform
 import re
 import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlparse
 
-
 ISAACLAB_COMMIT = "ffff603eafc6b74264a5261cc0183d6a65390d78"
+EXPECTED_PYTHON = (3, 12, 3)
 EXPECTED_PACKAGES = {
     "isaacsim": "6.0.1.0",
     "torch": "2.10.0+cu128",
@@ -259,8 +259,8 @@ def verify(
 ) -> dict[str, Any]:
     """Return auditable pinned-runtime facts or fail before any Kit launch."""
 
-    if sys.version_info[:2] != (3, 12):
-        raise VerificationError(f"Expected Python 3.12, found {sys.version.split()[0]}")
+    if sys.version_info[:3] != EXPECTED_PYTHON:
+        raise VerificationError(f"Expected Python 3.12.3, found {sys.version.split()[0]}")
     package_versions: dict[str, str] = {}
     for package, expected in EXPECTED_PACKAGES.items():
         try:

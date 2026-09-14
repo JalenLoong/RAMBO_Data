@@ -12,9 +12,12 @@ BASKET_ASSET_ROOT = (
 BASKET_USD_PATH = BASKET_ASSET_ROOT / "basket.usd"
 BASKET_MASS_KG = 0.53
 BASKET_ROOT_HEIGHT_ABOVE_BOTTOM_M = 0.0
-# Source Y-up -> task Z-up, followed by +90 degrees of world-Z yaw so the
-# arch plane faces the Go2 approaching from the negative-X side.
-BASKET_INITIAL_ORIENTATION_XYZW = (0.5, 0.5, 0.5, 0.5)
+# The source default prim ALREADY authors a +90 degree X rotation. UsdFileCfg
+# replaces that root orientation, so compose it with the source-stage Y-up to
+# task Z-up / +90 degree yaw conversion instead of discarding it. In XYZW:
+# (0.5, 0.5, 0.5, 0.5) * (sqrt(.5), 0, 0, sqrt(.5)).
+# The mesh's physical up axis in the rigid body's LOCAL frame is -Z, not +Y.
+BASKET_INITIAL_ORIENTATION_XYZW = (2.0 ** -0.5, 2.0 ** -0.5, 0.0, 0.0)
 
 
 def spawn_lift_basket_asset(

@@ -11,20 +11,24 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
-readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
-readonly ISAACLAB_SOURCE="${RAMBO_ISAACLAB_SOURCE:-/workspace/third_party/IsaacLab/3.0.0-beta2.patch1}"
-readonly WAM_POLICY_ROOT="${WAM_POLICY_ROOT:-/workspace/repos/WAM-Policy}"
+readonly DEFAULT_WORKSPACE_ROOT="$(cd -- "${REPO_ROOT}/../.." && pwd)"
+readonly LOCAL_WORKSPACE_ROOT="${WORKSPACE_ROOT:-${DEFAULT_WORKSPACE_ROOT}}"
+readonly VENV_DIR="${RAMBO_VENV:-${LOCAL_WORKSPACE_ROOT}/envs/rambo-isaac60-py312}"
+readonly ISAACLAB_SOURCE="${RAMBO_ISAACLAB_SOURCE:-${LOCAL_WORKSPACE_ROOT}/third_party/IsaacLab/3.0.0-beta2.patch1}"
+readonly WAM_POLICY_ROOT="${WAM_POLICY_ROOT:-${LOCAL_WORKSPACE_ROOT}/repos/WAM-Policy}"
 readonly ISAACLAB_COMMIT="ffff603eafc6b74264a5261cc0183d6a65390d78"
 readonly REQUIREMENTS_INPUT="${REPO_ROOT}/requirements/isaacsim60.in"
 readonly REQUIREMENTS_LOCK="${REPO_ROOT}/requirements/isaacsim60.lock"
 readonly VERIFIER="${REPO_ROOT}/scripts/verify_isaacsim60_install.py"
+readonly UV_COMMAND="${UV_BIN:-uv}"
 
 usage() {
     cat <<'EOF'
 Usage: bash scripts/setup_isaacsim60.sh [--docker-build-metadata-only]
 
 Environment:
-  RAMBO_VENV              Override /workspace/envs/rambo-isaac60-py312.
+  WORKSPACE_ROOT          Override the workspace inferred from the repository location.
+  RAMBO_VENV              Override the inferred envs/rambo-isaac60-py312 path.
   RAMBO_ISAACLAB_SOURCE   Override the exact tagged Isaac Lab checkout.
   WAM_POLICY_ROOT         Override the canonical WAM checkout.
 
@@ -61,7 +65,7 @@ case "${1:-}" in
         ;;
 esac
 
-if ! command -v uv >/dev/null 2>&1; then
+if ! command -v "${UV_COMMAND}" >/dev/null 2>&1; then
     echo "uv is required to create the pinned Isaac Sim 6 environment." >&2
     exit 1
 fi
@@ -87,31 +91,43 @@ done
 if [[ ! -x "${VENV_DIR}/bin/python" ]]; then
     # Seed pip so the locked wheel set can be installed sequentially without
     # retaining an aggregate download cache on the constrained workspace disk.
-    UV_NO_CACHE=1 uv venv --seed --python 3.12 "${VENV_DIR}"
+    "${UV_COMMAND}" venv --seed --python 3.12.3 "${VENV_DIR}"
 fi
 readonly PYTHON="${VENV_DIR}/bin/python"
 "${PYTHON}" - <<'PY'
 import sys
-if sys.version_info[:2] != (3, 12):
-    raise SystemExit(f"Expected Python 3.12, found {sys.version.split()[0]}")
+if sys.version_info[:3] != (3, 12, 3):
+    raise SystemExit(f"Expected Python 3.12.3, found {sys.version.split()[0]}")
 PY
 
 export PYTHONNOUSERSITE=1
 unset PYTHONPATH || true
 
 # The frozen lock enumerates every non-editable wheel.  Install each exact
-# pin in an independent no-cache transaction: pip's aggregate ``-r`` mode
-# still retains the full Isaac Sim wheel set while resolving metadata.  The
-# one-line transactions cap peak disk use at the installed target plus one
-# wheel and invoke no dependency resolver.
+# pin in an independent transaction. The one-line transactions cap peak disk
+# use, invoke no dependency resolver, and let uv reuse exact content-addressed
+# wheels already downloaded for the separate policy environment.
 while IFS= read -r requirement || [[ -n "${requirement}" ]]; do
     case "${requirement}" in
         ""|\#*|--*) continue ;;
     esac
-    "${PYTHON}" -m pip install --no-cache-dir --no-deps \
-        --extra-index-url https://pypi.nvidia.com \
-        --extra-index-url https://download.pytorch.org/whl/cu128 \
-        "${requirement}"
+    package_name="${requirement%%==*}"
+    package_name="${package_name,,}"
+    case "${package_name}" in
+        torch|torchvision|torchaudio)
+            package_index=https://download.pytorch.org/whl/cu128
+            ;;
+        isaacsim*|omniverseclient|nvidia-cublas|nvidia-cuda-cupti|nvidia-cuda-nvrtc|nvidia-cuda-runtime|\
+        nvidia-cudnn-cu13|nvidia-cufft|nvidia-cufile|nvidia-curand|nvidia-cusolver|nvidia-cusparse|\
+        nvidia-cusparselt-cu13|nvidia-nccl-cu13|nvidia-nvjitlink|nvidia-nvshmem-cu13|nvidia-nvtx)
+            package_index=https://pypi.nvidia.com
+            ;;
+        *)
+            package_index=https://pypi.org/simple
+            ;;
+    esac
+    "${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps \
+        --default-index "${package_index}" "${requirement}"
 done < "${REQUIREMENTS_LOCK}"
 
 # The exact tag's official core installation includes these bare source
@@ -127,13 +143,13 @@ for extension in \
     isaaclab_ovphysx \
     isaaclab_physx \
     isaaclab_tasks; do
-    "${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${ISAACLAB_SOURCE}/source/${extension}"
+    "${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps --editable "${ISAACLAB_SOURCE}/source/${extension}"
 done
-"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${ISAACLAB_SOURCE}/source/isaaclab_visualizers[kit]"
+"${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps --editable "${ISAACLAB_SOURCE}/source/isaaclab_visualizers[kit]"
 
-"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${REPO_ROOT}/source/crl2"
-"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${REPO_ROOT}/source/rambo"
-"${PYTHON}" -m pip install --no-cache-dir --no-deps --editable "${WAM_POLICY_ROOT}"
+"${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/crl2"
+"${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps --editable "${REPO_ROOT}/source/rambo"
+"${UV_COMMAND}" pip install --python "${PYTHON}" --no-deps --editable "${WAM_POLICY_ROOT}"
 
 # This read-only verifier does not launch Kit or any physics backend.  It
 # records the exact expected metadata conflicts from the vendor wheel graph

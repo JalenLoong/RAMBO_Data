@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 
 from rambo.assets import (
@@ -45,7 +46,11 @@ def test_lift_basket_asset_payload_matches_pinned_manifest() -> None:
 
 def test_lift_basket_uses_source_authored_physics_without_proxies() -> None:
     assert BASKET_ROOT_HEIGHT_ABOVE_BOTTOM_M == 0.0
-    assert BASKET_INITIAL_ORIENTATION_XYZW == (0.5, 0.5, 0.5, 0.5)
+    x, y, z, w = BASKET_INITIAL_ORIENTATION_XYZW
+    assert math.isclose(x*x + y*y + z*z + w*w, 1.0)
+    # Physical up is mesh-local -Z. Source orientation must survive the
+    # stage-up conversion; the old (.5,.5,.5,.5) left the basket horizontal.
+    assert math.isclose(2*(x*x + y*y) - 1, 1.0)
     source = (
         REPOSITORY_ROOT / "source/rambo/rambo/assets/lift_basket.py"
     ).read_text(encoding="utf-8")

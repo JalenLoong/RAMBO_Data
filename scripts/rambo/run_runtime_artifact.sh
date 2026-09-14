@@ -8,7 +8,10 @@
 set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly VENV_DIR="${RAMBO_VENV:-/workspace/envs/rambo-isaac60-py312}"
+readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+readonly DEFAULT_WORKSPACE_ROOT="$(cd -- "${REPO_ROOT}/../.." && pwd)"
+readonly LOCAL_WORKSPACE_ROOT="${WORKSPACE_ROOT:-${DEFAULT_WORKSPACE_ROOT}}"
+readonly VENV_DIR="${RAMBO_VENV:-${LOCAL_WORKSPACE_ROOT}/envs/rambo-isaac60-py312}"
 readonly FINALIZER="${SCRIPT_DIR}/finalize_runtime_artifact.py"
 readonly CONTRACT="${SCRIPT_DIR}/run60_contract.sh"
 

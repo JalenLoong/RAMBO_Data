@@ -11,13 +11,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from pathlib import Path
+import os
 import sys
 import traceback
+from pathlib import Path
 from typing import Any
 
-
-ARTIFACT_ROOT = Path("/workspace/runs/audit/isaac60/M2")
+ARTIFACT_ROOT = Path(os.environ.get("RUNS_ROOT", "/workspace/runs")) / "audit" / "isaac60" / "M2"
 EXPECTED_CAPABILITY = (8, 9)
 REQUIRED_ARCH = "sm_89"
 # NVIDIA documents that Ampere-native SASS (including sm_86) is forward
@@ -25,6 +25,10 @@ REQUIRED_ARCH = "sm_89"
 # exposes sm_86 but not a native sm_89 entry, so preserve that distinction in
 # the artifact rather than rejecting a working, vendor-compatible wheel.
 ADA_COMPATIBLE_ARCHS = (REQUIRED_ARCH, "sm_86", "sm_80")
+HARDWARE_PROFILES = {
+    "ada": {"capability": EXPECTED_CAPABILITY, "compatible_architectures": ADA_COMPATIBLE_ARCHS},
+    "blackwell": {"capability": (12, 0), "compatible_architectures": ("sm_120",)},
+}
 
 
 def _write_artifact(output_dir: Path, summary: dict[str, Any]) -> None:
@@ -34,20 +38,23 @@ def _write_artifact(output_dir: Path, summary: dict[str, Any]) -> None:
     (output_dir / "checksums.sha256").write_text(f"{digest}  summary.json\n", encoding="utf-8")
 
 
-def collect_cuda_evidence(torch: Any) -> dict[str, Any]:
+def collect_cuda_evidence(torch: Any, *, hardware_profile: str = "ada") -> dict[str, Any]:
     """Fail closed unless the accepted host CUDA/Torch contract is live."""
 
     if not bool(torch.cuda.is_available()):
         raise RuntimeError("torch.cuda.is_available() is false")
+    profile = HARDWARE_PROFILES[hardware_profile]
+    expected_capability = profile["capability"]
+    compatible_architectures = profile["compatible_architectures"]
     capability = tuple(torch.cuda.get_device_capability(0))
-    if capability != EXPECTED_CAPABILITY:
-        raise RuntimeError(f"CUDA capability is {capability}, expected {EXPECTED_CAPABILITY}")
+    if capability != expected_capability:
+        raise RuntimeError(f"CUDA capability is {capability}, expected {expected_capability} for {hardware_profile}")
     architectures = list(torch.cuda.get_arch_list())
-    compatible_arch = next((arch for arch in ADA_COMPATIBLE_ARCHS if arch in architectures), None)
+    compatible_arch = next((arch for arch in compatible_architectures if arch in architectures), None)
     if compatible_arch is None:
         raise RuntimeError(
-            "Torch architecture list lacks native Ada or an Ada-forward-compatible "
-            f"Ampere target {ADA_COMPATIBLE_ARCHS}: {architectures}"
+            f"Torch architecture list lacks a compiled target accepted by {hardware_profile} "
+            f"{compatible_architectures}: {architectures}"
         )
     values = torch.arange(1024, device="cuda", dtype=torch.float32)
     squared_sum = float(values.square().sum().item())
@@ -57,12 +64,15 @@ def collect_cuda_evidence(torch: Any) -> dict[str, Any]:
     return {
         "torch_version": str(torch.__version__),
         "torch_cuda_version": str(torch.version.cuda),
+        "hardware_profile": hardware_profile,
         "cuda_available": True,
         "gpu_name": str(torch.cuda.get_device_name(0)),
         "capability": list(capability),
         "arch_list": architectures,
         "native_sm89_compiled": REQUIRED_ARCH in architectures,
-        "ada_compatible_compiled_arch": compatible_arch,
+        "native_sm120_compiled": "sm_120" in architectures,
+        "accepted_compiled_arch": compatible_arch,
+        "ada_compatible_compiled_arch": compatible_arch if hardware_profile == "ada" else None,
         "arange_square_sum": squared_sum,
         "synchronized": True,
     }
@@ -71,6 +81,7 @@ def collect_cuda_evidence(torch: Any) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--hardware-profile", choices=sorted(HARDWARE_PROFILES), default="ada")
     args = parser.parse_args()
     output_dir = args.output_dir.expanduser().resolve()
     try:
@@ -87,12 +98,13 @@ def main() -> int:
         "command": [str(Path(sys.executable).resolve()), *sys.argv],
         "passed": False,
         "physics_backend_selected": False,
+        "hardware_profile": args.hardware_profile,
     }
     exit_code = 0
     try:
         import torch
 
-        summary["cuda"] = collect_cuda_evidence(torch)
+        summary["cuda"] = collect_cuda_evidence(torch, hardware_profile=args.hardware_profile)
     except BaseException as error:
         exit_code = 1
         summary["error"] = f"{type(error).__name__}: {error}"
