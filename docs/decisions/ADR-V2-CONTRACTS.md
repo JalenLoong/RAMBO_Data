@@ -1,9 +1,12 @@
 ---
 id: ADR-V2-CONTRACTS
 type: decision
-status: accepted
+status: superseded_in_part
 source_map: []
 ---
+
+> Dataset storage and raw/canonical cadence are superseded by [V2-DATA-CONTRACT](ADR-V2-DATA-CONTRACT.md). The native action/history/force and pure runtime decisions remain applicable.
+
 # Canonical v2 and confirmed native-command history
 
 Accepted in the user's stage-3 implementation request. Preserve 12.5 FPS dual RGB, 50 Hz native9,

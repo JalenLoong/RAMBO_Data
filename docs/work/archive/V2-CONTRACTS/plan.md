@@ -4,6 +4,9 @@ type: exec-plan
 status: completed
 source_map: []
 ---
+
+> Historical V2-CONTRACTS acceptance: PNG storage and direct12.5Hz acquisition. These data clauses are superseded by V2-DATA-CONTRACT; the recorded test results do not establish new LeRobot/50Hz compatibility.
+
 # Stage 3: canonical data and synchronous runtime contracts
 
 User-approved scope: version 2.0.0 schemas/profiles, independent validators,

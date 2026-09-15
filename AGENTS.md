@@ -12,3 +12,5 @@ Use workspace.env for paths and workspace.lock.yaml for installed environments. 
 Use Work IDs, ChangeSpec/ExecPlan and evidence; report passed/failed/not_run accurately. Run project boundary checks and affected tests before handoff.
 
 Stage 3 (V2-CONTRACTS) is authorized: versioned contracts, independent installed validators, CPU command/protocol logic and conformance tests. Keep real simulator/server integration and collection/training not_run. See docs/current/contracts-v2.md. No automatic commit/push.
+
+Current dataset authority: docs/current/contracts-v2.md -> V2-DATA-CONTRACT. Raw/canonical policy video target50Hz, model RGB12.5Hz, observer25Hz monitor-only. New data tooling uses LeRobot v2.1-style MP4/Parquet plus terminal snapshots. Old PNG2.0.0 data rules are historical. This task authorizes only schema/minimum CPU adapters/tests/docs, not recorder, real sensor/runtime wiring, collection or training. Preserve the current runtime protocol and stage-2 model code.

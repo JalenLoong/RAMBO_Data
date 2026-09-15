@@ -1,0 +1,321 @@
+{
+  "action": {
+    "dtype": "float32",
+    "shape": [
+      9
+    ],
+    "names": [
+      "base_vx",
+      "base_vy",
+      "base_yaw_rate",
+      "fl_ee_x",
+      "fl_ee_y",
+      "fl_ee_z",
+      "fl_force_x",
+      "fl_force_y",
+      "fl_force_z"
+    ]
+  },
+  "action.requested": {
+    "dtype": "float32",
+    "shape": [
+      9
+    ],
+    "names": [
+      "base_vx",
+      "base_vy",
+      "base_yaw_rate",
+      "fl_ee_x",
+      "fl_ee_y",
+      "fl_ee_z",
+      "fl_force_x",
+      "fl_force_y",
+      "fl_force_z"
+    ]
+  },
+  "simulation_time_ns": {
+    "dtype": "int64",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "physics_step": {
+    "dtype": "int64",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "execution.completed": {
+    "dtype": "bool",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "execution.force_zero_modified": {
+    "dtype": "bool",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "observation.state.base.position": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "observation.state.base.orientation": {
+    "dtype": "float32",
+    "shape": [
+      4
+    ],
+    "names": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "frame": "world xyzw"
+  },
+  "observation.state.base.linear_velocity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "observation.state.base.angular_velocity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "observation.state.projected_gravity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "body"
+  },
+  "observation.state.joint_position": {
+    "dtype": "float32",
+    "shape": [
+      12
+    ],
+    "names": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "frame": "RAMBO logical joint order"
+  },
+  "observation.state.joint_velocity": {
+    "dtype": "float32",
+    "shape": [
+      12
+    ],
+    "names": [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11"
+    ],
+    "frame": "RAMBO logical joint order"
+  },
+  "observation.state.fl_ee_position": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "projected_com"
+  },
+  "observation.state.fl_ee_velocity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "projected_com derivative"
+  },
+  "observation.state.fl_contact_force": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world net normal"
+  },
+  "task.object.position": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "task.object.orientation": {
+    "dtype": "float32",
+    "shape": [
+      4
+    ],
+    "names": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ],
+    "frame": "world xyzw"
+  },
+  "task.object.linear_velocity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "task.object.angular_velocity": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "task.goal.position": {
+    "dtype": "float32",
+    "shape": [
+      3
+    ],
+    "names": [
+      "0",
+      "1",
+      "2"
+    ],
+    "frame": "world"
+  },
+  "task.progress": {
+    "dtype": "float32",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ],
+    "frame": "task config"
+  },
+  "observation.state.foot_contact": {
+    "dtype": "bool",
+    "shape": [
+      4
+    ],
+    "names": [
+      "0",
+      "1",
+      "2",
+      "3"
+    ]
+  },
+  "task.success": {
+    "dtype": "bool",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "task.contact.fl_object": {
+    "dtype": "bool",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  },
+  "task.contact.body_object": {
+    "dtype": "bool",
+    "shape": [
+      1
+    ],
+    "names": [
+      "0"
+    ]
+  }
+}

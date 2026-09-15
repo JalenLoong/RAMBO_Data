@@ -32,12 +32,12 @@ The quadruped checkpoint has 405 observations and 18 residual actions, SHA-256 `
 Native high-level commands remain 9D; the bootstrap does not alter controller physics or train a controller.
 Existing Button, Lift-basket, Pull-object and Shoot-ball tasks remain available as runtime references.
 
-### Mounted RGB reference
+### Existing 12.5Hz mounted RGB reference (not the new acquisition profile)
 
 `bash scripts/rambo/launch_lift_dual_camera.sh` launches the retained `robot-dual-v3` pair.
 Go2 ego uses the existing nominal URDF mount and explicit 120-degree diagonal-FOV approximation.
 D435i task uses the existing (0.30, 0, 0.34) m mount, downward 65 degrees and 69.4-degree horizontal FOV.
-Both streams are 1280x720 at 12.5 Hz. F6/F7 switch ego/task; F8 is an editor debug view.
+The existing runtime reference still produces both streams at1280x720/12.5Hz; it has not been upgraded to the new50Hz acquisition profile. F6/F7 switch ego/task; F8 is an editor debug view.
 This is a nominal simulator reference, not per-device calibration or production Dataset v2 acceptance.
 Use `scripts/rambo/preview_lift_cameras.py` through run60.sh for bounded RTX diagnostics; it writes evidence, not dataset episodes.
 
@@ -48,6 +48,6 @@ Full SFT belongs to the user's remote AMD server after local model debugging and
 Keep all datasets, checkpoints and run evidence in versioned workspace directories. Prior migration history remains in original Git refs and external restoration/run records.
 Native runtime tests are the acceptance target. Docker definitions are retained as unvalidated deployment references; no image build or release is claimed.
 
-## Stage 3 contract interfaces
+## Current dataset contract interface
 
-See [Canonical v2 contracts](docs/current/contracts-v2.md) for versioned schemas, pure CPU validation and synchronous protocol interfaces. Real simulator/server wiring and dataset release require later runtime evidence.
+See [LeRobot dataset interface](docs/current/contracts-v2.md): raw/canonical50Hz MP4/Parquet, model12.5Hz, monitor-only observer25Hz and separate terminal snapshots/cache. Only CPU tooling is implemented; real acquisition and production release require later evidence.

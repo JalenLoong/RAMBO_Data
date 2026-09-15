@@ -1,0 +1,7 @@
+{
+  "dataset_root": "$RAMBO_DATA_ROOT/raw/v2/example-episode",
+  "canonical_root": "$RAMBO_DATA_ROOT/canonical/lerobot_v2_1/example-release",
+  "cache_root": "$WAM_POLICY_CACHE_ROOT/example-release",
+  "ffmpeg": "$WORKSPACE_ROOT/cache/tools/bin/ffmpeg",
+  "ffprobe": "$WORKSPACE_ROOT/cache/tools/bin/ffprobe"
+}

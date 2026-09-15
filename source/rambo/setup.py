@@ -23,11 +23,12 @@ setup(
     license="BSD-3-Clause",
     python_requires=">=3.12,<3.13",
     install_requires=["numpy==2.3.1", "gymnasium==1.2.0", "qpth==0.0.18"],
-    extras_require={"contracts": ["Pillow"]},
+    extras_require={"contracts": ["Pillow"], "dataset": ["pyarrow==25.0.1", "Pillow"]},
     packages=find_packages(include=["rambo", "rambo.*"]),
     package_data={
         "rambo": [
             "contracts_v2/spec/*.json",
+            "dataset_v2/spec/*.json",
             "tasks/direct/*/agents/*.yaml",
             "assets/third_party/oasis/lift_basket/*.json",
             "assets/third_party/oasis/lift_basket/*.usd",

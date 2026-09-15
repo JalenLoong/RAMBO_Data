@@ -1,0 +1,11 @@
+{
+  "authority": "RAMBO_Data",
+  "dataset_schema_version": "wam-quadruped-v2.1.0",
+  "files": {
+    "columns.json": "290891c5e332232d15b9e1edce6ecd95d3209ff7227b643c3d2f1f6e5f24203f",
+    "profile.json": "b1eb7a40486af7869e710e62cbf0c703557e37bf79295e3d777b459bdb26de18",
+    "schemas.json": "e182952f8c35f165ee98d7c89324a94fa27a2ec4b9d845a4ba0d75c8a6135508"
+  },
+  "profile_hash": "905d76c38f7c95a8bad986b945d1535f9ef0668476cc9f825005fc8d4da4603e",
+  "columns_hash": "26f9f87ef1633f022c765e4e37e8575ec3d7775691a0d7e2fd11911ed68dd3df"
+}

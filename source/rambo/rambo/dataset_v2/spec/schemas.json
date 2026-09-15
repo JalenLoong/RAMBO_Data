@@ -1,0 +1,1212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "canonical": {
+      "type": "object",
+      "properties": {
+        "dataset_schema_version": {
+          "const": "wam-quadruped-v2.1.0"
+        },
+        "profile_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "columns_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "transform_chain_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "diagnostic_only": {
+          "type": "boolean"
+        },
+        "episodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "episode_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "episode_uid": {
+                "type": "string",
+                "minLength": 1
+              },
+              "length": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "raw_boundary_count": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "raw_episode_uid": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_manifest_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "reset_epoch": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9223372036854775807
+              },
+              "task_text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "task_config_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "controller_config_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "asset_hashes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "source_commit": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}$"
+              },
+              "checkpoint_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "camera_config_hash": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "camera_index": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              },
+              "videos": {
+                "type": "object",
+                "properties": {
+                  "observation.images.ego": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "encoding": {
+                        "type": "object",
+                        "properties": {
+                          "profile_hash": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "encoder": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "crf": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "preset": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "gop": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "keyint_min": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "scenecut": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "color_range": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "command": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "encoder_version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "profile_hash",
+                          "encoder",
+                          "crf",
+                          "preset",
+                          "gop",
+                          "keyint_min",
+                          "scenecut",
+                          "color_range",
+                          "command",
+                          "encoder_version"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "sha256",
+                      "encoding"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "observation.images.task_centric": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      },
+                      "encoding": {
+                        "type": "object",
+                        "properties": {
+                          "profile_hash": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "encoder": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "crf": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "preset": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "gop": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "keyint_min": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "scenecut": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "color_range": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "command": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "encoder_version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "profile_hash",
+                          "encoder",
+                          "crf",
+                          "preset",
+                          "gop",
+                          "keyint_min",
+                          "scenecut",
+                          "color_range",
+                          "command",
+                          "encoder_version"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "sha256",
+                      "encoding"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "observation.images.ego",
+                  "observation.images.task_centric"
+                ],
+                "additionalProperties": false
+              },
+              "terminal": {
+                "type": "object",
+                "properties": {
+                  "simulation_time_ns": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9223372036854775807
+                  },
+                  "physics_step": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9223372036854775807
+                  },
+                  "state": {
+                    "type": "object",
+                    "properties": {
+                      "observation.state.base.position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.base.orientation": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
+                      },
+                      "observation.state.base.linear_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.base.angular_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.projected_gravity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.joint_position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 12,
+                        "maxItems": 12
+                      },
+                      "observation.state.joint_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 12,
+                        "maxItems": 12
+                      },
+                      "observation.state.fl_ee_position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.fl_ee_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "observation.state.fl_contact_force": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "task.object.position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "task.object.orientation": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
+                      },
+                      "task.object.linear_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "task.object.angular_velocity": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "task.goal.position": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      "task.progress": {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 1,
+                        "maxItems": 1
+                      },
+                      "observation.state.foot_contact": {
+                        "type": "array",
+                        "items": {
+                          "type": "boolean"
+                        },
+                        "minItems": 4,
+                        "maxItems": 4
+                      },
+                      "task.success": {
+                        "type": "array",
+                        "items": {
+                          "type": "boolean"
+                        },
+                        "minItems": 1,
+                        "maxItems": 1
+                      },
+                      "task.contact.fl_object": {
+                        "type": "array",
+                        "items": {
+                          "type": "boolean"
+                        },
+                        "minItems": 1,
+                        "maxItems": 1
+                      },
+                      "task.contact.body_object": {
+                        "type": "array",
+                        "items": {
+                          "type": "boolean"
+                        },
+                        "minItems": 1,
+                        "maxItems": 1
+                      }
+                    },
+                    "required": [
+                      "observation.state.base.position",
+                      "observation.state.base.orientation",
+                      "observation.state.base.linear_velocity",
+                      "observation.state.base.angular_velocity",
+                      "observation.state.projected_gravity",
+                      "observation.state.joint_position",
+                      "observation.state.joint_velocity",
+                      "observation.state.fl_ee_position",
+                      "observation.state.fl_ee_velocity",
+                      "observation.state.fl_contact_force",
+                      "task.object.position",
+                      "task.object.orientation",
+                      "task.object.linear_velocity",
+                      "task.object.angular_velocity",
+                      "task.goal.position",
+                      "task.progress",
+                      "observation.state.foot_contact",
+                      "task.success",
+                      "task.contact.fl_object",
+                      "task.contact.body_object"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "images": {
+                    "type": "object",
+                    "properties": {
+                      "observation.images.ego": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "source_video_sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "source_frame_index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "simulation_time_ns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256",
+                          "source_video_sha256",
+                          "source_frame_index",
+                          "simulation_time_ns"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "observation.images.task_centric": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "source_video_sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          },
+                          "source_frame_index": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          },
+                          "simulation_time_ns": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9223372036854775807
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256",
+                          "source_video_sha256",
+                          "source_frame_index",
+                          "simulation_time_ns"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "observation.images.ego",
+                      "observation.images.task_centric"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "simulation_time_ns",
+                  "physics_step",
+                  "state",
+                  "images"
+                ],
+                "additionalProperties": false
+              },
+              "status": {
+                "enum": [
+                  "success",
+                  "failure",
+                  "aborted",
+                  "invalid"
+                ]
+              }
+            },
+            "required": [
+              "episode_index",
+              "episode_uid",
+              "length",
+              "raw_boundary_count",
+              "raw_episode_uid",
+              "raw_manifest_sha256",
+              "reset_epoch",
+              "task_text",
+              "task_config_hash",
+              "controller_config_hash",
+              "asset_hashes",
+              "source_commit",
+              "checkpoint_sha256",
+              "camera_config_hash",
+              "camera_index",
+              "videos",
+              "terminal",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "dataset_schema_version",
+        "profile_hash",
+        "columns_hash",
+        "transform_chain_hash",
+        "diagnostic_only",
+        "episodes",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "dataset_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "canonical_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cache_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ffmpeg": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ffprobe": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "dataset_root",
+        "canonical_root",
+        "cache_root",
+        "ffmpeg",
+        "ffprobe"
+      ],
+      "additionalProperties": false
+    },
+    "raw": {
+      "type": "object",
+      "properties": {
+        "dataset_schema_version": {
+          "const": "wam-quadruped-v2.1.0"
+        },
+        "profile_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "diagnostic_only": {
+          "type": "boolean"
+        },
+        "episode_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "n_actions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "n_boundaries": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "streams": {
+          "type": "object",
+          "properties": {
+            "policy": {
+              "type": "string",
+              "minLength": 1
+            },
+            "controller": {
+              "type": "string",
+              "minLength": 1
+            },
+            "physics": {
+              "type": "string",
+              "minLength": 1
+            },
+            "contact_sensor": {
+              "type": "string",
+              "minLength": 1
+            },
+            "camera_index": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "policy",
+            "controller",
+            "physics",
+            "contact_sensor",
+            "camera_index"
+          ],
+          "additionalProperties": false
+        },
+        "videos": {
+          "type": "object",
+          "properties": {
+            "observation.images.ego": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "encoding": {
+                  "type": "object",
+                  "properties": {
+                    "profile_hash": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "encoder": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "crf": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "preset": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gop": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "keyint_min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "scenecut": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "color_range": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "encoder_version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "profile_hash",
+                    "encoder",
+                    "crf",
+                    "preset",
+                    "gop",
+                    "keyint_min",
+                    "scenecut",
+                    "color_range",
+                    "command",
+                    "encoder_version"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "encoding"
+              ],
+              "additionalProperties": false
+            },
+            "observation.images.task_centric": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "encoding": {
+                  "type": "object",
+                  "properties": {
+                    "profile_hash": {
+                      "type": "string",
+                      "pattern": "^[0-9a-f]{64}$"
+                    },
+                    "encoder": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "crf": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "preset": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "gop": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "keyint_min": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "scenecut": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9223372036854775807
+                    },
+                    "color_range": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "encoder_version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "profile_hash",
+                    "encoder",
+                    "crf",
+                    "preset",
+                    "gop",
+                    "keyint_min",
+                    "scenecut",
+                    "color_range",
+                    "command",
+                    "encoder_version"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "path",
+                "sha256",
+                "encoding"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "observation.images.ego",
+            "observation.images.task_centric"
+          ],
+          "additionalProperties": false
+        },
+        "observer": {
+          "type": "object",
+          "properties": {
+            "present": {
+              "type": "boolean"
+            },
+            "source_key": {
+              "type": "string",
+              "minLength": 1
+            },
+            "canonical_key": {
+              "const": "monitor.images.observer"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1
+            },
+            "crf": {
+              "enum": [
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            "sha256": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "present",
+            "source_key",
+            "canonical_key",
+            "reason",
+            "path",
+            "crf",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        "terminal": {
+          "type": "object",
+          "properties": {
+            "simulation_time_ns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "state": {
+              "type": "object",
+              "properties": {
+                "observation.state.base.position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.base.orientation": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "observation.state.base.linear_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.base.angular_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.projected_gravity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.joint_position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 12,
+                  "maxItems": 12
+                },
+                "observation.state.joint_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 12,
+                  "maxItems": 12
+                },
+                "observation.state.fl_ee_position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.fl_ee_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "observation.state.fl_contact_force": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "task.object.position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "task.object.orientation": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "task.object.linear_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "task.object.angular_velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "task.goal.position": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "task.progress": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 1,
+                  "maxItems": 1
+                },
+                "observation.state.foot_contact": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "task.success": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 1,
+                  "maxItems": 1
+                },
+                "task.contact.fl_object": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 1,
+                  "maxItems": 1
+                },
+                "task.contact.body_object": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  },
+                  "minItems": 1,
+                  "maxItems": 1
+                }
+              },
+              "required": [
+                "observation.state.base.position",
+                "observation.state.base.orientation",
+                "observation.state.base.linear_velocity",
+                "observation.state.base.angular_velocity",
+                "observation.state.projected_gravity",
+                "observation.state.joint_position",
+                "observation.state.joint_velocity",
+                "observation.state.fl_ee_position",
+                "observation.state.fl_ee_velocity",
+                "observation.state.fl_contact_force",
+                "task.object.position",
+                "task.object.orientation",
+                "task.object.linear_velocity",
+                "task.object.angular_velocity",
+                "task.goal.position",
+                "task.progress",
+                "observation.state.foot_contact",
+                "task.success",
+                "task.contact.fl_object",
+                "task.contact.body_object"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "simulation_time_ns",
+            "state"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "stream_sha256": {
+          "type": "object",
+          "properties": {
+            "policy": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "controller": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "physics": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "contact_sensor": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "camera_index": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "policy",
+            "controller",
+            "physics",
+            "contact_sensor",
+            "camera_index"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "dataset_schema_version",
+        "profile_hash",
+        "diagnostic_only",
+        "episode_uid",
+        "n_actions",
+        "n_boundaries",
+        "reset_epoch",
+        "streams",
+        "videos",
+        "observer",
+        "terminal",
+        "extensions",
+        "stream_sha256"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
