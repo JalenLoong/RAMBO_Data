@@ -29,7 +29,6 @@ from typing import Any
 
 TASKS = {
     "quadruped": ("Isaac-RAMBO-Quadruped-Go2-v0", 405),
-    "biped": ("Isaac-RAMBO-Biped-Go2-v0", 435),
     "button": ("Isaac-RAMBO-Quadruped-Button-Go2-v0", 405),
 }
 M6_ZERO_ACTION_STEPS = (100, 1000)

@@ -12,7 +12,7 @@ GO2_ACTUATOR_DELAY_STEPS = 10
 def make_go2_delayed_dc_motor_cfgs() -> dict[str, DelayedDCMotorCfg]:
     """Return fresh calibrated Go2 motor configurations.
 
-    Both the quadruped and biped policies use the same Go2 hardware contract.
+    The quadruped policies use the same Go2 hardware contract.
     Keeping this factory centralized prevents a seemingly harmless task-local
     edit from changing torque-speed saturation or delay behavior for only one
     checkpoint.

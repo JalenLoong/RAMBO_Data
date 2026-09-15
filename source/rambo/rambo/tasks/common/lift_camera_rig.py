@@ -3,26 +3,24 @@
 from __future__ import annotations
 
 import math
-import copy
 
 import numpy as np
 
 SETUP_ID = "robot-dual-v3"
-SETUP_IDS = ("robot-dual-v1", "robot-dual-v2", SETUP_ID)
+SETUP_IDS = (SETUP_ID,)
 BASE_PATH = "/World/envs/env_0/Robot/base"
 RIG_PATH = BASE_PATH + "/task_camera_rig"
-CAMERAS_V1 = {
+CAMERAS = {
     "ego": {"path": BASE_PATH + "/front_camera", "position": (0.30, 0.0, 0.08),
             "rotation_xyzw": (0.0, 0.0, 0.0, 1.0), "focal_length_mm": 18.0},
     "task": {"path": RIG_PATH + "/task_camera", "position": (0.30, 0.0, 0.34),
              "rotation_xyzw": (0.0, math.sin(math.radians(32.5)), 0.0, math.cos(math.radians(32.5))),
              "focal_length_mm": 9.0},
 }
-CAMERAS_V2 = copy.deepcopy(CAMERAS_V1)
 APERTURE_MM = 20.955
 EGO_DIAGONAL_FOV_DEG = 120.0  # Brochure does not identify the axis: explicit assumption.
 EGO_FOCAL_MM = math.hypot(APERTURE_MM, APERTURE_MM * 720 / 1280) / (2 * math.tan(math.radians(60)))
-CAMERAS_V2["ego"].update({
+CAMERAS["ego"].update({
     "position": (0.32715, -0.00003, 0.04297), "focal_length_mm": EGO_FOCAL_MM,
     "width": 1280, "height": 720, "horizontal_aperture_mm": APERTURE_MM,
     "vertical_aperture_mm": APERTURE_MM * 720 / 1280,
@@ -32,7 +30,6 @@ CAMERAS_V2["ego"].update({
     "mount_source": "https://github.com/unitreerobotics/unitree_ros/blob/master/robots/go2_description/urdf/go2_description.urdf",
     "fov_source": "https://static.generation-robots.com/media/brochure-unitree-go2-en.pdf",
 })
-CAMERAS = copy.deepcopy(CAMERAS_V2)
 D435I_RGB_FOCAL_LENGTH_MM = 1.88
 D435I_RGB_HORIZONTAL_FOV_DEG = 69.4
 D435I_RGB_VERTICAL_FOV_PUBLISHED_DEG = 42.5
@@ -62,8 +59,6 @@ CAMERAS["task"].update({
 def cameras_for_setup(setup_id):
     try:
         return {
-            "robot-dual-v1": CAMERAS_V1,
-            "robot-dual-v2": CAMERAS_V2,
             "robot-dual-v3": CAMERAS,
         }[setup_id]
     except KeyError as error:
@@ -107,7 +102,7 @@ def validate_renderer_transform(root_xyzw, view, view_matrix):
 
 
 def configure(env_cfg, setup_id=SETUP_ID):
-    """Configure two real sensors without changing legacy task defaults."""
+    """Configure two real sensors using the retained hardware-targeted pair."""
     from .camera import make_front_rgb_camera_cfg
 
     if env_cfg.task_kind != "lift_basket":

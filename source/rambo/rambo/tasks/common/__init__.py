@@ -1,4 +1,4 @@
-"""Components shared by RAMBO's quadruped and biped tasks."""
+"""Components shared by RAMBO's quadruped tasks."""
 
 from .camera import create_front_rgb_camera, make_front_rgb_camera_cfg
 from .contact_generator import ContactGenerator

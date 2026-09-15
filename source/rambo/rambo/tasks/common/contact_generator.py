@@ -1,4 +1,4 @@
-"""Contact schedule generator shared by RAMBO quadruped and biped tasks."""
+"""Contact schedule generator shared by RAMBO quadruped tasks."""
 
 from __future__ import annotations
 

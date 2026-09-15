@@ -194,7 +194,6 @@ def _validation_only_overrides(env_cfg: Any) -> dict[str, Any]:
     return {
         "scope": "validation-only copied environment configuration; production registry is unchanged",
         "episode_length_s": float(getattr(env_cfg, "episode_length_s")),
-        "contact_phase_offset_s": float(getattr(env_cfg, "contact_phase_offset_s", 0.0)),
         "contact_schedule_duration_s": _contact_schedule_durations(env_cfg),
     }
 
@@ -212,7 +211,6 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser = argparse.ArgumentParser(description="Validate a RAMBO CRL2 policy checkpoint.")
     parser.add_argument("--task", choices=(
         "Isaac-RAMBO-Quadruped-Go2-v0",
-        "Isaac-RAMBO-Biped-Go2-v0",
     ), required=True, help="Registered RAMBO Gym task.")
     parser.add_argument("--checkpoint", type=Path, required=True, help="Trusted local model_*.pt path.")
     parser.add_argument("--seed", type=int, default=42, help="Fixed validation seed.")
@@ -227,12 +225,6 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
         type=Path,
         required=True,
         help="New empty directory for summary.json and RGB artifacts.",
-    )
-    parser.add_argument(
-        "--contact-phase-offset-s",
-        type=float,
-        default=None,
-        help="Diagnostic biped gait-phase override; default uses the task's 19.6 s acceptance phase.",
     )
     parser.add_argument(
         "--third-person-diagnostic",
@@ -644,7 +636,6 @@ def main() -> int:
             env_cfg,
             duration_s=31.0,
             enable_rgb_camera=True,
-            contact_phase_offset_s=args_cli.contact_phase_offset_s,
         )
         validation_config_after = _validation_only_overrides(env_cfg)
         summary["validation_only_overrides"] = {
@@ -652,10 +643,6 @@ def main() -> int:
             "episode_length_s": {
                 "before": validation_config_before["episode_length_s"],
                 "after": validation_config_after["episode_length_s"],
-            },
-            "contact_phase_offset_s": {
-                "before": validation_config_before["contact_phase_offset_s"],
-                "after": validation_config_after["contact_phase_offset_s"],
             },
             "contact_schedule_duration_s": {
                 "before": validation_config_before["contact_schedule_duration_s"],
@@ -666,7 +653,6 @@ def main() -> int:
             "episode_length_s": float(env_cfg.episode_length_s),
             "randomize_initial_state": bool(getattr(env_cfg, "randomize_initial_state", False)),
             "randomize_episode_progress": bool(getattr(env_cfg, "randomize_episode_progress", False)),
-            "contact_phase_offset_s": float(getattr(env_cfg, "contact_phase_offset_s", 0.0)),
             "observation_noise": bool(getattr(env_cfg, "obs_noise", False)),
         }
 

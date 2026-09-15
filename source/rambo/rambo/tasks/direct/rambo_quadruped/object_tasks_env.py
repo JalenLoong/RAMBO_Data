@@ -41,8 +41,8 @@ class ObjectTaskQPEnvCfg(ButtonQPEnvCfg):
 @configclass
 class LiftBasketQPEnvCfg(ObjectTaskQPEnvCfg):
     task_kind = "lift_basket"
-    # Opt-in UI/preview layout; legacy collection keeps its original cameras.
-    lift_camera_setup = "legacy"
+    # Configured by the dual-camera launcher; basic task physics remains sensor-optional.
+    lift_camera_setup = None
     # The source USD rigid-body origin is on the physical bottom surface.
     primary_position = (0.75, 0.15, 0.02)
     basket_clearance_m = 0.06
@@ -155,7 +155,7 @@ class ObjectTaskQPEnv(QPEnv):
             self._spawn_shoot_task()
         else:  # pragma: no cover - configuration error
             raise ValueError(f"unsupported task kind: {kind}")
-        if getattr(self.cfg, "lift_camera_setup", "legacy") in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+        if getattr(self.cfg, "lift_camera_setup", None) in ("robot-dual-v3",):
             from rambo.tasks.common.lift_camera_rig import spawn
             spawn(self)
 

@@ -22,7 +22,6 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
     parser = argparse.ArgumentParser(description="Replay a verified RAMBO CRL2 checkpoint.")
     parser.add_argument("--task", choices=(
         "Isaac-RAMBO-Quadruped-Go2-v0",
-        "Isaac-RAMBO-Biped-Go2-v0",
     ), required=True, help="Registered RAMBO Gym task.")
     parser.add_argument("--checkpoint", type=Path, required=True, help="Trusted local model_*.pt path.")
     parser.add_argument("--seed", type=int, default=42, help="Policy/environment seed.")
@@ -42,12 +41,6 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
         "--enable-rgb-camera",
         action="store_true",
         help="Enable the RAMBO front RGB camera and Isaac Sim camera rendering.",
-    )
-    parser.add_argument(
-        "--contact-phase-offset-s",
-        type=float,
-        default=None,
-        help="Diagnostic biped gait-phase override for --deterministic replay.",
     )
     parser.add_argument(
         "--disable-fabric",
@@ -165,7 +158,6 @@ def main() -> int:
                 env_cfg,
                 duration_s=duration_s,
                 enable_rgb_camera=args_cli.enable_rgb_camera,
-                contact_phase_offset_s=args_cli.contact_phase_offset_s,
             )
 
         agent_cfg = runtime["load_cfg_from_registry"](args_cli.task, "crl2_cfg_entry_point")

@@ -182,6 +182,24 @@ def test_lift_teleop_relaxes_only_limb_contact_and_keeps_gui_alive_on_reset() ->
     assert "Safety termination auto-reset; GUI remains active" in source
 
 
+def test_lift_defaults_to_hardware_pair_and_button_rejects_task_camera() -> None:
+    teleop = _load_teleop_module()
+
+    class Parser:
+        def error(self, message: str) -> None:
+            raise ValueError(message)
+
+    args = SimpleNamespace(task=teleop.LIFT_BASKET_TASK_ID, view=teleop.VIEW_THIRD_PERSON,
+                           rambo_visualizer=["none"], camera_setup=None, enable_cameras=False)
+    teleop._validate_view_args(Parser(), args)
+    teleop._configure_ego_view_launcher(args)
+    assert args.camera_setup == "robot-dual-v3"
+    assert args.enable_cameras is True
+    args.task = teleop.TASK_ID
+    with pytest.raises(ValueError, match="requires the Lift-basket task"):
+        teleop._validate_view_args(Parser(), args)
+
+
 def test_ego_view_requires_kit_and_enables_only_the_existing_front_camera() -> None:
     teleop = _load_teleop_module()
 
@@ -231,7 +249,7 @@ def test_ego_view_requires_kit_and_enables_only_the_existing_front_camera() -> N
     teleop._configure_environment(
         cfg,
         SimpleNamespace(
-            task=teleop.LIFT_BASKET_TASK_ID,
+            task=teleop.TASK_ID,
             seed=42,
             episode_length_s=600.0,
             view=teleop.VIEW_EGO,
@@ -239,8 +257,8 @@ def test_ego_view_requires_kit_and_enables_only_the_existing_front_camera() -> N
     )
 
     assert cfg.enable_rgb_camera is True
-    assert cfg.front_camera.offset.rot == teleop.LIFT_BASKET_EGO_OFFSET_ROT_XYZW
-    assert cfg.front_camera.spawn.focal_length == teleop.LIFT_BASKET_EGO_FOCAL_LENGTH_MM
+    assert cfg.front_camera.offset.rot == (0.0, 0.0, 0.0, 1.0)
+    assert cfg.front_camera.spawn.focal_length == 18.0
     source = (
         Path(__file__).resolve().parents[2] / "scripts/rambo/teleop_loco_manip.py"
     ).read_text(encoding="utf-8")

@@ -13,14 +13,6 @@ import warp as wp
 # 375 RGB frames, rather than relying on a floating-point sensor clock.
 FRONT_RGB_UPDATE_PERIOD_S = 0.08
 
-# The Go2 base is rotated -90 degrees around Y in the biped task.  These
-# parent-frame offsets keep the physical camera at (+0.30, 0, +0.08) in the
-# initial world frame and pointing along world +X, clear of the chassis.
-UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS = (0.08, 0.0, -0.30)
-# Isaac Lab 3 camera offsets use simulator-facing XYZW quaternions.  This is
-# the former WXYZ rotation ``(sqrt(0.5), 0, sqrt(0.5), 0)`` written as XYZW.
-UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT = (0.0, math.sqrt(0.5), 0.0, math.sqrt(0.5))
-
 
 @wp.kernel
 def _advance_camera_ticks_kernel(
@@ -257,9 +249,7 @@ def make_front_rgb_camera_cfg(
     """Create RAMBO's shared base-mounted front RGB camera configuration.
 
     Both offsets remain relative to the base prim. ``offset_rot`` uses Isaac
-    Lab's ``world`` camera convention. The biped task pitches the Go2 base by
-    90 degrees to stand it upright, so it supplies transformed local position
-    and rotation offsets to keep the physical camera in front of the chassis.
+    Lab's ``world`` camera convention (+X forward, +Y left, +Z up).
     """
 
     try:

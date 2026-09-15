@@ -1,0 +1,14 @@
+# Create an immutable copy only for an actual run attempt.
+attempt_id: ATTEMPT-<WORK-ID>-<number>
+work_id: <WORK-ID>
+status: planned
+git_commit: <commit>
+config: <repo-relative-config-path>
+data:
+  uri: <immutable-uri>
+  sha256: <hash>
+checkpoint:
+  uri: <immutable-uri-or-null>
+  sha256: <hash-or-null>
+environment: <image-or-lockfile-reference>
+not_run: []

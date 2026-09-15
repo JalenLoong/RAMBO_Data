@@ -88,7 +88,7 @@ def test_m6_zero_action_contract_rejects_nonquadruped_or_unapproved_length() -> 
     module._validate_m6_zero_action_request("quadruped", 100)
     module._validate_m6_zero_action_request("quadruped", 1000)
     with pytest.raises(module.TaskSmokeError, match="only permits --task quadruped"):
-        module._validate_m6_zero_action_request("biped", 100)
+        module._validate_m6_zero_action_request("unsupported", 100)
     with pytest.raises(module.TaskSmokeError, match="one of 100, 1000"):
         module._validate_m6_zero_action_request("quadruped", 10)
 

@@ -14,7 +14,7 @@ from rambo.validation.checkpoints import contract_for_task  # noqa: E402
 
 
 def test_registry_helper_resolves_rambo_yaml_for_each_task_without_isaaclab_tasks() -> None:
-    """Both modes and the quadruped loco-manip task use RAMBO-owned entry points."""
+    """The quadruped locomotion and loco-manip tasks use RAMBO-owned entry points."""
 
     import rambo.tasks  # noqa: F401 - registration is the behavior under test.
 
@@ -25,7 +25,6 @@ def test_registry_helper_resolves_rambo_yaml_for_each_task_without_isaaclab_task
             405,
             18,
         ),
-        "Isaac-RAMBO-Biped-Go2-v0": ("rambo_biped.qp_env:QPEnv", 435, 18),
     }
     for task, (entry_point, observation_dim, action_dim) in expected.items():
         spec = gym.spec(task)
@@ -75,7 +74,6 @@ def test_runtime_scripts_and_tasks_do_not_depend_on_vendored_isaaclab_tasks() ->
         assert "isaaclab_tasks" not in (repository_root / relative_path).read_text(encoding="utf-8")
     for relative_path in (
         "source/rambo/rambo/tasks/direct/rambo_quadruped/qp_env.py",
-        "source/rambo/rambo/tasks/direct/rambo_biped/qp_env.py",
     ):
         contents = (repository_root / relative_path).read_text(encoding="utf-8")
         assert "from isaaclab_assets.robots.unitree import UNITREE_GO2_CFG" in contents

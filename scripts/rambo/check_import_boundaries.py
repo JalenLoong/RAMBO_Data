@@ -9,12 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "source" / "rambo" / "rambo"
-FORBIDDEN = {"wam_data", "wam_policy", "wam_rambo", "wam_contracts", "wan_va"}
+FORBIDDEN = {"wam_data", "wam_policy", "wam_rambo", "wam_contracts", "wan_va", "diffusers", "transformers"}
 
 
 def main() -> int:
     failures: list[str] = []
-    for path in SOURCE.rglob("*.py"):
+    for path in list(SOURCE.rglob("*.py")) + list((ROOT / "scripts" / "rambo").rglob("*.py")):
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         roots: set[str] = set()
         for node in ast.walk(tree):

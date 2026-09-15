@@ -19,16 +19,6 @@
       "iteration": 2000,
       "observation_dimension": 405,
       "action_dimension": 18
-    },
-    {
-      "task": "Isaac-RAMBO-Biped-Go2-v0",
-      "path": "/workspace/checkpoints/rambo/go2/biped/model_4000.pt",
-      "sha256": "c16e64bf1ca2dc16878c386b742cd303e65040f52e8744cd0c96c540c595b2a6",
-      "size_bytes": 9355829,
-      "iteration": 4000,
-      "observation_dimension": 435,
-      "action_dimension": 18,
-      "validation_gait_phase_offset_s": 19.6
     }
   ],
   "container_policy": "Checkpoints are external read-only runtime mounts and are never copied into a Docker image."

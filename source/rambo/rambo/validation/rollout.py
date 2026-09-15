@@ -220,7 +220,6 @@ def configure_validation_cfg(
     *,
     duration_s: float = 31.0,
     enable_rgb_camera: bool = True,
-    contact_phase_offset_s: float | None = None,
 ) -> Any:
     """Apply the deterministic 30-second acceptance-test configuration.
 
@@ -228,28 +227,12 @@ def configure_validation_cfg(
     one-second margin before timeout while the validator executes exactly 3000
     policy steps.  The contact sequence is copied before extending its final
     segment so registry-owned class configuration is never mutated in place.
-    Biped may select an explicit fixed contact phase without advancing its
-    episode clock; that offset is also included in the required sequence span.
     """
 
     if duration_s <= 0.0:
         raise ValueError("duration_s must be positive")
 
     env_cfg.episode_length_s = float(duration_s)
-    configured_phase_offset_s = getattr(env_cfg, "validation_contact_phase_offset_s", None)
-    if contact_phase_offset_s is None:
-        contact_phase_offset_s = configured_phase_offset_s
-    if contact_phase_offset_s is not None:
-        contact_phase_offset_s = float(contact_phase_offset_s)
-        if not math.isfinite(contact_phase_offset_s) or contact_phase_offset_s < 0.0:
-            raise ValueError("contact_phase_offset_s must be a finite non-negative duration")
-        if not hasattr(env_cfg, "contact_phase_offset_s"):
-            raise RolloutValidationError(
-                "This task does not support a deterministic contact phase offset"
-            )
-        env_cfg.contact_phase_offset_s = contact_phase_offset_s
-    else:
-        contact_phase_offset_s = 0.0
     # Startup and interval EventCfg terms are domain randomization as well.
     # Removing them is necessary because their state is sampled before the
     # first policy action, independently of the per-reset switches below.
@@ -278,7 +261,7 @@ def configure_validation_cfg(
         # RAMBO's camera has an integer physics-tick cadence and the recorder
         # reads it on each policy step.  Preserve Isaac Lab's lazy sensor
         # update semantics: forcing an RTX render every 2 ms is unnecessary
-        # for a 12.5 Hz camera and can perturb a marginally stable biped
+        # for a 12.5 Hz camera and can perturb the
         # rollout through the renderer/PhysX scheduling path.
         scene_cfg = getattr(env_cfg, "scene", None)
         if scene_cfg is not None and hasattr(scene_cfg, "lazy_sensor_update"):
@@ -313,7 +296,7 @@ def configure_validation_cfg(
         if any(not isinstance(segment, list) or len(segment) < 2 for segment in sequence):
             raise RolloutValidationError(f"contact sequence for {foot_name!r} has an invalid segment")
         total_duration = sum(float(segment[1]) for segment in sequence)
-        required_duration_s = duration_s + contact_phase_offset_s
+        required_duration_s = duration_s
         if total_duration < required_duration_s:
             sequence[-1][1] = float(sequence[-1][1]) + (required_duration_s - total_duration)
     env_cfg.contact_generator_config = copied_config

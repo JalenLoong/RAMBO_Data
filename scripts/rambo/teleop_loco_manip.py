@@ -20,14 +20,7 @@ LIFT_BASKET_TASK_ID = "Isaac-RAMBO-Quadruped-Lift-Basket-Go2-v0"
 VIEW_THIRD_PERSON = "third-person"
 VIEW_EGO = "ego"
 VIEW_TASK = "task"
-# ``make_front_rgb_camera_cfg`` expands its environment regex to this one
-# camera in the single-environment interactive teleoperation process.
 EGO_VIEW_CAMERA_PRIM_PATH = "/World/envs/env_0/Robot/base/front_camera"
-# The accepted OASIS Lift-basket collection keeps the physical base mount at
-# (0.30, 0.0, 0.08) m but looks left/down at the low basket with this rotation
-# and a 9-mm lens. The Button task retains the regular forward-facing camera.
-LIFT_BASKET_EGO_OFFSET_ROT_XYZW = (-0.0990457605, 0.2391176184, 0.3696438106, 0.8923991008)
-LIFT_BASKET_EGO_FOCAL_LENGTH_MM = 9.0
 EE_MIN = np.array([0.1934, 0.0, 0.0], dtype=np.float32)
 EE_MAX = np.array([0.50, 0.20, 0.40], dtype=np.float32)
 EE_DEFAULT = np.array([0.1934, 0.142, 0.05], dtype=np.float32)
@@ -87,7 +80,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, type]:
             "'third-person' preserves the existing world view."
         ),
     )
-    parser.add_argument("--camera-setup", choices=("legacy", "robot-dual-v1", "robot-dual-v2", "robot-dual-v3"), default="legacy",
+    parser.add_argument("--camera-setup", choices=("robot-dual-v3",), default=None,
                         help="Versioned Lift-basket forward-ego + bracket-mounted task-camera setup")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--episode-length-s", type=float, default=300.0)
@@ -172,17 +165,19 @@ def _validate_view_args(parser: argparse.ArgumentParser, args: argparse.Namespac
 
     if args.view in (VIEW_EGO, VIEW_TASK) and getattr(args, "rambo_visualizer", None) != ["kit"]:
         parser.error(f"--view {args.view} requires explicit --viz kit")
-    setup = getattr(args, "camera_setup", "legacy")
-    if setup in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3") and args.task != LIFT_BASKET_TASK_ID:
+    if getattr(args, "task", TASK_ID) == LIFT_BASKET_TASK_ID and getattr(args, "camera_setup", None) is None:
+        args.camera_setup = "robot-dual-v3"
+    setup = getattr(args, "camera_setup", None)
+    if setup in ("robot-dual-v3",) and args.task != LIFT_BASKET_TASK_ID:
         parser.error(f"--camera-setup {setup} requires the Lift-basket task")
-    if args.view == VIEW_TASK and setup not in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+    if args.view == VIEW_TASK and setup not in ("robot-dual-v3",):
         parser.error("--view task requires a robot-dual camera setup")
 
 
 def _configure_ego_view_launcher(args: argparse.Namespace) -> None:
     """Request Kit camera support before AppLauncher creates the RTX sensor."""
 
-    if args.view in (VIEW_EGO, VIEW_TASK) or getattr(args, "camera_setup", "legacy") in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+    if args.view in (VIEW_EGO, VIEW_TASK) or getattr(args, "camera_setup", None) in ("robot-dual-v3",):
         # Isaac Sim creates the renderer while constructing the environment, so
         # this must be set before ``AppLauncher`` rather than in _run().
         args.enable_cameras = True
@@ -251,20 +246,15 @@ def _configure_environment(env_cfg: Any, args: argparse.Namespace) -> None:
     env_cfg.viewer.lookat = [0.70, 0.10, 0.28]
     env_cfg.viewer.origin_type = "world"
     env_cfg.viewer.asset_name = None
-    # The viewport selects the same physical camera used by the legacy-v1
-    # recorder. Leave it disabled for the default third-person path, where it
-    # would add an unnecessary RTX render product.
+    # Button may expose a front debug camera. Lift uses the fixed mounted pair.
     if getattr(args, "view", VIEW_THIRD_PERSON) == VIEW_EGO:
         env_cfg.enable_rgb_camera = True
-        if args.task == LIFT_BASKET_TASK_ID:
-            env_cfg.front_camera.offset.rot = LIFT_BASKET_EGO_OFFSET_ROT_XYZW
-            env_cfg.front_camera.spawn.focal_length = LIFT_BASKET_EGO_FOCAL_LENGTH_MM
     if args.task == LIFT_BASKET_TASK_ID:
         # Calf/thigh contact is a useful fail-fast condition for training, but
         # it is too strict for interactive leg manipulation around the source
         # basket handle. Keep fall, orientation, and body/head safety gates.
         env_cfg.terminate_on_limb_contact = False
-    if getattr(args, "camera_setup", "legacy") in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+    if getattr(args, "camera_setup", None) in ("robot-dual-v3",):
         from rambo.tasks.common.lift_camera_rig import configure
         configure(env_cfg, args.camera_setup)
 
@@ -898,7 +888,7 @@ def _run(args: argparse.Namespace, simulation_app: Any) -> int:
             )
         )
         teleop.reset()
-        if not headless and getattr(args, "camera_setup", "legacy") in ("robot-dual-v1", "robot-dual-v2", "robot-dual-v3"):
+        if not headless and getattr(args, "camera_setup", None) in ("robot-dual-v3",):
             teleop.add_callback("F6", lambda: _select_mounted_view(VIEW_EGO))
             teleop.add_callback("F7", lambda: _select_mounted_view(VIEW_TASK))
             teleop.add_callback("F8", lambda: _select_mounted_view(VIEW_THIRD_PERSON))

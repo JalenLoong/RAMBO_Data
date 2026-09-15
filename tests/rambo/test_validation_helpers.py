@@ -24,8 +24,6 @@ from rambo.validation.rollout import (  # noqa: E402
     configure_validation_cfg,
 )
 from rambo.tasks.common.camera import (  # noqa: E402
-    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS,
-    UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT,
     advance_camera_cadence,
     camera_update_interval_steps,
     make_front_rgb_camera_cfg,
@@ -88,14 +86,6 @@ def test_front_camera_integer_cadence_is_exact_for_the_full_acceptance_rollout()
     assert due_physics_steps[-1] == 15_000
 
 
-def test_biped_camera_mount_is_transformed_with_the_upright_base() -> None:
-    """The biped mount must remain in front of, not inside, the rotated chassis."""
-
-    # The biped base is pitched -90 degrees around parent-frame Y.  Its local
-    # (0.08, 0, -0.30) mount therefore resolves to world (0.30, 0, 0.08).
-    pitch_minus_90 = np.array(((0.0, 0.0, -1.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0)))
-    np.testing.assert_allclose(pitch_minus_90 @ UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_POS, (0.30, 0.0, 0.08))
-    np.testing.assert_allclose(UPRIGHT_BIPED_FRONT_CAMERA_OFFSET_ROT, (0.0, np.sqrt(0.5), 0.0, np.sqrt(0.5)))
 
 
 def test_validation_config_removes_all_randomization_without_mutating_source_sequence() -> None:
@@ -146,23 +136,6 @@ def test_validation_config_removes_all_randomization_without_mutating_source_seq
     assert cfg.qp_torque_optimizer_config["qp_debug_vis"] is False
 
 
-def test_validation_config_supports_a_fixed_biped_phase_without_using_episode_progress() -> None:
-    source_contact_config = {"contact_sequence": {"RL": [["stance", 1.0], ["phase", 2.0]]}}
-    cfg = SimpleNamespace(
-        episode_length_s=20.0,
-        randomize_episode_progress=True,
-        contact_phase_offset_s=0.0,
-        validation_contact_phase_offset_s=2.5,
-        contact_generator_config=source_contact_config,
-    )
-
-    configure_validation_cfg(cfg, duration_s=31.0, enable_rgb_camera=False)
-
-    assert cfg.randomize_episode_progress is False
-    assert cfg.contact_phase_offset_s == 2.5
-    assert cfg.episode_length_s == 31.0
-    assert sum(segment[1] for segment in cfg.contact_generator_config["contact_sequence"]["RL"]) == 33.5
-    assert source_contact_config["contact_sequence"]["RL"][-1][1] == 2.0
 
 
 def _install_minimal_imageio(monkeypatch: pytest.MonkeyPatch) -> None:

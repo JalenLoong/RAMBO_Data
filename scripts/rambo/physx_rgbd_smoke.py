@@ -23,7 +23,6 @@ from isaaclab.app import AppLauncher
 
 TASKS = {
     "quadruped": "Isaac-RAMBO-Quadruped-Go2-v0",
-    "biped": "Isaac-RAMBO-Biped-Go2-v0",
 }
 
 
@@ -315,7 +314,7 @@ def main() -> int:
         ):
             if hasattr(env_cfg, attribute):
                 setattr(env_cfg, attribute, False)
-        # Biped's controller/QP markers subscribe to Kit post-update events
+        # Controller/QP markers subscribe to Kit post-update events
         # independently of the top-level RAMBO command visualizers.  A short
         # camera smoke must not leave those debug callbacks alive while Kit
         # tears down its USD prims; disable only the diagnostic streams, not

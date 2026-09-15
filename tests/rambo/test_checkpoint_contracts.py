@@ -25,10 +25,9 @@ _POLICY_ROOT = Path(os.environ.get("RAMBO_CHECKPOINT_ROOT", "/workspace/checkpoi
     ("task", "relative_path"),
     (
         ("Isaac-RAMBO-Quadruped-Go2-v0", Path("quadruped/model_2000.pt")),
-        ("Isaac-RAMBO-Biped-Go2-v0", Path("biped/model_4000.pt")),
     ),
 )
-def test_released_checkpoint_matches_its_dual_mode_contract(task: str, relative_path: Path) -> None:
+def test_released_checkpoint_matches_its_quadruped_contract(task: str, relative_path: Path) -> None:
     """Hash and deserialize the real policy only when the local input exists."""
 
     checkpoint_path = _POLICY_ROOT / relative_path
@@ -48,10 +47,9 @@ def test_released_checkpoint_matches_its_dual_mode_contract(task: str, relative_
     )
 
 
-def test_contracts_keep_both_modes_as_explicit_first_class_entries() -> None:
+def test_contracts_keep_all_quadruped_tasks_explicit() -> None:
     quadruped = contract_for_task("Isaac-RAMBO-Quadruped-Go2-v0")
     loco_manip = contract_for_task("Isaac-RAMBO-Quadruped-Button-Go2-v0")
-    biped = contract_for_task("Isaac-RAMBO-Biped-Go2-v0")
 
     assert set(CHECKPOINT_CONTRACTS) == {
         quadruped.task,
@@ -59,7 +57,6 @@ def test_contracts_keep_both_modes_as_explicit_first_class_entries() -> None:
         "Isaac-RAMBO-Quadruped-Lift-Basket-Go2-v0",
         "Isaac-RAMBO-Quadruped-Pull-Object-Into-Basket-Go2-v0",
         "Isaac-RAMBO-Quadruped-Shoot-Ball-Into-Goal-Go2-v0",
-        biped.task,
     }
     assert (quadruped.mode, quadruped.observation_dim, quadruped.action_dim) == ("quadruped", 405, 18)
     assert (loco_manip.mode, loco_manip.observation_dim, loco_manip.action_dim) == (
@@ -68,8 +65,6 @@ def test_contracts_keep_both_modes_as_explicit_first_class_entries() -> None:
         18,
     )
     assert loco_manip.sha256 == quadruped.sha256
-    assert (biped.mode, biped.observation_dim, biped.action_dim) == ("biped", 435, 18)
-    assert quadruped.sha256 != biped.sha256
 
 
 def test_untrusted_checkpoint_is_rejected_before_deserialization(tmp_path: Path) -> None:

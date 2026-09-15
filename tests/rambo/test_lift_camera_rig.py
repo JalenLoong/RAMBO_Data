@@ -28,28 +28,26 @@ def test_pair_config_preserves_native_ego_and_has_no_external_views(monkeypatch)
     monkeypatch.setattr(camera, "make_front_rgb_camera_cfg", lambda **kw:
                         SimpleNamespace(**kw, spawn=SimpleNamespace()))
     cfg = SimpleNamespace(task_kind="lift_basket", enable_rgb_camera=False)
-    rig.configure(cfg, "robot-dual-v1")
+    rig.configure(cfg)
     assert set(rig.CAMERAS) == {"ego", "task"}
     assert cfg.front_camera.offset_rot == (0., 0., 0., 1.)
-    assert cfg.front_camera.spawn.focal_length == 18.
-    assert cfg.task_camera.spawn.focal_length == 9.
+    assert cfg.front_camera.spawn.focal_length == rig.EGO_FOCAL_MM
+    assert cfg.task_camera.spawn.focal_length == 1.88
     assert cfg.task_camera.prim_path.startswith(rig.BASE_PATH + "/")
     with pytest.raises(ValueError, match="Lift-basket only"):
         rig.configure(SimpleNamespace(task_kind="press_button"))
 
 
-def test_v2_nominal_projection_is_explicit_and_v1_is_retained(monkeypatch):
+def test_nominal_ego_projection_is_explicit(monkeypatch):
     from rambo.tasks.common import camera
     monkeypatch.setattr(camera, "make_front_rgb_camera_cfg", lambda **kw:
                         SimpleNamespace(**kw, spawn=SimpleNamespace()))
     cfg = SimpleNamespace(task_kind="lift_basket")
-    rig.configure(cfg, "robot-dual-v2")
+    rig.configure(cfg)
     assert (cfg.front_camera.width, cfg.front_camera.height) == (1280, 720)
     assert cfg.front_camera.offset_pos == (.32715, -.00003, .04297)
     diagonal = math.hypot(cfg.front_camera.spawn.horizontal_aperture, cfg.front_camera.spawn.vertical_aperture)
     assert math.degrees(2 * math.atan(diagonal / (2 * cfg.front_camera.spawn.focal_length))) == pytest.approx(120)
-    assert rig.CAMERAS_V1["ego"]["focal_length_mm"] == 18.
-    assert rig.CAMERAS_V2["task"] == rig.CAMERAS_V1["task"]
 
 
 def test_v3_task_camera_matches_d435i_rgb_fov_and_preserves_mount(monkeypatch):
@@ -60,8 +58,8 @@ def test_v3_task_camera_matches_d435i_rgb_fov_and_preserves_mount(monkeypatch):
     rig.configure(cfg)
     task = rig.CAMERAS["task"]
     assert (cfg.task_camera.width, cfg.task_camera.height) == (1280, 720)
-    assert cfg.task_camera.offset_pos == rig.CAMERAS_V2["task"]["position"]
-    assert cfg.task_camera.offset_rot == rig.CAMERAS_V2["task"]["rotation_xyzw"]
+    assert cfg.task_camera.offset_pos == (.30, 0., .34)
+    assert cfg.task_camera.offset_rot == (0., math.sin(math.radians(32.5)), 0., math.cos(math.radians(32.5)))
     assert cfg.task_camera.spawn.focal_length == 1.88
     horizontal = math.degrees(2 * math.atan(
         cfg.task_camera.spawn.horizontal_aperture / (2 * cfg.task_camera.spawn.focal_length)))
@@ -72,4 +70,3 @@ def test_v3_task_camera_matches_d435i_rgb_fov_and_preserves_mount(monkeypatch):
     assert abs(vertical - rig.D435I_RGB_VERTICAL_FOV_PUBLISHED_DEG) < .1
     assert cfg.task_camera.width / cfg.task_camera.spawn.horizontal_aperture == pytest.approx(
         cfg.task_camera.height / cfg.task_camera.spawn.vertical_aperture)
-    assert rig.CAMERAS_V2["task"]["focal_length_mm"] == 9.

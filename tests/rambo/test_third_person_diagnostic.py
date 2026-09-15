@@ -71,7 +71,7 @@ def _provenance(*, clean: bool = True) -> dict:
         "collection_phase": "pre_app_launcher_source_then_runtime",
         "command": [
             "/workspace/envs/rambo-isaac60-py312/bin/python",
-            "/workspace/repos/rambo-sim/scripts/rambo/validate.py",
+            "/workspace/repos/RAMBO_Data/scripts/rambo/validate.py",
             "--task",
             "Isaac-RAMBO-Quadruped-Go2-v0",
             "--checkpoint",
@@ -84,13 +84,13 @@ def _provenance(*, clean: bool = True) -> dict:
             "final",
         ],
         "rambo": {
-            "module_path": "/workspace/repos/rambo-sim/source/rambo/rambo/__init__.py",
-            "git_root": "/workspace/repos/rambo-sim",
+            "module_path": "/workspace/repos/RAMBO_Data/source/rambo/rambo/__init__.py",
+            "git_root": "/workspace/repos/RAMBO_Data",
             "git_head": "a" * 40,
             "pre_run_worktree_clean": clean,
             "pre_run_status_porcelain_v1": status,
-            "runtime_module_path": "/workspace/repos/rambo-sim/source/rambo/rambo/__init__.py",
-            "runtime_git_root": "/workspace/repos/rambo-sim",
+            "runtime_module_path": "/workspace/repos/RAMBO_Data/source/rambo/rambo/__init__.py",
+            "runtime_git_root": "/workspace/repos/RAMBO_Data",
             "runtime_git_head": "a" * 40,
             "runtime_worktree_clean": clean,
             "runtime_status_porcelain_v1": status,
@@ -180,7 +180,7 @@ def test_prelaunch_collector_records_dirty_status_without_starting_kit(monkeypat
 
     def fake_git_output(_cwd: Path, *arguments: str) -> str:
         if arguments == ("rev-parse", "--show-toplevel"):
-            return "/workspace/repos/rambo-sim"
+            return "/workspace/repos/RAMBO_Data"
         if arguments == ("status", "--porcelain=v1", "--untracked-files=all"):
             return " M scripts/rambo/validate.py\n?? tests/rambo/test_third_person_diagnostic.py"
         if arguments == ("rev-parse", "HEAD"):
@@ -192,7 +192,7 @@ def test_prelaunch_collector_records_dirty_status_without_starting_kit(monkeypat
         sys,
         "argv",
         [
-            "/workspace/repos/rambo-sim/scripts/rambo/validate.py",
+            "/workspace/repos/RAMBO_Data/scripts/rambo/validate.py",
             "--steps=3000",
             "--third-person-diagnostic=final",
         ],

@@ -3,10 +3,10 @@ version = "0.1.0"
 title = "RAMBO Isaac Lab Tasks"
 author = "RAMBO Developers"
 maintainer = "RAMBO Developers"
-description = "RAMBO quadruped and biped DirectRL tasks for Isaac Lab."
-repository = "https://github.com/JalenLoong/rambo"
+description = "RAMBO quadruped DirectRL tasks for Isaac Lab."
+repository = "https://github.com/JalenLoong/RAMBO_Data"
 category = "robotics"
-keywords = ["isaaclab", "rambo", "quadruped", "biped", "robotics"]
+keywords = ["isaaclab", "rambo", "quadruped", "robotics"]
 
 [dependencies]
 "isaaclab" = {}

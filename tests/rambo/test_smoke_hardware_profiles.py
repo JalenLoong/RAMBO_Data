@@ -63,8 +63,8 @@ def test_checkpoint_entry_points_use_the_shared_physx_launcher_gate() -> None:
     assert "configure_physx" in task_smoke
 
 
-def test_rgbd_smoke_disables_nested_biped_debug_callbacks_before_kit_teardown() -> None:
-    """Camera-only runs must not retain biped marker callbacks after close."""
+def test_rgbd_smoke_disables_nested_debug_callbacks_before_kit_teardown() -> None:
+    """Camera-only runs must not retain controller marker callbacks after close."""
 
     root = Path(__file__).resolve().parents[2]
     contents = (root / "scripts" / "rambo" / "physx_rgbd_smoke.py").read_text(encoding="utf-8")
