@@ -1,0 +1,21 @@
+{
+  "authority": "RAMBO_Data",
+  "version": "2.0.0",
+  "source_baseline": "9a8989b56989c8450341b6071d33560c1f104c74",
+  "files": {
+    "action.json": "87b10128b7f53340545f8d6f35e30902fcbdcfb4d66d8148906a3a0ee91f5820",
+    "cameras.json": "91fe0485929afb0cafc48246703cdd0bc0a3d94f70006171e6d0f56e21ac41cc",
+    "d435i_rgb_task.json": "8438c8237eeb5d7ac4449a61ad27e5ef27d7fcc83dcc8f5c5b52f893c0616d6d",
+    "go2_ego.json": "fd164f6b780a9079b6f13e10b0b31515c86035b6d2b735644a383c63804b502c",
+    "schemas.json": "3aa7718a2e694b35451797838f787e9406f36de7b58e74a219c68c17e56c054c",
+    "telemetry.json": "270f09bba3fe4a78eb26275374976a705b2080e2718a4ffb3f83a1530b1fb539",
+    "timing.json": "2418e380d3f185e597fde9dfb135dce429860d3f373de4578a36885a75467a7d",
+    "golden_timeline.json": "e5fd8d3fcb312415713e7043128af3b34ddc29a87a3838ab1fab360ec9ad6ec8"
+  },
+  "profile_hashes": {
+    "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+    "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+    "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+    "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "rambo-native9-v2",
+  "version": "2.0.0",
+  "names": [
+    "base_vx",
+    "base_vy",
+    "base_yaw_rate",
+    "fl_ee_x",
+    "fl_ee_y",
+    "fl_ee_z",
+    "fl_ee_fx",
+    "fl_ee_fy",
+    "fl_ee_fz"
+  ],
+  "units": [
+    "m/s",
+    "m/s",
+    "rad/s",
+    "m",
+    "m",
+    "m",
+    "N",
+    "N",
+    "N"
+  ],
+  "frames": [
+    "projected_com_controller",
+    "projected_com_controller",
+    "projected_com_controller",
+    "projected_com",
+    "projected_com",
+    "projected_com",
+    "projected_com",
+    "projected_com",
+    "projected_com"
+  ],
+  "position_reference": "RAMBO analytical FL endpoint; absolute target, not delta",
+  "origin": "base world x/y projected onto world z=0; com_offset=(0,0,0), not measured whole-body CoM",
+  "rotation": "R_body_from_projected=rp_rotation_from_gravity_b(g_body); inverse is its transpose",
+  "axes": "gravity-level controller axes; +x forward/+y left at level pose, +z up; retain matrix definition under roll/pitch",
+  "force_sign": "desired robot-on-environment force; QP reaction and external injection use its negative",
+  "force_policy": "preserve requested; transformed/filtered/executed force exactly zero",
+  "filter": "identity",
+  "history": "completed high-level hold intervals; not measured EEF trajectory",
+  "consumption": "base/force read pre-step; FL IK updated post-step; residual runner consumes previous returned observation; record command IDs rather than retime labels",
+  "execution_dtype": "float32; requested JSON numbers preserved; transformed records dtype conversion before zero force"
+}

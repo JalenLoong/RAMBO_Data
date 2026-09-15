@@ -1,0 +1,211 @@
+{
+  "id": "rambo-telemetry-v2",
+  "version": "2.0.0",
+  "quaternion_order": "xyzw",
+  "joint_names": [
+    "FL_hip_joint",
+    "FR_hip_joint",
+    "RL_hip_joint",
+    "RR_hip_joint",
+    "FL_thigh_joint",
+    "FR_thigh_joint",
+    "RL_thigh_joint",
+    "RR_thigh_joint",
+    "FL_calf_joint",
+    "FR_calf_joint",
+    "RL_calf_joint",
+    "RR_calf_joint"
+  ],
+  "foot_names": [
+    "FL_foot",
+    "FR_foot",
+    "RL_foot",
+    "RR_foot"
+  ],
+  "sample_convention": "post-control state; contact has independent source ticks; no history peak masquerading as instantaneous force",
+  "groups": {
+    "robot": {
+      "base_pose": {
+        "shape": [
+          7
+        ],
+        "unit": "m,unit quaternion",
+        "frame": "world",
+        "dtype": "float32",
+        "reference": "root/base link origin, not body CoM"
+      },
+      "base_linear_velocity": {
+        "shape": [
+          3
+        ],
+        "unit": "m/s",
+        "frame": "world",
+        "dtype": "float32",
+        "reference": "world velocity of root/base link origin"
+      },
+      "base_angular_velocity": {
+        "shape": [
+          3
+        ],
+        "unit": "rad/s",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "projected_gravity": {
+        "shape": [
+          3
+        ],
+        "unit": "unit",
+        "frame": "body",
+        "dtype": "float32"
+      },
+      "joint_position": {
+        "shape": [
+          12
+        ],
+        "unit": "rad",
+        "frame": "joint",
+        "dtype": "float32"
+      },
+      "joint_velocity": {
+        "shape": [
+          12
+        ],
+        "unit": "rad/s",
+        "frame": "joint",
+        "dtype": "float32"
+      },
+      "fl_position": {
+        "shape": [
+          3
+        ],
+        "unit": "m",
+        "frame": "projected_com",
+        "dtype": "float32",
+        "reference": "RAMBO analytical FL endpoint"
+      },
+      "fl_velocity": {
+        "shape": [
+          3
+        ],
+        "unit": "m/s",
+        "frame": "projected_com",
+        "dtype": "float32",
+        "reference": "time derivative of analytical FL coordinates in the moving projected_com frame"
+      },
+      "foot_contact": {
+        "shape": [
+          4
+        ],
+        "unit": "bool",
+        "frame": "body contact",
+        "dtype": "bool"
+      }
+    },
+    "contact": {
+      "normal_force": {
+        "shape": [
+          4,
+          3
+        ],
+        "unit": "N",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "friction_force": {
+        "shape": [
+          4,
+          3
+        ],
+        "unit": "N",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "fl_object_contact": {
+        "shape": [],
+        "unit": "bool",
+        "frame": "named FL/object pair",
+        "dtype": "bool"
+      },
+      "body_object_contact": {
+        "shape": [],
+        "unit": "bool",
+        "frame": "named base/object pair",
+        "dtype": "bool"
+      },
+      "desired_force": {
+        "shape": [
+          3
+        ],
+        "unit": "N",
+        "frame": "projected_com",
+        "dtype": "float32"
+      },
+      "source_tick": {
+        "shape": [],
+        "unit": "physics tick",
+        "frame": "episode",
+        "dtype": "int64"
+      },
+      "qp_force": {
+        "shape": [
+          4,
+          3
+        ],
+        "unit": "N",
+        "frame": "body at qp_source_tick",
+        "dtype": "float32",
+        "meaning": "QP estimated ground reaction force, FL/FR/RL/RR; not measured contact or injected force"
+      },
+      "qp_source_tick": {
+        "shape": [],
+        "unit": "physics tick",
+        "frame": "episode",
+        "dtype": "int64"
+      }
+    },
+    "task": {
+      "object_pose": {
+        "shape": [
+          7
+        ],
+        "unit": "m,unit quaternion",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "object_linear_velocity": {
+        "shape": [
+          3
+        ],
+        "unit": "m/s",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "object_angular_velocity": {
+        "shape": [
+          3
+        ],
+        "unit": "rad/s",
+        "frame": "world",
+        "dtype": "float32"
+      },
+      "progress": {
+        "shape": [],
+        "unit": "task_config.metrics.progress.unit",
+        "frame": "task_config",
+        "dtype": "float32"
+      },
+      "success": {
+        "shape": [],
+        "unit": "bool",
+        "frame": "task_config",
+        "dtype": "bool"
+      }
+    }
+  },
+  "optional_release_fields": [
+    "friction_force",
+    "qp_force",
+    "qp_source_tick"
+  ]
+}

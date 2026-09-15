@@ -47,3 +47,7 @@ Local Ubuntu 24.04 / RTX 5070 Ti handles debugging, simulation and data synthesi
 Full SFT belongs to the user's remote AMD server after local model debugging and job preparation; this branch does not execute model training.
 Keep all datasets, checkpoints and run evidence in versioned workspace directories. Prior migration history remains in original Git refs and external restoration/run records.
 Native runtime tests are the acceptance target. Docker definitions are retained as unvalidated deployment references; no image build or release is claimed.
+
+## Stage 3 contract interfaces
+
+See [Canonical v2 contracts](docs/current/contracts-v2.md) for versioned schemas, pure CPU validation and synchronous protocol interfaces. Real simulator/server wiring and dataset release require later runtime evidence.

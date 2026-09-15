@@ -1,0 +1,16 @@
+{
+  "id": "sim-12p5rgb-50action-100control-500physics-v2",
+  "version": "2.0.0",
+  "physics_ns": 2000000,
+  "control_ticks": 5,
+  "action_ticks": 10,
+  "rgb_ticks": 40,
+  "latent_ticks": 160,
+  "actions_per_latent": 16,
+  "clock": "episode-local int64 ticks plus origin_sim_ns",
+  "interval": "[start_tick,end_tick)",
+  "initial_action": "16 zero slots with false mask",
+  "waiting": "freeze simulation time; wall-clock deadline separate",
+  "camera_alignment": "same capture tick; initial frame at tick 0; no duplicates or interpolation",
+  "terminal": "pre-reset snapshot; incomplete physical intervals retained but invalid for full labels"
+}

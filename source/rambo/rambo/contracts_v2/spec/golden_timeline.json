@@ -1,0 +1,7213 @@
+{
+  "diagnostic_only": true,
+  "description": "Synthetic timeline/protocol fixture. No actual images/commands from a robot.",
+  "frames": [
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 0,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000000.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 0,
+      "sha256": "74398d4802fd8baa5c2b6e5f9f4e9467da746c00fa6a6e2aa53f36112bff3267",
+      "timestamp_ns": 0,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 0,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000000.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 0,
+      "sha256": "1b317ddebf769c0d26c13f86490d0fa27fc25582ab5b41c284b8fca6f2a860fe",
+      "timestamp_ns": 0,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 40,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000001.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 1,
+      "sha256": "dc336e12eff72b4839e30a6e2f90a6e0fae3abd3ada7a79347e5f0aba66843d6",
+      "timestamp_ns": 80000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 40,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000001.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 1,
+      "sha256": "49771fddfeb46b96c277c91da793617877ee7745a2a25dc8cc247a0b1012ab5d",
+      "timestamp_ns": 80000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 80,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000002.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 2,
+      "sha256": "9621e4b560b1d927a99343fcffe01633d4aa27a20568c53c92ca74b7fd1fed1a",
+      "timestamp_ns": 160000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 80,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000002.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 2,
+      "sha256": "234013c3cf19410ed2bf97351ff0d2404c63e8552f8620e58a579a842608f03f",
+      "timestamp_ns": 160000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 120,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000003.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 3,
+      "sha256": "fb977a69e47754f9732887d1c4ed95987bfb6acdf3b31a138d72589f5525e07e",
+      "timestamp_ns": 240000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 120,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000003.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 3,
+      "sha256": "b21739a7b52e22cac68b402a0e53f7f850adba8ff3f9de1eb77edf17c90cadc9",
+      "timestamp_ns": 240000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 160,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000004.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 4,
+      "sha256": "f63177a4873c25697aefe7e15e774fc742bca509aaabb164050d12cac8b4c61d",
+      "timestamp_ns": 320000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 160,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000004.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 4,
+      "sha256": "18a07b3a92c58b2d9b4e4de130c55abd0aa166fbd5c715c607a93ce511d3f6ee",
+      "timestamp_ns": 320000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 200,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000005.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 5,
+      "sha256": "ee73c97d3e4b8ae81221d461bfb4ed09bf40a0c1dd9ac518a9e6cb8732093321",
+      "timestamp_ns": 400000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 200,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000005.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 5,
+      "sha256": "4885eed73672e27d18359b285850d4d71642658d5ce72f66a8322c6bf5a41692",
+      "timestamp_ns": 400000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 240,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000006.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 6,
+      "sha256": "5d68e7114644789103ebc67e3bd69efcff1a5621b4a81e2ad235c892e1d2fd00",
+      "timestamp_ns": 480000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 240,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000006.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 6,
+      "sha256": "a661a53e1c0ae3a840fbe47c2dfc090cbe82254dead23df972e05c1c137837cc",
+      "timestamp_ns": 480000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 280,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000007.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 7,
+      "sha256": "3b3a2c3b47a758c1bb570f991c6572dee5e34312ea57c00e5b62dc621a44f661",
+      "timestamp_ns": 560000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 280,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000007.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 7,
+      "sha256": "1c5f372f7b1c8256e18084da8531a9c4e1effe101f16ffc9dc336a9fbbcb7cac",
+      "timestamp_ns": 560000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    },
+    {
+      "camera_id": "go2_ego",
+      "capture_tick": 320,
+      "extensions": {},
+      "intrinsics": [
+        [
+          423.94968254892405,
+          0,
+          640
+        ],
+        [
+          0,
+          423.94968254892405,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/go2_ego/000008.png",
+      "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+      "reset_epoch": 0,
+      "sensor_frame_id": 8,
+      "sha256": "1b6edc89e6632012c9bd6c07f3447ee1754082dd5f21e3516edb53c72075115d",
+      "timestamp_ns": 640000000,
+      "world_position": [
+        0.32715,
+        -3e-05,
+        0.04297
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "camera_id": "d435i_rgb_task",
+      "capture_tick": 320,
+      "extensions": {},
+      "intrinsics": [
+        [
+          924.2773797459289,
+          0,
+          640
+        ],
+        [
+          0,
+          924.277379745929,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "path": "rgb/d435i_rgb_task/000008.png",
+      "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+      "reset_epoch": 0,
+      "sensor_frame_id": 8,
+      "sha256": "af447c6cce4dff2ca877f7656917e7d5541f225c44e3a0f2589f12e0b68224b6",
+      "timestamp_ns": 640000000,
+      "world_position": [
+        0.3,
+        0.0,
+        0.34
+      ],
+      "world_quaternion_xyzw": [
+        0.0,
+        0.5372996083468239,
+        0.0,
+        0.8433914458128857
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "command_id": "fixture:0",
+      "end_tick": 10,
+      "executed": [
+        0.10000000149011612,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 10,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10000000149011612,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": true,
+      "requested": [
+        0.1,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        1.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 0,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10000000149011612,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:1",
+      "end_tick": 20,
+      "executed": [
+        0.10100000351667404,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 20,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10100000351667404,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.101,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 10,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10100000351667404,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:2",
+      "end_tick": 30,
+      "executed": [
+        0.10199999809265137,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 30,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10199999809265137,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10200000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 20,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10199999809265137,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:3",
+      "end_tick": 40,
+      "executed": [
+        0.10300000011920929,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 40,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10300000011920929,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10300000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 30,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10300000011920929,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:4",
+      "end_tick": 50,
+      "executed": [
+        0.10400000214576721,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 50,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10400000214576721,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10400000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 40,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10400000214576721,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:5",
+      "end_tick": 60,
+      "executed": [
+        0.10499999672174454,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 60,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10499999672174454,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10500000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 50,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10499999672174454,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:6",
+      "end_tick": 70,
+      "executed": [
+        0.10599999874830246,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 70,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10599999874830246,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10600000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 60,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10599999874830246,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:7",
+      "end_tick": 80,
+      "executed": [
+        0.10700000077486038,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 80,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10700000077486038,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10700000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 70,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10700000077486038,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:8",
+      "end_tick": 90,
+      "executed": [
+        0.1080000028014183,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 90,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.1080000028014183,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10800000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 80,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.1080000028014183,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:9",
+      "end_tick": 100,
+      "executed": [
+        0.10899999737739563,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 100,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10899999737739563,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.10900000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 90,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10899999737739563,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:10",
+      "end_tick": 110,
+      "executed": [
+        0.10999999940395355,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 110,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.10999999940395355,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.11,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 100,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.10999999940395355,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:11",
+      "end_tick": 120,
+      "executed": [
+        0.11100000143051147,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 120,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11100000143051147,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.111,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 110,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11100000143051147,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:12",
+      "end_tick": 130,
+      "executed": [
+        0.1120000034570694,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 130,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.1120000034570694,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.112,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 120,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.1120000034570694,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:13",
+      "end_tick": 140,
+      "executed": [
+        0.11299999803304672,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 140,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11299999803304672,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.113,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 130,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11299999803304672,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:14",
+      "end_tick": 150,
+      "executed": [
+        0.11400000005960464,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 150,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11400000005960464,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.114,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 140,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11400000005960464,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:15",
+      "end_tick": 160,
+      "executed": [
+        0.11500000208616257,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 160,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11500000208616257,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.115,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 150,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11500000208616257,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:16",
+      "end_tick": 170,
+      "executed": [
+        0.11599999666213989,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 170,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11599999666213989,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.116,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 160,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11599999666213989,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:17",
+      "end_tick": 180,
+      "executed": [
+        0.11699999868869781,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 180,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11699999868869781,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.117,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 170,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11699999868869781,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:18",
+      "end_tick": 190,
+      "executed": [
+        0.11800000071525574,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 190,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11800000071525574,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.11800000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 180,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11800000071525574,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:19",
+      "end_tick": 200,
+      "executed": [
+        0.11900000274181366,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 200,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11900000274181366,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.11900000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 190,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11900000274181366,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:20",
+      "end_tick": 210,
+      "executed": [
+        0.11999999731779099,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 210,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.11999999731779099,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.12000000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 200,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.11999999731779099,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:21",
+      "end_tick": 220,
+      "executed": [
+        0.12099999934434891,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 220,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12099999934434891,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.12100000000000001,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 210,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12099999934434891,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:22",
+      "end_tick": 230,
+      "executed": [
+        0.12200000137090683,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 230,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12200000137090683,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.122,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 220,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12200000137090683,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:23",
+      "end_tick": 240,
+      "executed": [
+        0.12300000339746475,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 240,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12300000339746475,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.123,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 230,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12300000339746475,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:24",
+      "end_tick": 250,
+      "executed": [
+        0.12399999797344208,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 250,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12399999797344208,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.124,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 240,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12399999797344208,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:25",
+      "end_tick": 260,
+      "executed": [
+        0.125,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 260,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.125,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.125,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 250,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.125,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:26",
+      "end_tick": 270,
+      "executed": [
+        0.12600000202655792,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 270,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12600000202655792,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.126,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 260,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12600000202655792,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:27",
+      "end_tick": 280,
+      "executed": [
+        0.12700000405311584,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 280,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12700000405311584,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.127,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 270,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12700000405311584,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:28",
+      "end_tick": 290,
+      "executed": [
+        0.12800000607967377,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 290,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12800000607967377,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.128,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 280,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12800000607967377,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:29",
+      "end_tick": 300,
+      "executed": [
+        0.1289999932050705,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 300,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.1289999932050705,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.129,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 290,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.1289999932050705,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:30",
+      "end_tick": 310,
+      "executed": [
+        0.12999999523162842,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 310,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.12999999523162842,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.13,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 300,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.12999999523162842,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "command_id": "fixture:31",
+      "end_tick": 320,
+      "executed": [
+        0.13099999725818634,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "executed_until_tick": 320,
+      "extensions": {},
+      "filter_id": "identity",
+      "filtered": [
+        0.13099999725818634,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "force_overridden": false,
+      "requested": [
+        0.131,
+        0.0,
+        0.0,
+        0.1934,
+        0.142,
+        0.05,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "start_tick": 310,
+      "status": "completed",
+      "transform_id": "native9_force_zero_v2",
+      "transformed": [
+        0.13099999725818634,
+        0.0,
+        0.0,
+        0.19339999556541443,
+        0.1420000046491623,
+        0.05000000074505806,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "last_tick": 320,
+  "epoch": 0,
+  "origin_ns": 0,
+  "messages": {
+    "reset": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "reset",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "ResetRequest",
+      "body": {
+        "timeout_s": 5,
+        "task": {
+          "id": "contract-diagnostic",
+          "version": "2.0.0",
+          "instruction": "Diagnostic input; do not use for training.",
+          "language": "en"
+        },
+        "origin_sim_ns": 0
+      }
+    },
+    "ready": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "reply:reset",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "Ready",
+      "body": {
+        "tick": 0,
+        "cache_generation": 1
+      }
+    },
+    "observation": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "obs0",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "Observation",
+      "body": {
+        "tick": 0,
+        "rgb": [
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 0,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000000.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 0,
+            "sha256": "74398d4802fd8baa5c2b6e5f9f4e9467da746c00fa6a6e2aa53f36112bff3267",
+            "timestamp_ns": 0,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 0,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000000.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 0,
+            "sha256": "1b317ddebf769c0d26c13f86490d0fa27fc25582ab5b41c284b8fca6f2a860fe",
+            "timestamp_ns": 0,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          }
+        ],
+        "executed_history": [],
+        "instruction": "Diagnostic input; do not use for training."
+      }
+    },
+    "chunk": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "action0",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "ActionChunk",
+      "body": {
+        "observation_id": "obs0",
+        "chunk_id": "chunk0",
+        "start_tick": 0,
+        "action_period_ticks": 10,
+        "actions": [
+          [
+            0.1,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            1.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.101,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10200000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10300000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10400000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10500000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10600000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10700000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10800000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.10900000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.11,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.111,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.112,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.113,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.114,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.115,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.116,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.117,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.11800000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.11900000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.12000000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.12100000000000001,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.122,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.123,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.124,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.125,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.126,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.127,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.128,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.129,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.13,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ],
+          [
+            0.131,
+            0.0,
+            0.0,
+            0.1934,
+            0.142,
+            0.05,
+            0.0,
+            0.0,
+            0.0
+          ]
+        ]
+      }
+    },
+    "accepted": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "reply:action0",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "ActionAccepted",
+      "body": {
+        "chunk_id": "chunk0",
+        "start_tick": 0,
+        "command_count": 32
+      }
+    },
+    "ack": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "ack:1:chunk0",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "ExecutionAck",
+      "body": {
+        "chunk_id": "chunk0",
+        "start_tick": 0,
+        "end_tick": 320,
+        "completed_count": 32,
+        "commands": [
+          {
+            "command_id": "chunk0:0",
+            "start_tick": 0,
+            "end_tick": 10,
+            "executed_until_tick": 10,
+            "requested": [
+              0.1,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": true,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:1",
+            "start_tick": 10,
+            "end_tick": 20,
+            "executed_until_tick": 20,
+            "requested": [
+              0.101,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:2",
+            "start_tick": 20,
+            "end_tick": 30,
+            "executed_until_tick": 30,
+            "requested": [
+              0.10200000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:3",
+            "start_tick": 30,
+            "end_tick": 40,
+            "executed_until_tick": 40,
+            "requested": [
+              0.10300000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:4",
+            "start_tick": 40,
+            "end_tick": 50,
+            "executed_until_tick": 50,
+            "requested": [
+              0.10400000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:5",
+            "start_tick": 50,
+            "end_tick": 60,
+            "executed_until_tick": 60,
+            "requested": [
+              0.10500000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:6",
+            "start_tick": 60,
+            "end_tick": 70,
+            "executed_until_tick": 70,
+            "requested": [
+              0.10600000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:7",
+            "start_tick": 70,
+            "end_tick": 80,
+            "executed_until_tick": 80,
+            "requested": [
+              0.10700000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:8",
+            "start_tick": 80,
+            "end_tick": 90,
+            "executed_until_tick": 90,
+            "requested": [
+              0.10800000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:9",
+            "start_tick": 90,
+            "end_tick": 100,
+            "executed_until_tick": 100,
+            "requested": [
+              0.10900000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:10",
+            "start_tick": 100,
+            "end_tick": 110,
+            "executed_until_tick": 110,
+            "requested": [
+              0.11,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:11",
+            "start_tick": 110,
+            "end_tick": 120,
+            "executed_until_tick": 120,
+            "requested": [
+              0.111,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:12",
+            "start_tick": 120,
+            "end_tick": 130,
+            "executed_until_tick": 130,
+            "requested": [
+              0.112,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:13",
+            "start_tick": 130,
+            "end_tick": 140,
+            "executed_until_tick": 140,
+            "requested": [
+              0.113,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:14",
+            "start_tick": 140,
+            "end_tick": 150,
+            "executed_until_tick": 150,
+            "requested": [
+              0.114,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:15",
+            "start_tick": 150,
+            "end_tick": 160,
+            "executed_until_tick": 160,
+            "requested": [
+              0.115,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:16",
+            "start_tick": 160,
+            "end_tick": 170,
+            "executed_until_tick": 170,
+            "requested": [
+              0.116,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:17",
+            "start_tick": 170,
+            "end_tick": 180,
+            "executed_until_tick": 180,
+            "requested": [
+              0.117,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:18",
+            "start_tick": 180,
+            "end_tick": 190,
+            "executed_until_tick": 190,
+            "requested": [
+              0.11800000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:19",
+            "start_tick": 190,
+            "end_tick": 200,
+            "executed_until_tick": 200,
+            "requested": [
+              0.11900000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:20",
+            "start_tick": 200,
+            "end_tick": 210,
+            "executed_until_tick": 210,
+            "requested": [
+              0.12000000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:21",
+            "start_tick": 210,
+            "end_tick": 220,
+            "executed_until_tick": 220,
+            "requested": [
+              0.12100000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:22",
+            "start_tick": 220,
+            "end_tick": 230,
+            "executed_until_tick": 230,
+            "requested": [
+              0.122,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:23",
+            "start_tick": 230,
+            "end_tick": 240,
+            "executed_until_tick": 240,
+            "requested": [
+              0.123,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:24",
+            "start_tick": 240,
+            "end_tick": 250,
+            "executed_until_tick": 250,
+            "requested": [
+              0.124,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:25",
+            "start_tick": 250,
+            "end_tick": 260,
+            "executed_until_tick": 260,
+            "requested": [
+              0.125,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:26",
+            "start_tick": 260,
+            "end_tick": 270,
+            "executed_until_tick": 270,
+            "requested": [
+              0.126,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:27",
+            "start_tick": 270,
+            "end_tick": 280,
+            "executed_until_tick": 280,
+            "requested": [
+              0.127,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:28",
+            "start_tick": 280,
+            "end_tick": 290,
+            "executed_until_tick": 290,
+            "requested": [
+              0.128,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:29",
+            "start_tick": 290,
+            "end_tick": 300,
+            "executed_until_tick": 300,
+            "requested": [
+              0.129,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:30",
+            "start_tick": 300,
+            "end_tick": 310,
+            "executed_until_tick": 310,
+            "requested": [
+              0.13,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:31",
+            "start_tick": 310,
+            "end_tick": 320,
+            "executed_until_tick": 320,
+            "requested": [
+              0.131,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          }
+        ],
+        "reason": "completed"
+      }
+    },
+    "next_observation": {
+      "protocol_version": "2.0.0",
+      "session_id": "fixture-session",
+      "episode_id": "synthetic-session",
+      "reset_epoch": 0,
+      "message_id": "obs1",
+      "profiles": {
+        "action": "3844b323ade045280f220ac1d0f684af6c8555a3d40e8534ba1d02719dda4d69",
+        "timing": "22fcfbf52b0c0bd0ae952dc8c204a2c8ef52ff7274b6ccd494b02f1af6f62fdc",
+        "telemetry": "7152d9c2e0efd9f0c76853bfecb7223aaf0a7ff108eabf5af50c216b6ec6806f",
+        "cameras": "e38bb89c9353cc562c6027463dfcff47f21b5940b3527c08be1eac4908fe3b8b"
+      },
+      "extensions": {},
+      "type": "Observation",
+      "body": {
+        "tick": 320,
+        "rgb": [
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 40,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000001.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 1,
+            "sha256": "dc336e12eff72b4839e30a6e2f90a6e0fae3abd3ada7a79347e5f0aba66843d6",
+            "timestamp_ns": 80000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 40,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000001.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 1,
+            "sha256": "49771fddfeb46b96c277c91da793617877ee7745a2a25dc8cc247a0b1012ab5d",
+            "timestamp_ns": 80000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 80,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000002.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 2,
+            "sha256": "9621e4b560b1d927a99343fcffe01633d4aa27a20568c53c92ca74b7fd1fed1a",
+            "timestamp_ns": 160000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 80,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000002.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 2,
+            "sha256": "234013c3cf19410ed2bf97351ff0d2404c63e8552f8620e58a579a842608f03f",
+            "timestamp_ns": 160000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 120,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000003.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 3,
+            "sha256": "fb977a69e47754f9732887d1c4ed95987bfb6acdf3b31a138d72589f5525e07e",
+            "timestamp_ns": 240000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 120,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000003.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 3,
+            "sha256": "b21739a7b52e22cac68b402a0e53f7f850adba8ff3f9de1eb77edf17c90cadc9",
+            "timestamp_ns": 240000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 160,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000004.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 4,
+            "sha256": "f63177a4873c25697aefe7e15e774fc742bca509aaabb164050d12cac8b4c61d",
+            "timestamp_ns": 320000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 160,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000004.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 4,
+            "sha256": "18a07b3a92c58b2d9b4e4de130c55abd0aa166fbd5c715c607a93ce511d3f6ee",
+            "timestamp_ns": 320000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 200,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000005.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 5,
+            "sha256": "ee73c97d3e4b8ae81221d461bfb4ed09bf40a0c1dd9ac518a9e6cb8732093321",
+            "timestamp_ns": 400000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 200,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000005.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 5,
+            "sha256": "4885eed73672e27d18359b285850d4d71642658d5ce72f66a8322c6bf5a41692",
+            "timestamp_ns": 400000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 240,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000006.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 6,
+            "sha256": "5d68e7114644789103ebc67e3bd69efcff1a5621b4a81e2ad235c892e1d2fd00",
+            "timestamp_ns": 480000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 240,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000006.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 6,
+            "sha256": "a661a53e1c0ae3a840fbe47c2dfc090cbe82254dead23df972e05c1c137837cc",
+            "timestamp_ns": 480000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 280,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000007.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 7,
+            "sha256": "3b3a2c3b47a758c1bb570f991c6572dee5e34312ea57c00e5b62dc621a44f661",
+            "timestamp_ns": 560000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 280,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000007.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 7,
+            "sha256": "1c5f372f7b1c8256e18084da8531a9c4e1effe101f16ffc9dc336a9fbbcb7cac",
+            "timestamp_ns": 560000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          },
+          {
+            "camera_id": "go2_ego",
+            "capture_tick": 320,
+            "extensions": {},
+            "intrinsics": [
+              [
+                423.94968254892405,
+                0,
+                640
+              ],
+              [
+                0,
+                423.94968254892405,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/go2_ego/000008.png",
+            "profile_hash": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+            "reset_epoch": 0,
+            "sensor_frame_id": 8,
+            "sha256": "1b6edc89e6632012c9bd6c07f3447ee1754082dd5f21e3516edb53c72075115d",
+            "timestamp_ns": 640000000,
+            "world_position": [
+              0.32715,
+              -3e-05,
+              0.04297
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          },
+          {
+            "camera_id": "d435i_rgb_task",
+            "capture_tick": 320,
+            "extensions": {},
+            "intrinsics": [
+              [
+                924.2773797459289,
+                0,
+                640
+              ],
+              [
+                0,
+                924.277379745929,
+                360
+              ],
+              [
+                0,
+                0,
+                1
+              ]
+            ],
+            "path": "rgb/d435i_rgb_task/000008.png",
+            "profile_hash": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118",
+            "reset_epoch": 0,
+            "sensor_frame_id": 8,
+            "sha256": "af447c6cce4dff2ca877f7656917e7d5541f225c44e3a0f2589f12e0b68224b6",
+            "timestamp_ns": 640000000,
+            "world_position": [
+              0.3,
+              0.0,
+              0.34
+            ],
+            "world_quaternion_xyzw": [
+              0.0,
+              0.5372996083468239,
+              0.0,
+              0.8433914458128857
+            ]
+          }
+        ],
+        "executed_history": [
+          {
+            "command_id": "chunk0:0",
+            "start_tick": 0,
+            "end_tick": 10,
+            "executed_until_tick": 10,
+            "requested": [
+              0.1,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              1.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10000000149011612,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": true,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:1",
+            "start_tick": 10,
+            "end_tick": 20,
+            "executed_until_tick": 20,
+            "requested": [
+              0.101,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10100000351667404,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:2",
+            "start_tick": 20,
+            "end_tick": 30,
+            "executed_until_tick": 30,
+            "requested": [
+              0.10200000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10199999809265137,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:3",
+            "start_tick": 30,
+            "end_tick": 40,
+            "executed_until_tick": 40,
+            "requested": [
+              0.10300000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10300000011920929,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:4",
+            "start_tick": 40,
+            "end_tick": 50,
+            "executed_until_tick": 50,
+            "requested": [
+              0.10400000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10400000214576721,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:5",
+            "start_tick": 50,
+            "end_tick": 60,
+            "executed_until_tick": 60,
+            "requested": [
+              0.10500000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10499999672174454,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:6",
+            "start_tick": 60,
+            "end_tick": 70,
+            "executed_until_tick": 70,
+            "requested": [
+              0.10600000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10599999874830246,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:7",
+            "start_tick": 70,
+            "end_tick": 80,
+            "executed_until_tick": 80,
+            "requested": [
+              0.10700000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10700000077486038,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:8",
+            "start_tick": 80,
+            "end_tick": 90,
+            "executed_until_tick": 90,
+            "requested": [
+              0.10800000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1080000028014183,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:9",
+            "start_tick": 90,
+            "end_tick": 100,
+            "executed_until_tick": 100,
+            "requested": [
+              0.10900000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10899999737739563,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:10",
+            "start_tick": 100,
+            "end_tick": 110,
+            "executed_until_tick": 110,
+            "requested": [
+              0.11,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.10999999940395355,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:11",
+            "start_tick": 110,
+            "end_tick": 120,
+            "executed_until_tick": 120,
+            "requested": [
+              0.111,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11100000143051147,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:12",
+            "start_tick": 120,
+            "end_tick": 130,
+            "executed_until_tick": 130,
+            "requested": [
+              0.112,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1120000034570694,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:13",
+            "start_tick": 130,
+            "end_tick": 140,
+            "executed_until_tick": 140,
+            "requested": [
+              0.113,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11299999803304672,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:14",
+            "start_tick": 140,
+            "end_tick": 150,
+            "executed_until_tick": 150,
+            "requested": [
+              0.114,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11400000005960464,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:15",
+            "start_tick": 150,
+            "end_tick": 160,
+            "executed_until_tick": 160,
+            "requested": [
+              0.115,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11500000208616257,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:16",
+            "start_tick": 160,
+            "end_tick": 170,
+            "executed_until_tick": 170,
+            "requested": [
+              0.116,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11599999666213989,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:17",
+            "start_tick": 170,
+            "end_tick": 180,
+            "executed_until_tick": 180,
+            "requested": [
+              0.117,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11699999868869781,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:18",
+            "start_tick": 180,
+            "end_tick": 190,
+            "executed_until_tick": 190,
+            "requested": [
+              0.11800000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11800000071525574,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:19",
+            "start_tick": 190,
+            "end_tick": 200,
+            "executed_until_tick": 200,
+            "requested": [
+              0.11900000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11900000274181366,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:20",
+            "start_tick": 200,
+            "end_tick": 210,
+            "executed_until_tick": 210,
+            "requested": [
+              0.12000000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.11999999731779099,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:21",
+            "start_tick": 210,
+            "end_tick": 220,
+            "executed_until_tick": 220,
+            "requested": [
+              0.12100000000000001,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12099999934434891,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:22",
+            "start_tick": 220,
+            "end_tick": 230,
+            "executed_until_tick": 230,
+            "requested": [
+              0.122,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12200000137090683,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:23",
+            "start_tick": 230,
+            "end_tick": 240,
+            "executed_until_tick": 240,
+            "requested": [
+              0.123,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12300000339746475,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:24",
+            "start_tick": 240,
+            "end_tick": 250,
+            "executed_until_tick": 250,
+            "requested": [
+              0.124,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12399999797344208,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:25",
+            "start_tick": 250,
+            "end_tick": 260,
+            "executed_until_tick": 260,
+            "requested": [
+              0.125,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.125,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:26",
+            "start_tick": 260,
+            "end_tick": 270,
+            "executed_until_tick": 270,
+            "requested": [
+              0.126,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12600000202655792,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:27",
+            "start_tick": 270,
+            "end_tick": 280,
+            "executed_until_tick": 280,
+            "requested": [
+              0.127,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12700000405311584,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:28",
+            "start_tick": 280,
+            "end_tick": 290,
+            "executed_until_tick": 290,
+            "requested": [
+              0.128,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12800000607967377,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:29",
+            "start_tick": 290,
+            "end_tick": 300,
+            "executed_until_tick": 300,
+            "requested": [
+              0.129,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.1289999932050705,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:30",
+            "start_tick": 300,
+            "end_tick": 310,
+            "executed_until_tick": 310,
+            "requested": [
+              0.13,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.12999999523162842,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          },
+          {
+            "command_id": "chunk0:31",
+            "start_tick": 310,
+            "end_tick": 320,
+            "executed_until_tick": 320,
+            "requested": [
+              0.131,
+              0.0,
+              0.0,
+              0.1934,
+              0.142,
+              0.05,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "transformed": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "filtered": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "executed": [
+              0.13099999725818634,
+              0.0,
+              0.0,
+              0.19339999556541443,
+              0.1420000046491623,
+              0.05000000074505806,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "status": "completed",
+            "force_overridden": false,
+            "transform_id": "native9_force_zero_v2",
+            "filter_id": "identity",
+            "extensions": {}
+          }
+        ],
+        "instruction": "Diagnostic input; do not use for training."
+      }
+    }
+  },
+  "expected": {
+    "rgb_per_camera": 9,
+    "latent_frames": 3,
+    "valid_commands": 32,
+    "invalid_initial_slots": 16,
+    "control_steps": 64,
+    "physics_ticks": 320
+  }
+}

@@ -1,0 +1,22 @@
+---
+id: ADR-V2-CONTRACTS
+type: decision
+status: accepted
+source_map: []
+---
+# Canonical v2 and confirmed native-command history
+
+Accepted in the user's stage-3 implementation request. Preserve 12.5 FPS dual RGB, 50 Hz native9,
+100 Hz RAMBO control and 500 Hz physics. Each command is held for two control steps. Executed
+history means completed high-level holds, with residual/IK consumption recorded separately.
+Preserve requested force; zero it at the new policy boundary. Retain the existing float32 setter
+representation explicitly in transformed values; no geometric clipping or high-level filtering.
+
+RAMBO owns authoritative versioned contracts and canonical release validation. WAM maintains a
+pinned declarative copy and its own installed validator/alignment/history consumer. No cross imports.
+Keep schema conformance separate from release eligibility and runtime proof. Initial model action
+padding remains invalid as accepted in stage 2. Existing controller/setter/model behavior is unchanged.
+
+Current stage: pure CPU contracts and fake-backend tests. Actual force/control/cache wiring,
+Isaac temporal/contact/RTX/terminal evidence, new task/assets, collection, formal training and remote
+work are deferred. Human approval of actual assets/dual-view coverage remains required.

@@ -7,3 +7,8 @@
 - [Bootstrap execution](work/archive/V2-BOOTSTRAP/plan.md)
 - [Cleanup specification](changes/archive/V2-CLEANUP/change-spec.md)
 - [Cleanup execution](work/archive/V2-CLEANUP/plan.md)
+
+- [Stage 3 contracts](current/contracts-v2.md)
+- [Stage 3 decision](decisions/ADR-V2-CONTRACTS.md)
+- [Stage 3 specification](changes/archive/V2-CONTRACTS/change-spec.md)
+- [Stage 3 execution](work/archive/V2-CONTRACTS/plan.md)

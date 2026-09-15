@@ -13,7 +13,8 @@ The repositories exchange explicit data and runtime contracts; neither imports t
 
 ## Current implementation boundary
 Stages 0–1 establish branches, directory identity, governance, packaging and quadruped cleanup.
-Dataset v2 and production camera/runtime contracts are not implemented or validated by this stage.
+Stage 3 implements canonical v2 schemas/profiles, offline validation and a pure synchronous command protocol.
+Actual camera/contact/control integration and production dataset release are not yet validated.
 Existing Go2/D435i nominal camera geometry is retained as a runtime reference, not a device calibration or production dataset acceptance.
 
 ## Compute
@@ -31,3 +32,7 @@ Completed: branch/directory bootstrap, editable-source isolation, governance and
 The retained controller passed a 64-step native PhysX check. The nominal mounted pair passed a 240-step RTX check with 30 frames per view.
 No production dataset, model conversion, training or new task is claimed by these checks.
 Full records are under workspace runs/audit/v2/V2-BOOTSTRAP/20260915T024558Z.
+
+## Stage 3 acceptance
+[Contract interfaces](contracts-v2.md) passed CPU and two-interpreter conformance checks.
+Evidence: workspace `runs/audit/v2/V2-CONTRACTS/20260915T060642Z`. Real simulator/server wiring and dataset release remain not_run.

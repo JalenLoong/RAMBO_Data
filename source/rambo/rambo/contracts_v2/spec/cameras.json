@@ -1,0 +1,11 @@
+{
+  "id": "go2-ego-d435i-task-v2",
+  "version": "2.0.0",
+  "source_setup": "robot-dual-v3",
+  "cameras": {
+    "go2_ego": "ca3991a612799f9c28a4af708ef191672c4d531d1177a2f7d72710666bd7ecf5",
+    "d435i_rgb_task": "f24b73c97c2c0e66aca725b1a76ffd0bb35fe4d9c7c6f967571426f483338118"
+  },
+  "preprocessing": "not part of camera hash; owned by WAM",
+  "sampling": "sim synchronized; real-camera resampling requires a different profile"
+}

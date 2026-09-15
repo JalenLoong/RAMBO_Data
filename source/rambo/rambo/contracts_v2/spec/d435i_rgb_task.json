@@ -1,0 +1,95 @@
+{
+  "id": "d435i_rgb_task",
+  "version": "2.0.0",
+  "source_setup": "robot-dual-v3",
+  "source_key": "task",
+  "width": 1280,
+  "height": 720,
+  "rgb_period_ticks": 40,
+  "mount_parent": "Robot/base",
+  "mount_position_m": [
+    0.3,
+    0.0,
+    0.34
+  ],
+  "mount_quaternion_xyzw": [
+    0.0,
+    0.5372996083468239,
+    0.0,
+    0.8433914458128857
+  ],
+  "mount_axes": "x forward, y left, z up",
+  "optical_axes": "x right, y down, z forward",
+  "R_mount_from_optical": [
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      -1,
+      0,
+      0
+    ],
+    [
+      0,
+      -1,
+      0
+    ]
+  ],
+  "intrinsics": [
+    [
+      924.2773797459289,
+      0,
+      640
+    ],
+    [
+      0,
+      924.277379745929,
+      360
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "pixel_coordinate_convention": "renderer principal point (width/2,height/2)",
+  "clipping_m": [
+    0.1,
+    20.0
+  ],
+  "calibration_status": "nominal_specification_approximation_not_device_calibration",
+  "device_distortion": "unknown; simulator is rectilinear pinhole",
+  "mechanical_mount": "nominal not measured",
+  "rig_physics": {
+    "mass_modeled": false,
+    "collision": false
+  },
+  "source_parameters": {
+    "path": "/World/envs/env_0/Robot/base/task_camera_rig/task_camera",
+    "position": [
+      0.3,
+      0.0,
+      0.34
+    ],
+    "rotation_xyzw": [
+      0.0,
+      0.5372996083468239,
+      0.0,
+      0.8433914458128857
+    ],
+    "focal_length_mm": 1.88,
+    "width": 1280,
+    "height": 720,
+    "horizontal_aperture_mm": 2.603547433630244,
+    "vertical_aperture_mm": 1.4644954314170122,
+    "sensor_model": "Intel RealSense D435i RGB / OmniVision OV2740 nominal specification",
+    "horizontal_fov_deg": 69.4,
+    "vertical_fov_published_deg": 42.5,
+    "vertical_fov_simulated_deg": 42.561177083628365,
+    "pixel_aspect_ratio": 1.0,
+    "projection": "centered_rectilinear_pinhole_no_device_distortion",
+    "specification_source": "https://www.realsenseai.com/wp-content/uploads/2022/03/Intel-RealSense-D400-Series-Datasheet-March-2022.pdf"
+  }
+}

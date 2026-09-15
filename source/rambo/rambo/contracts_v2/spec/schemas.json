@@ -1,0 +1,1819 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "episode": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "2.0.0"
+        },
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "diagnostic_only": {
+          "type": "boolean"
+        },
+        "origin_sim_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "warmup_end_sim_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "last_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "task": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "instruction": {
+              "type": "string",
+              "minLength": 1
+            },
+            "language": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id",
+            "version",
+            "instruction",
+            "language"
+          ],
+          "additionalProperties": false
+        },
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "rambo_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "checkpoint_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "isaac_sim": {
+              "type": "string",
+              "minLength": 1
+            },
+            "isaac_lab_commit": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            },
+            "asset": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "license": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "approval": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{64}$"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "sha256"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "source",
+                "license",
+                "sha256",
+                "approval"
+              ],
+              "additionalProperties": false
+            },
+            "task_config": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            },
+            "runtime_evidence": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "rambo_commit",
+            "checkpoint_sha256",
+            "isaac_sim",
+            "isaac_lab_commit",
+            "asset",
+            "task_config",
+            "runtime_evidence"
+          ],
+          "additionalProperties": false
+        },
+        "files": {
+          "type": "object",
+          "properties": {
+            "rgb_index": {
+              "type": "string",
+              "minLength": 1
+            },
+            "commands": {
+              "type": "string",
+              "minLength": 1
+            },
+            "control_trace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "interventions": {
+              "type": "string",
+              "minLength": 1
+            },
+            "robot": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "missing_reasons": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "missing_reasons"
+              ],
+              "additionalProperties": false
+            },
+            "contact": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "missing_reasons": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "missing_reasons"
+              ],
+              "additionalProperties": false
+            },
+            "task": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "missing_reasons": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "missing_reasons"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "rgb_index",
+            "commands",
+            "control_trace",
+            "interventions",
+            "robot",
+            "contact",
+            "task"
+          ],
+          "additionalProperties": false
+        },
+        "outcome": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "success_tick": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9223372036854775807
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "terminated": {
+              "type": "boolean"
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "terminal_snapshot_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "snapshot_epoch": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            }
+          },
+          "required": [
+            "success",
+            "success_tick",
+            "terminated",
+            "truncated",
+            "reason",
+            "terminal_snapshot_tick",
+            "snapshot_epoch"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "dataset_id",
+        "episode_id",
+        "reset_epoch",
+        "seed",
+        "diagnostic_only",
+        "origin_sim_ns",
+        "warmup_end_sim_ns",
+        "last_tick",
+        "profiles",
+        "task",
+        "provenance",
+        "files",
+        "outcome",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "camera_frame": {
+      "type": "object",
+      "properties": {
+        "camera_id": {
+          "enum": [
+            "go2_ego",
+            "d435i_rgb_task"
+          ]
+        },
+        "profile_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sensor_frame_id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "capture_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "timestamp_ns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "intrinsics": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "world_position": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "world_quaternion_xyzw": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "camera_id",
+        "profile_hash",
+        "sensor_frame_id",
+        "capture_tick",
+        "timestamp_ns",
+        "path",
+        "sha256",
+        "intrinsics",
+        "world_position",
+        "world_quaternion_xyzw",
+        "reset_epoch",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "command": {
+      "type": "object",
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "end_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "executed_until_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "requested": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "transformed": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "filtered": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "executed": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 9,
+              "maxItems": 9
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "partial",
+            "not_executed"
+          ]
+        },
+        "force_overridden": {
+          "type": "boolean"
+        },
+        "transform_id": {
+          "const": "native9_force_zero_v2"
+        },
+        "filter_id": {
+          "const": "identity"
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "command_id",
+        "start_tick",
+        "end_tick",
+        "executed_until_tick",
+        "requested",
+        "transformed",
+        "filtered",
+        "executed",
+        "status",
+        "force_overridden",
+        "transform_id",
+        "filter_id",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "control_step": {
+      "type": "object",
+      "properties": {
+        "start_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "end_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "held": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "residual_observation_command_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fl_ik_command_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fl_ik_computed_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "residual_action_18d": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 18,
+          "maxItems": 18
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "start_tick",
+        "end_tick",
+        "command_id",
+        "held",
+        "residual_observation_command_id",
+        "fl_ik_command_id",
+        "fl_ik_computed_tick",
+        "residual_action_18d",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "intervention": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "external_wrench",
+            "state_intervention"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "frame": {
+          "enum": [
+            "world",
+            "body",
+            "projected_com"
+          ]
+        },
+        "application_point": {
+          "enum": [
+            "body_com",
+            "explicit"
+          ]
+        },
+        "point_m": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "force_n": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "torque_nm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "start_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "end_tick": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "state_change": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "quantity": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              },
+              "required": [
+                "quantity",
+                "value"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind",
+        "source",
+        "target_body",
+        "frame",
+        "application_point",
+        "point_m",
+        "force_n",
+        "torque_nm",
+        "start_tick",
+        "end_tick",
+        "state_change",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "task_config": {
+      "type": "object",
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "unit",
+              "description"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "success_definition": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "object_body": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contact_pairs": {
+          "type": "object",
+          "properties": {
+            "fl": {
+              "type": "object",
+              "properties": {
+                "sensor_body": {
+                  "const": "FL_foot"
+                },
+                "partner_body": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "method": {
+                  "enum": [
+                    "filtered_body_pair",
+                    "unavailable",
+                    "proximity_inference"
+                  ]
+                }
+              },
+              "required": [
+                "sensor_body",
+                "partner_body",
+                "method"
+              ],
+              "additionalProperties": false
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "sensor_body": {
+                  "const": "base"
+                },
+                "partner_body": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "method": {
+                  "enum": [
+                    "filtered_body_pair",
+                    "unavailable",
+                    "proximity_inference"
+                  ]
+                }
+              },
+              "required": [
+                "sensor_body",
+                "partner_body",
+                "method"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "fl",
+            "body"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "task_id",
+        "version",
+        "metrics",
+        "success_definition",
+        "extensions",
+        "object_body",
+        "contact_pairs"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "asset_approval",
+            "runtime_conformance"
+          ]
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "not_run"
+          ]
+        },
+        "diagnostic_only": {
+          "type": "boolean"
+        },
+        "subject_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "checks": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "passed",
+              "failed",
+              "not_run"
+            ]
+          }
+        },
+        "author": {
+          "type": "string",
+          "minLength": 1
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "kind",
+        "status",
+        "diagnostic_only",
+        "subject_sha256",
+        "checks",
+        "author",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "release": {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": "2.0.0"
+        },
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "checksums_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "sha256",
+              "checksums_sha256"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "extensions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "dataset_id",
+        "episodes",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "ResetRequest": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "ResetRequest"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "timeout_s": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "task": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "instruction": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "language": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "instruction",
+                "language"
+              ],
+              "additionalProperties": false
+            },
+            "origin_sim_ns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            }
+          },
+          "required": [
+            "timeout_s",
+            "task",
+            "origin_sim_ns"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "Ready": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "Ready"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "cache_generation": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            }
+          },
+          "required": [
+            "tick",
+            "cache_generation"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "Observation": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "Observation"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "rgb": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/camera_frame"
+              }
+            },
+            "executed_history": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/command"
+              }
+            },
+            "instruction": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "tick",
+            "rgb",
+            "executed_history",
+            "instruction"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "ActionChunk": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "ActionChunk"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "observation_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "chunk_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "action_period_ticks": {
+              "const": 10
+            },
+            "actions": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 9,
+                "maxItems": 9
+              }
+            }
+          },
+          "required": [
+            "observation_id",
+            "chunk_id",
+            "start_tick",
+            "action_period_ticks",
+            "actions"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "ActionAccepted": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "ActionAccepted"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "chunk_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "command_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            }
+          },
+          "required": [
+            "chunk_id",
+            "start_tick",
+            "command_count"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "ExecutionAck": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "ExecutionAck"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "chunk_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "start_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "end_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "completed_count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "commands": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/command"
+              }
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "chunk_id",
+            "start_tick",
+            "end_tick",
+            "completed_count",
+            "commands",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "End": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "End"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "success": {
+              "type": "boolean"
+            },
+            "terminated": {
+              "type": "boolean"
+            },
+            "truncated": {
+              "type": "boolean"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "tick",
+            "success",
+            "terminated",
+            "truncated",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "protocol_version": {
+          "const": "2.0.0"
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reset_epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "message_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "profiles": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "timing": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "cameras": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "telemetry": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "action",
+            "timing",
+            "cameras",
+            "telemetry"
+          ],
+          "additionalProperties": false
+        },
+        "extensions": {
+          "type": "object"
+        },
+        "type": {
+          "const": "Error"
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "tick",
+            "code",
+            "reason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol_version",
+        "session_id",
+        "episode_id",
+        "reset_epoch",
+        "message_id",
+        "profiles",
+        "extensions",
+        "type",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

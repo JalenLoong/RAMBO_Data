@@ -1,0 +1,94 @@
+{
+  "id": "go2_ego",
+  "version": "2.0.0",
+  "source_setup": "robot-dual-v3",
+  "source_key": "ego",
+  "width": 1280,
+  "height": 720,
+  "rgb_period_ticks": 40,
+  "mount_parent": "Robot/base",
+  "mount_position_m": [
+    0.32715,
+    -3e-05,
+    0.04297
+  ],
+  "mount_quaternion_xyzw": [
+    0.0,
+    0.0,
+    0.0,
+    1.0
+  ],
+  "mount_axes": "x forward, y left, z up",
+  "optical_axes": "x right, y down, z forward",
+  "R_mount_from_optical": [
+    [
+      0,
+      0,
+      1
+    ],
+    [
+      -1,
+      0,
+      0
+    ],
+    [
+      0,
+      -1,
+      0
+    ]
+  ],
+  "intrinsics": [
+    [
+      423.94968254892405,
+      0,
+      640
+    ],
+    [
+      0,
+      423.94968254892405,
+      360
+    ],
+    [
+      0,
+      0,
+      1
+    ]
+  ],
+  "pixel_coordinate_convention": "renderer principal point (width/2,height/2)",
+  "clipping_m": [
+    0.1,
+    20.0
+  ],
+  "calibration_status": "nominal_specification_approximation_not_device_calibration",
+  "device_distortion": "unknown; simulator is rectilinear pinhole",
+  "mechanical_mount": "nominal not measured",
+  "rig_physics": {
+    "mass_modeled": false,
+    "collision": false
+  },
+  "source_parameters": {
+    "path": "/World/envs/env_0/Robot/base/front_camera",
+    "position": [
+      0.32715,
+      -3e-05,
+      0.04297
+    ],
+    "rotation_xyzw": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "focal_length_mm": 6.940519998291173,
+    "width": 1280,
+    "height": 720,
+    "horizontal_aperture_mm": 20.955,
+    "vertical_aperture_mm": 11.787187499999998,
+    "calibration_status": "nominal_specification_approximation_not_device_calibration",
+    "fov_axis_assumption": "diagonal",
+    "diagonal_fov_deg": 120.0,
+    "projection": "centered_rectilinear_pinhole_no_distortion",
+    "mount_source": "https://github.com/unitreerobotics/unitree_ros/blob/master/robots/go2_description/urdf/go2_description.urdf",
+    "fov_source": "https://static.generation-robots.com/media/brochure-unitree-go2-en.pdf"
+  }
+}
