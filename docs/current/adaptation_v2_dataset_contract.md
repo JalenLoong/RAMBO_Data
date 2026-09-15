@@ -13,6 +13,8 @@ source_map:
 
 # WAM-Policy Adaptation v2 Dataset Contract
 
+> Work ID: `DATA-002` in the independent adaptation-v2 namespace.
+
 > Dataset schema: `wam-quadruped-v2.1.0`; LeRobot codebase: `v2.1`; library: `lerobot==0.3.3`.
 > 本轮范围：contract/schema、最小CPU读取/校验/映射适配与人工测试。
 > 真实50Hz采集、observer机位、recorder、生产converter、VAE/T5批量生成、训练均未在本轮实现。

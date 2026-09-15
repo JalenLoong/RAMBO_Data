@@ -10,7 +10,7 @@ source_map:
   - scripts/rambo/check_contracts_v2_conformance.py
 ---
 
-> Historical PNG/12.5Hz acquisition contract 2.0.0. Dataset storage/timing is superseded by V2-DATA-CONTRACT; this is not the current canonical specification. Runtime/action-confirmation behavior remains separately applicable.
+> Historical PNG/12.5Hz acquisition contract 2.0.0. Dataset storage/timing is superseded by DATA-002; this is not the current canonical specification. Runtime/action-confirmation behavior remains separately applicable.
 
 # Canonical Dataset v2 and synchronous policy contract
 

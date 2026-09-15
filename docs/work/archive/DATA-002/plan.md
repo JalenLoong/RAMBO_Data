@@ -1,6 +1,6 @@
 ---
-id: V2-DATA-CONTRACT
-type: change
+id: DATA-002
+type: exec-plan
 status: completed
 source_map: []
 ---
@@ -25,6 +25,20 @@ Acceptance: correct row/frame/terminal counts; immutable canonical during cache 
 normalizer; false initial masks; observer exclusion; sensor freshness; failed partial video retained.
 Documentation distinguishes new targets from actual 12.5 Hz simulator reference.
 Evidence: workspace runs/audit/v2/V2-DATA-CONTRACT/20260915T141714Z.
+
+## Implementation and CPU acceptance
+New dataset_v2 packages, separate profile/schema version, media checks/finalization, Raw sensor freshness,
+LeRobot reader/terminal/tail adapter and isolated model-cache reads implemented. Current-context docs
+and historical supersession markers updated. WAM make check55 passed; data tooling37 passed; simulator
+CPU regression198 passed (one data-tooling module skipped for absent PyArrow, one CUDA deselected);
+10 cross-namespace cases passed. All data-tooling tests ran separately with the installed policy/file-tool Python.
+No environment install/upgrade, real simulation, collection, production converter, real VAE/T5 or training.
+Evidence: workspace runs/audit/v2/V2-DATA-CONTRACT/20260915T141714Z.
+Downloads mirrors updated successfully; final archive and integrity checks recorded with this run.
+
+Development notes: a context test exposed a missing Work ID reference, corrected. A broad regression
+launch omitted workspace.env and hit the read-only default Hugging Face cache; loading the approved
+workspace environment resolved it without changing data/model behavior. Failed logs retained.
 
 ## Completion
 User-approved contract supplements and current-context migration completed. Both Downloads documents

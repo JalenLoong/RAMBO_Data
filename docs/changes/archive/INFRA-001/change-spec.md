@@ -1,13 +1,13 @@
 ---
-id: V2-CLEANUP
-type: exec-plan
+id: INFRA-001
+type: change
 status: completed
 source_map: []
 ---
-# V2-CLEANUP
+# INFRA-001
 
 ## Authorized scope
-Remove retired biped and three-view project surfaces, enforce ownership, and validate the retained quadruped runtime.
+Create v2 branches, migrate the simulator directory and editable bindings, establish governance and compute context.
 User authorization: implement v2 stages 0–1, 2026-09-15.
 
 ## Plan and acceptance

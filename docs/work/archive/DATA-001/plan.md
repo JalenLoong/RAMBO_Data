@@ -1,11 +1,11 @@
 ---
-id: V2-CONTRACTS
-type: change
+id: DATA-001
+type: exec-plan
 status: completed
 source_map: []
 ---
 
-> Historical V2-CONTRACTS acceptance: PNG storage and direct12.5Hz acquisition. These data clauses are superseded by V2-DATA-CONTRACT; the recorded test results do not establish new LeRobot/50Hz compatibility.
+> Historical DATA-001 acceptance: PNG storage and direct12.5Hz acquisition. These data clauses are superseded by DATA-002; the recorded test results do not establish new LeRobot/50Hz compatibility.
 
 # Stage 3: canonical data and synchronous runtime contracts
 
@@ -35,6 +35,9 @@ Evidence: workspace runs/audit/v2/V2-CONTRACTS/20260915T060642Z.
 Isaac/controller wiring, physical consumption timing, contact-pair sensing,
 RTX synchronization, terminal capture, real VAE/server integration, collection, training, remote jobs.
 No automatic commit/push. Contract acceptance does not authorize dataset release.
+
+## Progress
+Schema/profile, offline validators, command ledger, session protocol and WAM alignment/history implemented. Initial RAMBO 41 and WAM 20 CPU tests passed. Initial 23-case conformance passed. Final float32/terminal/contact and integrity checks completed; see acceptance below.
 
 ## Final acceptance
 WAM make check: 38 tests passed; RAMBO CPU suite: 195 passed, 1 skipped, 1 CUDA deselected.

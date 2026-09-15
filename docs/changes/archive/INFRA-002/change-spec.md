@@ -1,13 +1,13 @@
 ---
-id: V2-BOOTSTRAP
-type: exec-plan
+id: INFRA-002
+type: change
 status: completed
 source_map: []
 ---
-# V2-BOOTSTRAP
+# INFRA-002
 
 ## Authorized scope
-Create v2 branches, migrate the simulator directory and editable bindings, establish governance and compute context.
+Remove retired biped and three-view project surfaces, enforce ownership, and validate the retained quadruped runtime.
 User authorization: implement v2 stages 0–1, 2026-09-15.
 
 ## Plan and acceptance

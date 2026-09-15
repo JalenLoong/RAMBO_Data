@@ -14,10 +14,10 @@ def test_current_dataset_contract_is_explicit():
 
 
 def test_old_rules_are_marked_and_current_entries_route_to_new_contract():
-    assert 'V2-DATA-CONTRACT' in (ROOT/'AGENTS.md').read_text()
+    assert 'DATA-002' in (ROOT/'AGENTS.md').read_text()
     assert 'wam-quadruped-v2.1.0' in (ROOT/'docs/current/contracts-v2.md').read_text()
-    assert 'superseded_in_part' in (ROOT/'docs/decisions/ADR-V2-CONTRACTS.md').read_text()
+    assert 'superseded_in_part' in (ROOT/'docs/decisions/ADR-0003.md').read_text()
     for tree,file in [('changes','change-spec.md'),('work','plan.md')]:
-        text=(ROOT/f'docs/{tree}/archive/V2-CONTRACTS/{file}').read_text()
-        assert 'Historical V2-CONTRACTS acceptance' in text and 'superseded' in text
+        text=(ROOT/f'docs/{tree}/archive/DATA-001/{file}').read_text()
+        assert 'Historical DATA-001 acceptance' in text and 'superseded' in text
     assert 'Existing 12.5Hz mounted RGB reference' in (ROOT/'README.md').read_text()

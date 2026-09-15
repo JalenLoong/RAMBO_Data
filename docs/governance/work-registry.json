@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "namespace": "adaptation-v2",
+  "authority_repository": "WAM-Policy",
+  "categories": {
+    "ALG": "algorithm/model/loss",
+    "DATA": "data/preprocessing/contracts",
+    "EVAL": "evaluation",
+    "INFRA": "environment/repository infrastructure",
+    "DOC": "documentation governance",
+    "SIM": "simulator/task",
+    "TRAIN": "training execution",
+    "INFER": "inference serving"
+  },
+  "allocation": "Shared across v2 repositories, independent of v1; per-category monotonic numbering from 001, never reuse. Add registry reservation before creating work.",
+  "works": [
+    {
+      "id": "INFRA-001",
+      "category": "INFRA",
+      "status": "completed",
+      "aliases": [
+        "V2-BOOTSTRAP"
+      ],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/INFRA-001/change-spec.md",
+      "plan": "docs/work/archive/INFRA-001/plan.md"
+    },
+    {
+      "id": "INFRA-002",
+      "category": "INFRA",
+      "status": "completed",
+      "aliases": [
+        "V2-CLEANUP"
+      ],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/INFRA-002/change-spec.md",
+      "plan": "docs/work/archive/INFRA-002/plan.md"
+    },
+    {
+      "id": "ALG-001",
+      "category": "ALG",
+      "status": "completed",
+      "aliases": [
+        "V2-ADAPTATION"
+      ],
+      "repositories": [
+        "WAM-Policy"
+      ],
+      "change": "docs/changes/archive/ALG-001/change-spec.md",
+      "plan": "docs/work/archive/ALG-001/plan.md"
+    },
+    {
+      "id": "DATA-001",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [
+        "V2-CONTRACTS"
+      ],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-001/change-spec.md",
+      "plan": "docs/work/archive/DATA-001/plan.md"
+    },
+    {
+      "id": "DATA-002",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [
+        "V2-DATA-CONTRACT"
+      ],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-002/change-spec.md",
+      "plan": "docs/work/archive/DATA-002/plan.md"
+    },
+    {
+      "id": "DOC-001",
+      "category": "DOC",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DOC-001/change-spec.md",
+      "plan": "docs/work/archive/DOC-001/plan.md"
+    }
+  ]
+}

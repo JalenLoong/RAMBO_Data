@@ -2,13 +2,21 @@
 id: <WORK-ID>
 type: exec-plan
 status: active
+namespace: adaptation-v2
 source_map: []
 ---
-
 # ExecPlan: <WORK-ID>
 
-## Steps
+## Purpose and scope
 
-## Validation
+## Context and milestones
 
-## Not run
+## Progress (timestamped)
+
+## Discoveries and decision log
+
+## Validation and not_run
+
+## Recovery
+
+## Outcomes and retrospective

@@ -9,7 +9,7 @@ source_map:
 ---
 # Current data interface: LeRobot 50Hz
 
-Work ID: **V2-DATA-CONTRACT**.
+Work ID: **DATA-002**.
 
 [Authoritative dataset contract](adaptation_v2_dataset_contract.md) defines `wam-quadruped-v2.1.0`, LeRobot codebase `v2.1` and `lerobot==0.3.3` compatibility.
 Raw/canonical policy RGB are 50Hz; model RGB is deterministically sampled to 12.5Hz by WAM. Observer25Hz is monitor-only.
@@ -26,7 +26,7 @@ the Isaac interpreter remains unchanged and does not currently include PyArrow. 
 
 ## Historical boundary
 
-The [2.0.0 PNG reference](../work/archive/V2-CONTRACTS/contracts-v2.0-reference.md) and its original CPU acceptance remain historical evidence.
+The [2.0.0 PNG reference](../work/archive/DATA-001/contracts-v2.0-reference.md) and its original CPU acceptance remain historical evidence.
 `contracts_v2` is retained for that explicit audit and the existing pure runtime protocol; do not use its old PNG dataset schema as the new default.
 Dataset format versioning does not rewrite the existing runtime handshake/profile bundle. Real 50Hz acquisition, observer creation,
 recorder, production conversion, actual sensor cadence, VAE/T5 generation and simulator/server wiring remain not_run.

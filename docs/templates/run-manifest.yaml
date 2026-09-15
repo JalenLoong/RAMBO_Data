@@ -1,14 +1,23 @@
-# Create an immutable copy only for an actual run attempt.
-attempt_id: ATTEMPT-<WORK-ID>-<number>
+# Copy only when an actual attempt starts; null means unavailable, never fabricated.
+namespace: adaptation-v2
 work_id: <WORK-ID>
-status: planned
-git_commit: <commit>
-config: <repo-relative-config-path>
-data:
-  uri: <immutable-uri>
-  sha256: <hash>
-checkpoint:
-  uri: <immutable-uri-or-null>
-  sha256: <hash-or-null>
-environment: <image-or-lockfile-reference>
+logical_run_id: <LOGICAL-RUN-ID>
+attempt_id: ATTEMPT-<WORK-ID>-<number>
+parent_attempt_id: null
+status: running
+started_at: null
+ended_at: null
+exit_code: null
+git: {commit: null, branch: null, dirty: null, patch_sha256: null}
+entrypoint: null
+command: []
+config: {uri: null, sha256: null}
+data: {uri: null, sha256: null, split: null, preprocessing_version: null}
+models: {teacher: null, student: null, resume_checkpoint: null}
+seed: null
+environment: {python: null, framework: null, cuda_or_rocm: null, lockfile: null, host: null, gpu_count: null, scheduler_job_id: null}
+wandb: {status: not_run, run_id: null, group: null, url: null}
+artifacts: {inputs: [], outputs: []}
+evidence: {source_review: not_run, unit_synthetic: not_run, real_artifact: not_run, target_hardware: not_run, training: not_run}
+links: {change: null, plan: null, adrs: [], pr: null}
 not_run: []

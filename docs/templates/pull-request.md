@@ -1,9 +1,13 @@
-# Pull request template
+# [<WORK-ID>] <observable change>
 
-## Work ID and scope
+## Problem and resulting behavior
 
-## Contract or behavior change
+## ChangeSpec / ExecPlan / ADR links
 
-## Validation performed
+## Actual attempt evidence
 
-## Explicitly not run
+## Algorithm / data / checkpoint / evaluation / reproducibility impact
+
+## Passed, failed and not_run
+
+## Compatibility and rollback

@@ -10,6 +10,9 @@ from typing import Any
 
 import yaml
 
+sys.path.insert(0, str(Path(__file__).resolve().parent if Path(__file__).resolve().parent.name == "scripts" else Path(__file__).resolve().parents[1]))
+from check_governance import check as check_governance
+
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
 CHECKED_TREES = ("current", "research", "decisions", "changes", "work", "governance", "upstream")
@@ -60,7 +63,8 @@ def main() -> int:
                 source_path = Path(source)
                 if source_path.is_absolute() or ".." in source_path.parts or not (ROOT / source_path).exists():
                     failures.append(f"{path.relative_to(ROOT)}: invalid source_map entry {source!r}")
-            for target in LINK.findall(text):
+            link_text = re.sub(r"```[\s\S]*?```", "", text)
+            for target in LINK.findall(link_text):
                 if not local_link_exists(path, target):
                     failures.append(f"{path.relative_to(ROOT)}: broken local link {target!r}")
             relative_parts = path.relative_to(DOCS).parts
@@ -73,6 +77,7 @@ def main() -> int:
     plan_ids = {meta["id"] for path, meta in documents if "work" in path.parts and meta["type"] == "exec-plan"}
     if change_ids != plan_ids:
         failures.append(f"ChangeSpec/ExecPlan Work IDs differ: {sorted(change_ids)} vs {sorted(plan_ids)}")
+    failures.extend(check_governance(ROOT))
     if failures:
         print("Documentation check failed:\n" + "\n".join(failures), file=sys.stderr)
         return 1

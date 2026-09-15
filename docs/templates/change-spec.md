@@ -2,13 +2,15 @@
 id: <WORK-ID>
 type: change
 status: active
+namespace: adaptation-v2
 source_map: []
 ---
+# ChangeSpec: <WORK-ID>
 
-# ChangeSpec: <title>
+## Intent and observable behavior
 
-## Intent
+## Compatibility and non-goals
 
-## Observable behavior
+## Evidence threshold and acceptance scenarios
 
-## Evidence threshold
+## Migration and rollback

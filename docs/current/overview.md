@@ -39,4 +39,4 @@ Evidence: workspace `runs/audit/v2/V2-CONTRACTS/20260915T060642Z`. Real simulato
 
 ## Current dataset revision
 
-V2-DATA-CONTRACT supersedes the old PNG/direct12.5Hz data clauses with LeRobot v2.1-style50Hz raw/canonical video/action rows, terminal snapshots and separate model cache. See [current interface](contracts-v2.md). Model RGB remains12.5Hz. New50Hz acquisition and25Hz observer are specification targets, not runtime acceptance. Existing V2-CONTRACTS CPU results remain evidence only for the old data profile and retained pure protocol.
+DATA-002 supersedes the old PNG/direct12.5Hz data clauses with LeRobot v2.1-style50Hz raw/canonical video/action rows, terminal snapshots and separate model cache. See [current interface](contracts-v2.md). Model RGB remains12.5Hz. New50Hz acquisition and25Hz observer are specification targets, not runtime acceptance. Existing DATA-001 CPU results remain evidence only for the old data profile and retained pure protocol.

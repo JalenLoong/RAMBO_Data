@@ -1,0 +1,43 @@
+{
+  "namespace": "adaptation-v2",
+  "work_aliases": {
+    "V2-BOOTSTRAP": "INFRA-001",
+    "V2-CLEANUP": "INFRA-002",
+    "V2-ADAPTATION": "ALG-001",
+    "V2-CONTRACTS": "DATA-001",
+    "V2-DATA-CONTRACT": "DATA-002"
+  },
+  "adr_aliases": {
+    "ADR-V2-BOUNDARIES": "ADR-0001",
+    "ADR-V2-ADAPTATION": "ADR-0002",
+    "ADR-V2-CONTRACTS": "ADR-0003",
+    "ADR-V2-DATA-CONTRACT": "ADR-0004"
+  },
+  "historical_publication_group": "V2-PUBLISH",
+  "historical_publications": [
+    {
+      "path": "runs/audit/v2/V2-PUBLISH/20260915T031935Z/publication.json",
+      "related_work": [
+        "INFRA-001",
+        "INFRA-002"
+      ]
+    },
+    {
+      "path": "runs/audit/v2/V2-PUBLISH/20260915T052825Z/publication.json",
+      "related_work": [
+        "ALG-001"
+      ]
+    }
+  ],
+  "historical_execution_commits": {
+    "WAM-Policy": {
+      "ff8c61c273bfce31cb9e7092474e9b989a4b406a": "62b1a229b27e16a1a6818839598041e5ee79aaad",
+      "2a2374c13e36ea256846e260d963acaa4209a1a7": "e9be8f59461faef9c2176b0497627276a7ef2409"
+    },
+    "RAMBO_Data": {
+      "9a8989b56989c8450341b6071d33560c1f104c74": "5de5beeff56e223d47eb45751adfaadc9d3eee73"
+    }
+  },
+  "evidence_root": "runs/audit/v2/DOC-001/20260915T152709Z/",
+  "note": "Old SHA/path/hash records identify actual historical execution. Reworded commits have identical trees, not new execution evidence."
+}

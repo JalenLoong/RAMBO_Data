@@ -12,3 +12,5 @@ evidence threshold stated in the ChangeSpec is met.
 
 Run manifests are immutable records of actual attempts. Start from
 `docs/templates/run-manifest.yaml`; do not create a manifest for a planned or unrun job.
+
+Governance: read docs/governance/documentation.md and docs/governance/v2.md before multi-file work. Reserve CATEGORY-NNN in docs/governance/work-registry.json; v2 numbering starts at 001 independently of v1, shared across both repositories. Use the same Work ID in changes, plans, commit/PR titles and attempts. See docs/work/INDEX.md.
