@@ -9,6 +9,7 @@ from isaaclab.assets import RigidObject, RigidObjectCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.math import quat_apply
 from .object_tasks_env import ObjectTaskQPEnv, LiftBasketQPEnvCfg
+from ...common.push_box_scenarios import goal_markers
 from ...common.push_box_geometry import source_geometry, world_geometry, fully_inside, PolicySuccessHold
 
 @configclass
@@ -35,7 +36,7 @@ def asset_geometry(path):
 class PushBoxV2Env(ObjectTaskQPEnv):
     def _spawn_lift_basket(self):
         low,high=asset_geometry(self.cfg.approved_asset_path)
-        self._box_geometry=source_geometry(low,high)
+        self._box_geometry=source_geometry(low,high,face=self.cfg.approved_profile.get("episode_scenario",{}).get("selected_face","local_x_min"))
         self._box_center_local_np=(low+high)/2
         self._initial_center_x=world_geometry(self._box_geometry,[*self.cfg.primary_position,*self.cfg.primary_orientation])['center'][0]
         self._success_hold=PolicySuccessHold(self.cfg.approved_profile["success_policy_ticks"])
@@ -44,8 +45,8 @@ class PushBoxV2Env(ObjectTaskQPEnv):
         cfg.func(path,cfg,translation=tuple(self.cfg.primary_position),orientation=tuple(self.cfg.primary_orientation))
         self._primary=RigidObject(RigidObjectCfg(prim_path=path,init_state=RigidObjectCfg.InitialStateCfg(pos=tuple(self.cfg.primary_position),rot=tuple(self.cfg.primary_orientation))))
         self.scene.rigid_objects['box05']=self._primary
-        for i,(pos,size) in enumerate([((.95,.15,.002),(.008,.5,.003)),((1.35,.15,.002),(.008,.5,.003)),((1.15,-.10,.002),(.4,.008,.003)),((1.15,.40,.002),(.4,.008,.003))]):
-            marker=sim.CuboidCfg(size=size,visual_material=sim.PreviewSurfaceCfg(diffuse_color=(.05,.8,.15)))
+        for i,(pos,size) in enumerate(goal_markers(self.cfg.approved_profile)):
+            marker=sim.CuboidCfg(size=size,visual_material=sim.PreviewSurfaceCfg(diffuse_color=tuple(self.cfg.approved_profile.get("goal_color",(.05,.8,.15)))))
             marker.func('/World/Goal_'+str(i),marker,translation=pos)
 
     @property
@@ -82,6 +83,8 @@ class PushBoxV2Env(ObjectTaskQPEnv):
         if hasattr(self,'_expert_start_world'):del self._expert_start_world
         self._expert_diagnostics=None
         if hasattr(self,'_expert_stage'):del self._expert_stage
+        for key in ['_expert_push_start','_expert_finish_start','_expert_finish_base','_expert_finish_foot','_expert_lateral_comp','_corner_recovery']:
+            if hasattr(self,key):delattr(self,key)
 
     def _get_dones(self):
         geometry=self.geometry_world();profile=self.cfg.approved_profile

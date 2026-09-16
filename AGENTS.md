@@ -1,20 +1,17 @@
-# RAMBO_Data v2 agent guide
+# Adaptation v2 agent guide
 
-Read docs/current/overview.md and .agent/PLANS.md. Work only on the v2 branch for this adaptation.
-RAMBO_Data owns Isaac/RAMBO runtime, quadruped tasks, assets, camera geometry, teleoperation, recording, telemetry, success detection and canonical dataset publication.
-Never import WAM, LingBot-VA, Diffusers or Transformers. WAM-Policy consumes explicit dataset/runtime contracts and owns model-specific caches, training and inference.
-Current scope: quadruped Go2, single FL manipulation, native 9D; Go2 ego + D435i RGB task camera. First-baseline desired force is zero. Retired biped and three-world-view project code/documents are deleted from v2, with history retained in Git.
-Preserve existing quadruped controller/checkpoint physics and other quadruped tasks unless a task-specific change is authorized. Editor cameras are debug-only.
-Keep datasets, checkpoints and run outputs in versioned workspace layers outside source. Preserve historical resources and manifests.
-Local Ubuntu 24.04 / RTX 5070 Ti handles debugging, simulation and data synthesis. The user authorizes outside-sandbox execution for necessary local GPU/Isaac checks; sandbox GPU invisibility is not a host-driver failure.
-Full model SFT belongs to the remote AMD server after local debugging and job-script preparation; connection and remote runtime are not yet verified. Do not start remote work in bootstrap.
-Use workspace.env for paths and workspace.lock.yaml for installed environments. The old /etc/vast-agents-guide.md is unavailable and is not a dependency.
-Use Work IDs, ChangeSpec/ExecPlan and evidence; report passed/failed/not_run accurately. Run project boundary checks and affected tests before handoff.
+Read docs/INDEX.md, docs/current/overview.md, docs/current/contracts-v2.md, docs/current/publication-v2.md and .agent/PLANS.md. Follow docs/governance/documentation.md and docs/governance/v2.md. Shared v2 Work IDs are reserved in WAM's docs/governance/work-registry.json and synchronized to RAMBO; v1 numbering is independent. Archive paired ChangeSpec/ExecPlan only after evidence passes. Keep attempt/source/checkpoint identities and historical manifests immutable.
 
-Stage 3 (DATA-001) is authorized: versioned contracts, independent installed validators, CPU command/protocol logic and conformance tests. Keep real simulator/server integration and collection/training not_run. See docs/current/contracts-v2.md. No automatic commit/push.
+Fixed baseline: Go2 quadruped, FL manipulation only, native9, original RAMBO controller, ego + task RGB, desired force zero. Raw/canonical50Hz, modelRGB12.5Hz, observer25Hz diagnostic-only. Inherit authoritative simulation timestamps and pre-reset terminal state/RGB; do not synthesize time from frame indices. Do not add proprio/observer/contact as model inputs or redesign the architecture.
 
-Current dataset authority: docs/current/contracts-v2.md -> DATA-002. Raw/canonical policy video target50Hz, model RGB12.5Hz, observer25Hz monitor-only. New data tooling uses LeRobot v2.1-style MP4/Parquet plus terminal snapshots. Old PNG2.0.0 data rules are historical. This task authorizes only schema/minimum CPU adapters/tests/docs, not recorder, real sensor/runtime wiring, collection or training. Preserve the current runtime protocol and stage-2 model code.
+Use workspace.env and workspace.lock.yaml in the workspace container. Necessary local RTX5070Ti GPU/Isaac execution outside the sandbox is user-authorized; sandbox GPU invisibility is not a host-driver diagnosis. Full SFT is intended for the user's AMD server; connection/runtime/backend remain unverified. No OPD, remote job, new collection or training is implied by prior data authorization.
 
-Governance: read docs/governance/documentation.md and docs/governance/v2.md before multi-file work. Reserve CATEGORY-NNN in docs/governance/work-registry.json; v2 numbering starts at 001 independently of v1, shared across both repositories. Use the same Work ID in changes, plans, commit/PR titles and attempts. See docs/work/INDEX.md.
+Current data: DATA-005 ten accepted demonstrations; DATA-006 completed50 usable demonstrations,40/5/5 episode split,24,335 actions, actual frozen VAE/T5 caches and train-only normalization on19,340 actions. Read docs/work/archive/DATA-006/plan.md. Pilots, failures and demo11-a1 quarantine remain local/excluded; demo11-a2 is the valid replacement. Success remains full footprint in episode goal and not fallen for3 policy ticks; contact unknown is diagnostic, not a gate.
 
-DATA-004 current acceptance: one straight-push/full-footprint replacement pilot under push-box-v2-2. The old8.04s center-only pilot is invalid and excluded from training. Face width is not a requirement; the reviewed narrow face is used. Whole-footprint containment for3 policy ticks, not contact/yaw, gates success. Read docs/current/overview.md and docs/work/archive/DATA-004/plan.md. No batch collection, training or automatic commit/push before user review.
+DATA-007 publishes usable demonstration Raw/Canonical and corresponding evidence/replay to dontKnow23456/QLM-Bench. Never upload pilots/failures/quarantine/model caches/weights/asset source. Public/license unknown unchanged. User explicitly authorized current source commits/pushes to existing v2 targets; publication receipts record actual results. This is not permission for arbitrary later commits or jobs.
+
+Next training session must first read context and confirm its understanding with the user, without file edits, local training, new collection, server connection or remote job submission. Training code/job orchestration/local small-scale checks are the intended next discussion, not implemented or accepted merely because foundations exist. Preserve unrelated user changes.
+
+RAMBO owns simulator/task/assets/cameras/control/recording/canonical publication. Never import WAM/LingBot-VA/Diffusers/Transformers. Preserve original controller/checkpoint and unrelated quadruped tasks. Run docs, import boundaries and affected tests before handoff.
+
+DATA-007 HF release is published/verified at 4b5e0ed9aa04cbc1143774798f63171b27d838a7. Its completed plan is docs/work/archive/DATA-007/plan.md. Source push receipts and next-session prompt are in workspace runs/audit/v2/DATA-007.

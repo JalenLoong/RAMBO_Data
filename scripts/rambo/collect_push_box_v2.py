@@ -1,4 +1,4 @@
-"""Bounded DATA-004 terminal gate or exactly one approved technical pilot."""
+"""Bounded approved Push Box collection, with explicit work/scenario provenance."""
 import argparse,hashlib,importlib.util,json,os,subprocess,sys,traceback
 from pathlib import Path
 import numpy as np
@@ -9,7 +9,13 @@ def main():
     from rambo.utils.physx import validate_rambo_visualizer_args
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--ffmpeg',required=True)
-    p.add_argument('--mode',choices=['terminal-gate','pilot'],required=True)
+    p.add_argument('--episode-config',type=Path)
+    p.add_argument('--mode',choices=['terminal-gate','pilot','demonstration'],required=True)
+    p.add_argument('--work-id',default='DATA-004')
+    p.add_argument('--scenario-id',default='nominal')
+    p.add_argument('--offset-x',type=float,default=0.)
+    p.add_argument('--offset-y',type=float,default=0.)
+    p.add_argument('--pilot-gate',type=Path)
     p.add_argument('--output-dir',type=Path,required=True)
     p.add_argument('--terminal-gate',type=Path)
     p.add_argument('--max-actions',type=int,default=500)
@@ -17,14 +23,24 @@ def main():
     root=Path(os.environ['WORKSPACE_ROOT']);repo=Path(__file__).resolve().parents[2]
     profile=json.loads((repo/'configs/push_box_v2.json').read_text())
     if profile['approval']['status']!='approved':raise ValueError('Asset/task approval required')
-    watched=[repo/'source/rambo/rambo/recording_v2.py',repo/'source/rambo/rambo/tasks/direct/rambo_quadruped/qp_env.py',repo/'source/rambo/rambo/tasks/direct/rambo_quadruped/push_box_v2.py',repo/'configs/push_box_v2.json',Path(__file__),repo/'source/rambo/rambo/tasks/common/push_box_geometry.py',repo/'source/rambo/rambo/tasks/common/push_box_expert.py']
+    watched=[repo/'source/rambo/rambo/recording_v2.py',repo/'source/rambo/rambo/tasks/direct/rambo_quadruped/qp_env.py',repo/'source/rambo/rambo/tasks/direct/rambo_quadruped/push_box_v2.py',repo/'configs/push_box_v2.json',Path(__file__),repo/'source/rambo/rambo/tasks/common/push_box_geometry.py',repo/'source/rambo/rambo/tasks/common/push_box_expert.py',repo/'source/rambo/rambo/tasks/common/push_box_scenarios.py',repo/'source/rambo/rambo/tasks/common/push_box_corner_recovery.py']
     implementation={str(f.relative_to(repo)):hashlib.sha256(f.read_bytes()).hexdigest() for f in watched}
-    if args.mode=='pilot':
+    if not np.isfinite([args.offset_x,args.offset_y]).all() or abs(args.offset_x)>.030000001 or abs(args.offset_y)>.010000001:raise ValueError('Only bounded small XY offsets are authorized')
+    scenario=dict(id=args.scenario_id,offset_x_m=args.offset_x,offset_y_m=args.offset_y,seed=42,yaw_rad=0.)
+    expansion=json.loads(args.episode_config.read_text()) if args.episode_config else None
+    if expansion is not None:
+        if args.work_id!='DATA-006' or args.mode!='demonstration' or expansion.get('work_id')!='DATA-006' or expansion.get('authorization')!='data006-expansion-v1':raise ValueError('Invalid expansion authorization')
+        scenario=expansion
+        profile['asset_path']=expansion['asset_path'];profile['asset_sha256']=expansion['asset_sha256']
+    if args.mode!='terminal-gate' and expansion is None:
         gate=json.loads(args.terminal_gate.read_text()) if args.terminal_gate else {}
         if not gate.get('passed') or gate.get('implementation')!=implementation:raise ValueError('Current implementation must pass actual terminal-before-reset gate')
+    if args.mode=='demonstration' and expansion is None:
+        pilot_gate=json.loads(args.pilot_gate.read_text()) if args.pilot_gate else {}
+        if not pilot_gate.get('ready_for_demonstrations') or pilot_gate.get('collector_implementation')!=implementation:raise ValueError('Three-pilot gate must pass before demonstrations')
     if not 1<=args.max_actions<=1000:raise ValueError('Bounded <=20s only')
     args.output_dir.mkdir(parents=True,exist_ok=False)
-    out=args.output_dir.resolve();report=dict(work_id='DATA-004',mode=args.mode,passed=False,implementation=implementation,profile=profile,dataset_episode=args.mode=='pilot')
+    out=args.output_dir.resolve();report=dict(work_id=args.work_id,scenario=scenario,mode=args.mode,passed=False,implementation=implementation,profile=profile,dataset_episode=args.mode!='terminal-gate')
     app=rec=None;code=1
     try:
         app=AppLauncher(args)
@@ -39,11 +55,13 @@ def main():
         from rambo.recording_v2 import Recorder,json_write
         from rambo.tasks.common.push_box_geometry import source_geometry,world_geometry
         from rambo.tasks.common.push_box_expert import command as expert_command
+        if {str(f.relative_to(repo)):hashlib.sha256(f.read_bytes()).hexdigest() for f in watched}!=implementation:
+            raise RuntimeError('Source changed during simulator startup; refuse ambiguous execution provenance')
         from rambo.contracts_v2.runtime import prepare_command
         spec=importlib.util.spec_from_file_location('pilot_teleop',repo/'scripts/rambo/teleop_loco_manip.py');teleop=importlib.util.module_from_spec(spec);spec.loader.exec_module(teleop)
         task='Isaac-RAMBO-Quadruped-Push-Box-V2-Go2-v0'
         cfg=parse_env_cfg(task,device='cuda:0',num_envs=1,use_fabric=True)
-        teleop._configure_environment(cfg,argparse.Namespace(task=teleop.LIFT_BASKET_TASK_ID,seed=42,episode_length_s=24.,view='third-person',camera_setup='robot-dual-v3'))
+        teleop._configure_environment(cfg,argparse.Namespace(task=teleop.LIFT_BASKET_TASK_ID,seed=(expansion['parameters']['seed'] if expansion else 42),episode_length_s=24.,view='third-person',camera_setup='robot-dual-v3'))
         configure_physx(cfg);cfg.sim.render_interval=10
         cfg.front_camera.update_period=.02;cfg.task_camera.update_period=.02
         cfg.terminate_on_body_contact=False;cfg.terminate_on_limb_contact=False;cfg.terminate_on_undesired_foot_contact=False
@@ -56,8 +74,13 @@ def main():
         # Keep that controller reference and express the relative geometry by
         # placing the box, rather than translating the robot's spawn.
         face_width=geometry['dimensions'][1]
-        center_xy=(profile['initial_face_distance_x']+geometry['dimensions'][0]/2,float(cfg.ee_default_command[1]))
+        center_xy=(profile['initial_face_distance_x']+geometry['dimensions'][0]/2+args.offset_x,float(cfg.ee_default_command[1])+args.offset_y)
         cfg.primary_position=(center_xy[0]-float(center[0]),center_xy[1]-float(center[1]),profile['initial_floor_clearance']-float(low[2]))
+        if expansion is not None:
+            from rambo.tasks.common.push_box_scenarios import resolve_episode
+            profile,geometry,position,orientation=resolve_episode(profile,expansion,low,high)
+            cfg.primary_position=tuple(position);cfg.primary_orientation=tuple(orientation);cfg.approved_profile=profile
+            scenario=profile['episode_scenario'];report['scenario']=scenario;report['profile']=profile
         initial_geometry=world_geometry(geometry,[*cfg.primary_position,*cfg.primary_orientation])
         report['initial_geometry']=dict(source=geometry,world=initial_geometry,box_pose=[*cfg.primary_position,*cfg.primary_orientation],robot_config_position=list(cfg.robot.init_state.pos))
         cfg.pilot_max_physics_steps=(32 if args.mode=='terminal-gate' else args.max_actions)*10
@@ -78,7 +101,7 @@ def main():
         for _ in range(4):be.sim.render()
         contract=contract_for_task(teleop.LIFT_BASKET_TASK_ID)
         checkpoint=load_verified_checkpoint(root/'checkpoints/rambo/go2/quadruped/model_2000.pt',contract)
-        agent=load_cfg_from_registry(task,'crl2_cfg_entry_point');agent['general']['num_envs']=1;agent['seed']=42
+        agent=load_cfg_from_registry(task,'crl2_cfg_entry_point');agent['general']['num_envs']=1;agent['seed']=expansion['parameters']['seed'] if expansion else 42
         runner=PPO(task=task,env=env,agent_cfg=agent,train=False,device=be.device);restore_runner(runner,checkpoint,load_values=False,verify=True);policy=runner.get_inference_policy(device=be.device)
         rec.begin();initial=rec.boundaries[0]
         for k in range(cfg.pilot_max_physics_steps//10):
@@ -112,7 +135,7 @@ def main():
             ids=[x['sensor_frame_ids'][role] for x in rec.boundaries]
             assert all(b>a for a,b in zip(ids,ids[1:])),(role,ids)
         status='success' if rec.terminal['state']['task.success'][0] else 'failure'
-        capture=rec.close(dict(mode=args.mode,diagnostic_only=True,profile=profile,implementation=implementation,checkpoint_sha256=contract.sha256,source_commit=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip(),status=status,task_text='Push the box into the target area.',initial_geometry=report['initial_geometry'],post_reset_state=after))
+        capture=rec.close(dict(work_id=args.work_id,scenario=scenario,mode=args.mode,diagnostic_only=args.mode!='demonstration',profile=profile,implementation=implementation,checkpoint_sha256=contract.sha256,source_commit=subprocess.check_output(['git','-C',str(repo),'rev-parse','HEAD'],text=True).strip(),status=status,task_text='Push the box into the target area.',initial_geometry=report['initial_geometry'],post_reset_state=after))
         report.update(passed=True,terminal_before_reset=True,terminal_simulation_time_ns=rec.terminal['simulation_time_ns'],n_actions=len(rec.commands),n_boundaries=len(rec.boundaries),reset_events=events,terminal_vs_reset=changes,state_difference_m=state_delta,status=status,physics=assert_physx_environment(env),contact_provenance='unknown_diagnostic_only')
         code=0
     except BaseException:

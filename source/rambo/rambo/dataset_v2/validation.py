@@ -216,8 +216,13 @@ def validate_canonical(root, *, tools, check_media=True):
         require(ep['status'] != 'success' or terminal['state']['task.success'] == [True], 'state', 'success must follow terminal task state')
         total += n
         reports.append({'episode_index':index,'rows':n,'terminal_action_count':0,'boundary_observations':n+1})
-    if len(manifest['episodes'])==1:
+    if len(manifest['episodes'])==1 and 'episode_metadata' not in manifest.get('extensions',{}):
         _task_contact_diagnostics(root, manifest, total)
+    elif manifest.get('extensions',{}).get('task_profile_version')=='push-box-v2-2':
+        metadata=manifest['extensions'].get('episode_metadata',{})
+        require(set(metadata)==uids,'contact','per-episode diagnostic metadata required')
+        for ep in manifest['episodes']:
+            _task_contact_diagnostics(root, {'extensions':metadata[ep['episode_uid']]}, ep['length'])
     require(total == info['total_frames'] and info['total_videos'] == 2 * len(episodes), 'episode', 'totals')
     require(not any(p.parts[0] in ('latents','text_embeddings','normalization','cache') for p in map(Path,sums)), 'cache', 'model cache inside canonical')
     return {'contract_valid':True,'dataset_schema_version':VERSION,'diagnostic_only':manifest['diagnostic_only'],

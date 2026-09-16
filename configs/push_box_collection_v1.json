@@ -1,0 +1,86 @@
+{
+  "work_id": "DATA-005",
+  "base_task_profile": "push-box-v2-2",
+  "seed": 42,
+  "max_abs_offset_x_m": 0.03,
+  "max_abs_offset_y_m": 0.01,
+  "pilots": [
+    {
+      "id": "pilot_nominal",
+      "offset_x_m": 0.0,
+      "offset_y_m": 0.0
+    },
+    {
+      "id": "pilot_forward",
+      "offset_x_m": 0.025,
+      "offset_y_m": 0.0
+    },
+    {
+      "id": "pilot_lateral",
+      "offset_x_m": 0.0,
+      "offset_y_m": 0.01
+    }
+  ],
+  "demonstrations": [
+    {
+      "id": "demo_00",
+      "offset_x_m": -0.02,
+      "offset_y_m": -0.008,
+      "split": "train"
+    },
+    {
+      "id": "demo_01",
+      "offset_x_m": -0.015,
+      "offset_y_m": 0.004,
+      "split": "train"
+    },
+    {
+      "id": "demo_02",
+      "offset_x_m": -0.01,
+      "offset_y_m": 0.01,
+      "split": "train"
+    },
+    {
+      "id": "demo_03",
+      "offset_x_m": -0.005,
+      "offset_y_m": -0.004,
+      "split": "train"
+    },
+    {
+      "id": "demo_04",
+      "offset_x_m": 0.0,
+      "offset_y_m": 0.006,
+      "split": "train"
+    },
+    {
+      "id": "demo_05",
+      "offset_x_m": 0.005,
+      "offset_y_m": -0.01,
+      "split": "train"
+    },
+    {
+      "id": "demo_06",
+      "offset_x_m": 0.01,
+      "offset_y_m": 0.0,
+      "split": "train"
+    },
+    {
+      "id": "demo_07",
+      "offset_x_m": 0.015,
+      "offset_y_m": 0.008,
+      "split": "train"
+    },
+    {
+      "id": "demo_08",
+      "offset_x_m": 0.02,
+      "offset_y_m": -0.006,
+      "split": "validation"
+    },
+    {
+      "id": "demo_09",
+      "offset_x_m": 0.025,
+      "offset_y_m": 0.004,
+      "split": "test"
+    }
+  ]
+}

@@ -29,3 +29,13 @@
 - [Simple success and diagnostic contact](decisions/ADR-0007.md)
 
 - [One real technical pilot acceptance](decisions/ADR-0008.md)
+
+- [Three pilots and ten demonstrations](work/archive/DATA-005/plan.md)
+
+- [Episode split and train-only normalization](decisions/ADR-0009.md)
+
+- [Authorized randomized50-episode expansion](work/archive/DATA-006/plan.md)
+
+- [QLM-Bench publication](work/archive/DATA-007/plan.md)
+
+- [QLM-Bench data publication](current/publication-v2.md)

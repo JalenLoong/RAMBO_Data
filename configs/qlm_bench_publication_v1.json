@@ -1,0 +1,12 @@
+{
+  "repo_id": "dontKnow23456/QLM-Bench",
+  "repo_type": "dataset",
+  "visibility": "public",
+  "license": "unknown",
+  "scope": "usable_demonstrations_only",
+  "raw_prefix": "raw/v2",
+  "canonical_prefix": "canonical/lerobot_v2_1",
+  "release_prefix": "releases",
+  "immutable_releases": true,
+  "excluded": ["pilots", "failed_attempts", "quarantined_attempts", "model_cache", "model_weights", "asset_source", "training_artifacts"]
+}

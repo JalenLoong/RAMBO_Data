@@ -12,14 +12,16 @@ def rotation_xyzw(q):
                      [2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)]])
 
 
-def source_geometry(low,high):
+def source_geometry(low,high,face="local_x_min"):
     low=np.asarray(low,dtype=np.float64);high=np.asarray(high,dtype=np.float64)
     if low.shape!=(3,) or high.shape!=(3,) or not np.isfinite([low,high]).all() or not (high>low).all():raise ValueError('Invalid mesh bounds')
     center=(low+high)/2
-    # Preserve the reviewed nominal yaw. The face opposing +world X is x-min.
-    face=center.copy();face[0]=low[0]
+    # Default preserves DATA-004; DATA-006 selects the local side facing -world X.
+    names={'local_x_min':(0,-1),'local_x_max':(0,1),'local_y_min':(1,-1),'local_y_max':(1,1)}
+    axis,sign=names[face];point=center.copy();point[axis]=low[axis] if sign<0 else high[axis]
+    normal=np.zeros(3);normal[axis]=sign
     return dict(low=low.tolist(),high=high.tolist(),dimensions=(high-low).tolist(),center=center.tolist(),
-                face_center=face.tolist(),face_normal=[-1.,0.,0.],face='local_x_min',
+                face_center=point.tolist(),face_normal=normal.tolist(),face=face,
                 corners=np.array(list(product(*zip(low,high)))).tolist())
 
 
@@ -55,3 +57,17 @@ class PolicySuccessHold:
         if inside and self.first_inside_ns is None:self.first_inside_ns=physics_tick*2_000_000
         self.count=self.count+1 if inside and not_fallen else 0
         return self.count>=self.required and not_fallen
+
+
+def forward_face_ray(geometry,pose):
+    """Intersect a world-X center ray with the oriented source bounds.
+
+    Unlike dividing by one permanently selected face normal, this remains
+    well-defined if the box rotates and a different face becomes the near side.
+    """
+    pose=np.asarray(pose,dtype=np.float64);R=rotation_xyzw(pose[3:]);direction=R.T@np.array([-1.,0.,0.])
+    half=(np.asarray(geometry['high'])-geometry['low'])/2
+    distances=np.full(3,np.inf);np.divide(half,np.abs(direction),out=distances,where=np.abs(direction)>1e-10)
+    axis=int(np.argmin(distances));center=R@geometry['center']+pose[:3]
+    normal=np.zeros(3);normal[axis]=np.sign(direction[axis])
+    return center+np.array([-distances[axis],0.,0.]),R@normal

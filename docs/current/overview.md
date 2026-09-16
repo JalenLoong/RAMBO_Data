@@ -4,86 +4,70 @@ type: current
 status: accepted
 source_map: []
 ---
-# v2 ownership and runtime
+# Adaptation v2 overview
 
-This is the simulator repository in the quadruped native 9D adaptation baseline.
-WAM-Policy owns model conversion, model readers/preprocessing/cache, normalization, SFT, inference and model evaluation.
-RAMBO_Data owns Isaac/RAMBO, task assets and cameras, teleoperation, recording, telemetry, success detection and canonical dataset publishing.
-The repositories exchange explicit data and runtime contracts; neither imports the other's implementation.
+## Research objective and current position
 
-## Current implementation boundary
-Stages 0–1 establish branches, directory identity, governance, packaging and quadruped cleanup.
-Stage 3 implements canonical v2 schemas/profiles, offline validation and a pure synchronous command protocol.
-DATA-004 validates real camera/control/recorder integration for one technical pilot. Target-pair contact remains unknown diagnostic evidence; production dataset release is not validated.
-Existing Go2/D435i nominal camera geometry is retained as a runtime reference, not a device calibration or production dataset acceptance.
+Adapt pretrained LingBot-VA to language-conditioned Go2 quadrupedal manipulation with one FL manipulation leg and native RAMBO9D commands. The research target is a correctly trained checkpoint making stable synchronous closed-loop progress on the approved Push Box task using dual RGB/visual history and confirmed executed-action history.
 
-## Compute
-Local Ubuntu 24.04 / RTX 5070 Ti: development, debugging, Isaac data synthesis and feasible model/evaluation checks.
-The user authorizes outside-sandbox execution for necessary local GPU work. Sandbox device visibility does not diagnose host drivers.
-Full SFT will run on the remote AMD server previously used for native LingBot-VA OPD, after local debugging and job-script preparation.
-Remote hardware/backend, connection and job configuration remain unverified; OPD is not part of this baseline.
+Model adaptation foundations and the real simulation-to-data-to-cache path are validated. DATA-005's ten demonstrations were user accepted; DATA-006 now has50 usable demonstrations, complete Canonical/cache acceptance and no missing slots. No SFT checkpoint or learned-policy task-success result exists yet. QLM-Bench publication is DATA-007; its current status and fixed revision are in [publication policy](publication-v2.md).
 
-## Resources
-Use workspace.env and workspace.lock.yaml for installed runtime paths. Keep immutable data/model/checkpoint and historical manifests in workspace layers.
-Source directory migration is recorded in new evidence; historical absolute paths are not rewritten.
+## Fixed baseline
 
-## Stage 0–1 acceptance
-Completed: branch/directory bootstrap, editable-source isolation, governance and quadruped cleanup.
-The retained controller passed a 64-step native PhysX check. The nominal mounted pair passed a 240-step RTX check with 30 frames per view.
-No production dataset, model conversion, training or new task is claimed by these checks.
-Full records are under workspace runs/audit/v2/V2-BOOTSTRAP/20260915T024558Z.
+- Go2 quadruped, FL only; original RAMBO controller/checkpoint and native robot reset XY origin.
+- Native9 order: base vx/vy/yaw rate, FL position xyz, desired FL force xyz. Desired force remains zero.
+- Inputs: text, Go2 ego RGB, D435i task RGB, visual history and confirmed executed9D history. Telemetry/proprio/contact/observer remain diagnostic, not extra model inputs.
+- Frozen VAE/T5, native9 projections and ego-above-task dual-view latent composition. First SFT baseline uses existing Transformer trainability policy; no OPD, LoRA-first redesign, proprio encoder or replacement controller.
+- Raw/canonical RGB/actions50Hz; modelRGB12.5Hz; observer25Hz monitor-only; controller100Hz/physics500Hz. Factor4 selects rows; timestamps inherit authoritative canonical simulation_time_ns or terminal metadata, never frame-index synthesis.
+- CanonicalN action rows/video frames plus separate pre-reset terminal state/two RGB PNGs; RawN+1 boundaries. No dummy terminal action. Preserve source tails; apply explicit initial masks/complete grouping only in derived model preprocessing.
 
-## Stage 3 acceptance
-[Contract interfaces](contracts-v2.md) passed CPU and two-interpreter conformance checks.
-Evidence: workspace `runs/audit/v2/V2-CONTRACTS/20260915T060642Z`. That DATA-001 attempt did not run real wiring or dataset release; DATA-004 now validates the collector path.
+## Responsibilities
 
-## Current dataset revision
+WAM-Policy owns model conversion, data consumption, frozen preprocessing/cache, normalization, SFT, checkpoint recovery, inference and model evaluation. RAMBO_Data owns Isaac/controller/task/assets/cameras, scripted demonstrations, recording, task success and canonical publication. Exchange explicit contracts; no cross-repository implementation imports.
 
-DATA-002 supersedes the old PNG/direct12.5Hz data clauses with LeRobot v2.1-style50Hz raw/canonical video/action rows, terminal snapshots and separate model cache. See [current interface](contracts-v2.md). Model RGB remains12.5Hz. DATA-004 validates50Hz acquisition and25Hz observer for one technical pilot. Existing DATA-001 CPU results remain evidence only for the old data profile and retained pure protocol.
+## Completed evidence and limits
 
-## First-task approval boundary — DATA-003
+| Work | Completed | Not established |
+|---|---|---|
+| INFRA-001/002 | Local workspace, source isolation, runtime foundations | Remote AMD runtime |
+| ALG-001 | Native9 conversion, dual-view VAE/T5, full-model T=9 forward/export/reload; small-model backward/single-process recovery | Full-model backward/optimizer, FSDP/distributed resume |
+| DATA-001/002/003 | Runtime/data contracts, LeRobot50Hz storage, authoritative timestamps and terminal semantics | Learned-policy runtime integration |
+| DATA-004 | Approved task/assets/cameras, original controller wiring, strict terminal-before-reset and valid straight full-footprint pilot | Old center-only pilot is invalid/excluded |
+| DATA-005 | Three pilots followed by ten accepted small-XY demonstrations,8/1/1 split and actual frozen caches | Learned task success |
+| DATA-006 | Fifty usable episodes,40/5/5 split, real frozen cache reload, train-only normalization and final data acceptance | Dataset sufficiency/generalization or SFT performance |
 
-Approach-and-Push Box / Box 05 is **approved under DATA-004** with fixed camera coverage and geometry. Success requires the entire XY footprint inside the goal and robot not fallen for 3 consecutive50Hz policy ticks. Contact remains diagnostic/unknown. Prior DATA-003 candidate status is historical.
+DATA-004 was previously committed/pushed. Later source publication is recorded by DATA-007's GitHub publication evidence; source HEADs alone do not identify uncommitted historical collection implementations. Each original run retains its actual source hashes.
 
-## System input paths
+## Current task and data
 
-```mermaid
-flowchart TD
-    RGB["Actual dual RGB + visual history"] --> SAMPLE["Canonical row selection factor 4
-inherit source simulation timestamps"]
-    SAMPLE --> VAE["Frozen causal VAE
-separate temporal state per view"]
-    VAE --> VIDEO["Video latent composition + video input projection"]
-    TEXT["Language text"] --> T5["Frozen T5"]
-    T5 --> COND["Text conditioning"]
-    HISTORY["Confirmed executed 9D action history"] --> NORM["Existing action normalization + validity mask"]
-    NORM --> EMBED["Action embedder"]
-    VIDEO --> MODEL["Shared LingBot-VA backbone"]
-    COND --> MODEL
-    EMBED --> MODEL
-    MODEL --> OUT["Video/action flow outputs"]
-    OUT --> SAMPLEOUT["Later sampler + physical command conversion"]
-    SAMPLEOUT --> RAMBO["RAMBO command boundary + execution acknowledgement"]
-    RAMBO --> HISTORY
-```
+Success: full XY envelope of all eight pose-transformed source-box corners inside that episode's goal, robot not fallen, for three consecutive50Hz policy ticks. Roll/pitch are included in geometry. Contact is diagnostic/unknown, not a gate; residual yaw and natural box toppling are reported without inventing upright/contact/yaw success thresholds.
 
-The diagram describes existing architecture and planned runtime connections. Flow outputs are not directly executable physical commands. Actual RGB enters the VAE path; text enters T5; only confirmed executed history enters the action path. Telemetry and observer remain outside model inputs. Learned-model sampler/server wiring remains not_run; the real collector/Isaac path is validated by DATA-004.
+DATA-006 retains DATA-005's ten original files and8/1/1 split, and adds40 episodes with32/4/4 split. Total50 episodes and24,335 actions; train-only affine q01/q99 normalization uses19,340 actions, no clipping, constant dimension scale1, force offsets0/scales1. Validation/test do not affect fitting. VAE state resets per episode; frozen VAE/T5 encoding and cache reload passed on all50.
 
+Added variations: Box05/01/04 counts20/10/10, yaw0/90/180/270 ten each, goal colors/geometry and coordinated/leg-finish/body-finish configuration counts14/13/13. Of13 leg-finish configurations,12 actually triggered the conditional finish phase. demo13/25 successful a4s include stop-forward/left-shift/inward-FL correction. demo11-a2 is valid; a1 is quarantined. Pilots, failures and quarantined attempts remain local and are excluded from usable Canonical and HF publication.
 
-## Current DATA-004 valid replacement pilot
+Evidence: workspace runs/audit/v2/DATA-006/20260916T075451Z/acceptance.json, collection-paths.json and collection-entries.json. Original per-episode Raw/canonical sources and source media are immutable. Final audit confirms all pre-reset terminals and inherited timestamps;26 core schema/profile and24 asset files plus original controller remain unchanged. No further collection is required to meet this50-episode scope.
 
-The prior 8.04s/402-action center-only pilot is invalid for current DATA-004 and excluded from future training. No legacy/compatibility path or history rewrite was introduced. The only current valid technical pilot is the new straight-push replacement under task profile `push-box-v2-2`.
+## Next phase: discuss before implementation
 
-The reviewed narrow `local_x_min` face is allowed. Actual mesh bounds define its center/normal and all corners. Box dimensions are about30.0763x17.4538x22.6464cm. Nominal geometric center is(0.690382,0.142000,0.133114)m, face center(0.540000,0.142000,0.133114)m and normal(-1,0,0), yaw0. Robot stays at native reset XY origin; FL's neutral lateral command aligns the push line. No yaw randomization, controller replacement or model architecture change.
+The user intends to prepare training code, submission scripts/job orchestration for their AMD server and feasible local RTX5070Ti small-scale verification. The next session must first restore context and confirm understanding, not implement or launch jobs.
 
-The scripted expert approaches until the measured face distance is suitable, then approaches normally and advances the body with about0.38m FL forward reference. World-axis references are transformed into the existing projected-com native9 frame. This is demonstration generation using simulator state, not a learned-policy result. Intended face/commanded contact/actual FL EEF/box pose/yaw are recorded in audit-only task-review metadata.
+Existing flow/trainability/checkpoint utilities are not a complete production training launcher. Resolve real data-window/history/mask/tail handling, sampling and resumable data state, optimizer/scheduler/validation/logging, complete checkpoints and remote execution configuration. Preserve approved model/data semantics. Full-model backward/optimizer/checkpoint-resume on the target backend requires its own canary evidence before formal SFT; small-model success cannot substitute.
 
-Success requires the entire projected source-box bounding volume inside goal x=[0.95,1.35], y=[-0.10,0.40]m and robot not fallen for3 consecutive50Hz policy ticks. Four XY envelope corners are computed from all8 pose-transformed3D corners, including roll/pitch. Contact remains diagnostic/unknown and never gates success; yaw is reported without a success threshold.
+The AMD server connection, GPU count/type, scheduler, ROCm/PyTorch/attention backend and runtime/storage are unverified. Do not infer CUDA compatibility or copy prior OPD behavior. Local outside-sandbox GPU work is generally user-authorized, but the new session's first turn is read-only context recovery. No remote jobs, training or new collection have been started.
 
-The valid pilot lasts9.08s with454 completed actions. Full containment first appears at physics timestamp9036000000ns and policy timestamp9040000000ns; success ticks are9.04/9.06/9.08s. Terminal footprint X=[0.956747,1.297620],Y=[0.038445,0.257470]m is fully inside. Forward displacement0.436802m, net lateral displacement0.005958m. Yaw range[-12.405,1.875]degrees, final-7.396degrees; residual rotation is disclosed.
+## Read next
 
-Real terminal-before-reset/reset isolation passed on the current implementation and final pilot. Raw/canonical validation and MP4 decode passed:455 dual50Hz Raw boundaries,454 canonical rows/frames plus separate terminal state/RGB,908 controller steps,4540 physics steps/4541 snapshots,909 actual sensor updates,228 observer25Hz frames. Requested/executed native9 and zero desired force/external wrench retained. Observer is never a model input or success ground truth. DATA-002 schema/profile bytes are unchanged.
+- [Contracts](contracts-v2.md)
+- [Publication](publication-v2.md)
+- [DATA-005](../work/archive/DATA-005/plan.md)
+- [DATA-006](../work/archive/DATA-006/plan.md)
+- [Normalization/split decision](../decisions/ADR-0009.md)
 
-WAM reads113 sampled RGB frames per view with inherited source timestamps, encodes real frozen VAE/T5, and reloads latents[1,48,29,24,20], actions/mask[1,9,29,16,1], text[1,512,4096]. Initial mask is false.448 actions enter complete groups;6 tail actions and their timestamps remain in Raw/canonical and are explicitly reported by cache metadata. Normalizer is diagnostic identity, not training statistics.
+The Downloads handoff is historical research context; current contracts and measured evidence take precedence.
 
-Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Only the replacement is the current valid pilot. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. Further batch demonstrations require separate authorization; formal training/release and model server closed-loop remain not_run.
+- [Authoritative dataset contract](adaptation_v2_dataset_contract.md)
+
+## Published first release
+
+QLM-Bench publication and fixed-revision readback passed. Final Hub revision `4b5e0ed9aa04cbc1143774798f63171b27d838a7`; payload revision `21b69e2d775cd77d6565e25d1b0b99ad725b54b3`. Exactly1616 payload files/2150407479 bytes,50 usable Raw/Canonical demonstrations, split40/5/5. All remote file hashes match;516 Canonical/release files were downloaded at the payload revision and independently validated through RAMBO and WAM/LeRobot0.3.3. Root README/index and exact remote membership were verified at the final revision; public/license unknown unchanged. No pilots/failures/quarantine/model-cache/asset binaries uploaded. Publication and source handoff receipts: workspace runs/audit/v2/DATA-007. No training or remote jobs.

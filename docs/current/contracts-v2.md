@@ -49,7 +49,7 @@ For approved Push Box, diagnostic pair evidence distinguishes FL-object and body
 
 ## Current DATA-004 valid replacement pilot
 
-The prior 8.04s/402-action center-only pilot is invalid for current DATA-004 and excluded from future training. No legacy/compatibility path or history rewrite was introduced. The only current valid technical pilot is the new straight-push replacement under task profile `push-box-v2-2`.
+The prior 8.04s/402-action center-only pilot is invalid for current DATA-004 and excluded from future training. No legacy/compatibility path or history rewrite was introduced. The DATA-004 valid technical pilot is the straight-push replacement under task profile `push-box-v2-2`.
 
 The reviewed narrow `local_x_min` face is allowed. Actual mesh bounds define its center/normal and all corners. Box dimensions are about30.0763x17.4538x22.6464cm. Nominal geometric center is(0.690382,0.142000,0.133114)m, face center(0.540000,0.142000,0.133114)m and normal(-1,0,0), yaw0. Robot stays at native reset XY origin; FL's neutral lateral command aligns the push line. No yaw randomization, controller replacement or model architecture change.
 
@@ -63,4 +63,9 @@ Real terminal-before-reset/reset isolation passed on the current implementation 
 
 WAM reads113 sampled RGB frames per view with inherited source timestamps, encodes real frozen VAE/T5, and reloads latents[1,48,29,24,20], actions/mask[1,9,29,16,1], text[1,512,4096]. Initial mask is false.448 actions enter complete groups;6 tail actions and their timestamps remain in Raw/canonical and are explicitly reported by cache metadata. Normalizer is diagnostic identity, not training statistics.
 
-Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Only the replacement is the current valid pilot. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. Further batch demonstrations require separate authorization; formal training/release and model server closed-loop remain not_run.
+Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Within DATA-004, only the replacement is valid. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. The later DATA-005 batch was separately authorized; formal training/release and model server closed-loop remain not_run.
+
+
+## DATA-005 completed
+
+Three pilots and ten small-variation demonstrations passed the full data path. The DATA-004 controller/task/cameras remain fixed. Whole-episode splits are8/1/1; no training or publication was performed. See [DATA-005 execution](../work/archive/DATA-005/plan.md), [episode-isolation decision](../decisions/ADR-0009.md) and the [current data contract](adaptation_v2_dataset_contract.md).

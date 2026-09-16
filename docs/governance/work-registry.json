@@ -118,6 +118,42 @@
       ],
       "change": "docs/changes/archive/DATA-004/change-spec.md",
       "plan": "docs/work/archive/DATA-004/plan.md"
+    },
+    {
+      "id": "DATA-005",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-005/change-spec.md",
+      "plan": "docs/work/archive/DATA-005/plan.md"
+    },
+    {
+      "id": "DATA-006",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-006/change-spec.md",
+      "plan": "docs/work/archive/DATA-006/plan.md"
+    },
+    {
+      "id": "DATA-007",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-007/change-spec.md",
+      "plan": "docs/work/archive/DATA-007/plan.md"
     }
   ]
 }
