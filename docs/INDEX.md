@@ -39,3 +39,14 @@
 - [QLM-Bench publication](work/archive/DATA-007/plan.md)
 
 - [QLM-Bench data publication](current/publication-v2.md)
+
+- [Historical AMD evidence and v2 applicability](../../WAM-Policy/docs/current/amd-training-reference.md)
+- [Current status correction](work/archive/DOC-002/plan.md)
+
+- [TRAIN-001 implementation](work/archive/TRAIN-001/plan.md)
+
+- [GitHub/HF administrator handoff correction](work/archive/DOC-003/plan.md)
+
+- [Final checkpoint HF publication instructions](work/archive/DOC-004/plan.md)
+
+- [Authorized source publication](work/active/DOC-005/plan.md)

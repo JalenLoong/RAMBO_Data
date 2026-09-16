@@ -21,6 +21,26 @@ Model adaptation foundations and the real simulation-to-data-to-cache path are v
 - Raw/canonical RGB/actions50Hz; modelRGB12.5Hz; observer25Hz monitor-only; controller100Hz/physics500Hz. Factor4 selects rows; timestamps inherit authoritative canonical simulation_time_ns or terminal metadata, never frame-index synthesis.
 - CanonicalN action rows/video frames plus separate pre-reset terminal state/two RGB PNGs; RawN+1 boundaries. No dummy terminal action. Preserve source tails; apply explicit initial masks/complete grouping only in derived model preprocessing.
 
+## Conditioning paths and approval
+
+Approach-and-Push Box is approved under DATA-004. Contact remains diagnostic/unknown and does not gate success. The following paths describe the accepted model/data interface; the learned-policy runtime connection remains unimplemented.
+
+```mermaid
+flowchart LR
+    RGB["Dual RGB and visual history"] --> SAMPLE["Select canonical rows at factor4; inherit authoritative timestamps"]
+    SAMPLE --> VAE["Frozen causal VAE, independent view state"]
+    VAE --> VIDEO["Ego-above-task visual latents"]
+    TEXT["Language text"] --> T5["Frozen T5"]
+    T5 --> COND["Text conditioning"]
+    HISTORY["Confirmed executed native9 history"] --> NORM["Train-only normalization and validity mask"]
+    NORM --> EMBED["Action embedding"]
+    VIDEO --> MODEL["Causal video-action Transformer"]
+    COND --> MODEL
+    EMBED --> MODEL
+```
+
+Observer, proprioception, telemetry and contact remain diagnostic. Model flow outputs require later sampling and execution integration; they are not physical commands.
+
 ## Responsibilities
 
 WAM-Policy owns model conversion, data consumption, frozen preprocessing/cache, normalization, SFT, checkpoint recovery, inference and model evaluation. RAMBO_Data owns Isaac/controller/task/assets/cameras, scripted demonstrations, recording, task success and canonical publication. Exchange explicit contracts; no cross-repository implementation imports.
@@ -29,7 +49,7 @@ WAM-Policy owns model conversion, data consumption, frozen preprocessing/cache, 
 
 | Work | Completed | Not established |
 |---|---|---|
-| INFRA-001/002 | Local workspace, source isolation, runtime foundations | Remote AMD runtime |
+| INFRA-001/002 | Local workspace, source isolation, runtime foundations | Current v2 AMD runtime; historical OPD evidence is documented below |
 | ALG-001 | Native9 conversion, dual-view VAE/T5, full-model T=9 forward/export/reload; small-model backward/single-process recovery | Full-model backward/optimizer, FSDP/distributed resume |
 | DATA-001/002/003 | Runtime/data contracts, LeRobot50Hz storage, authoritative timestamps and terminal semantics | Learned-policy runtime integration |
 | DATA-004 | Approved task/assets/cameras, original controller wiring, strict terminal-before-reset and valid straight full-footprint pilot | Old center-only pilot is invalid/excluded |
@@ -50,11 +70,11 @@ Evidence: workspace runs/audit/v2/DATA-006/20260916T075451Z/acceptance.json, col
 
 ## Next phase: discuss before implementation
 
-The user intends to prepare training code, submission scripts/job orchestration for their AMD server and feasible local RTX5070Ti small-scale verification. The next session must first restore context and confirm understanding, not implement or launch jobs.
+The user intends to prepare training code, submission scripts/job orchestration for their AMD server and feasible local RTX5070Ti small-scale verification. Initial read-only context recovery is complete. DOC-002 corrected status and historical AMD evidence. The user subsequently authorized TRAIN-001 training implementation, administrator job orchestration and bounded local checks, without AMD connection/submission or commit/push.
 
-Existing flow/trainability/checkpoint utilities are not a complete production training launcher. Resolve real data-window/history/mask/tail handling, sampling and resumable data state, optimizer/scheduler/validation/logging, complete checkpoints and remote execution configuration. Preserve approved model/data semantics. Full-model backward/optimizer/checkpoint-resume on the target backend requires its own canary evidence before formal SFT; small-model success cannot substitute.
+TRAIN-001 now implements whole-episode sampling, a single/DDP training entrypoint, complete rank-specific data/RNG recovery, validation/logging and automatic administrator Slurm orchestration. See [training implementation](../../../WAM-Policy/docs/current/training-v2.md). Local CPU/Gloo and diagnostic GPU evidence are separate from target AMD acceptance. Full-model backward/optimizer and8-card recovery remain administrator smoke gates before automatic1000-step SFT; small-model results cannot substitute.
 
-The AMD server connection, GPU count/type, scheduler, ROCm/PyTorch/attention backend and runtime/storage are unverified. Do not infer CUDA compatibility or copy prior OPD behavior. Local outside-sandbox GPU work is generally user-authorized, but the new session's first turn is read-only context recovery. No remote jobs, training or new collection have been started.
+Historical AMD execution is now verified through the user-supplied W&B run and pinned OPD branch:8 visible MI355X GPUs, Slurm mi355x, Python3.12.3 and torch2.11.0.dev20260206+rocm7.0; recorded Stage1/Stage2 updates completed. See [historical AMD evidence](../../../WAM-Policy/docs/current/amd-training-reference.md) for source and final-evaluation metadata limitations. Current access/runtime/attention compatibility and full-Transformer v2 training/recovery remain unverified. Do not infer CUDA compatibility or import OPD behavior. No Adaptation v2 remote jobs, formal SFT or new collection have been started; TRAIN-001 local diagnostic updates are recorded separately, and no AMD connection was used.
 
 ## Read next
 

@@ -17,7 +17,7 @@ source_map:
 
 > Dataset schema: `wam-quadruped-v2.1.0`; LeRobot codebase: `v2.1`; library: `lerobot==0.3.3`.
 > DATA-002原验收范围：contract/schema、最小CPU读取/校验/映射适配与人工测试。
-> DATA-004已验证一条真实50Hz/25Hz替代technical pilot及完整模型缓存链路；本页末尾记录当前结果。大规模生产及训练仍未运行。
+> 当前验收（DOC-002核对）：DATA-005/006已完成50条可用脚本示范、24,335动作、40/5/5 split和真实冻结VAE/T5缓存重载；归一化仅拟合train的19,340动作。DATA-007数据发布及源码推送完成。Adaptation v2 SFT与学习策略闭环仍未运行；历史AMD OPD证据不属于本批次训练。详见[当前概览](overview.md)与[发布状态](publication-v2.md)。
 > 原PNG数据契约2.0.0只用于历史审计；同步runtime协议不因落盘格式变化自动升级。
 
 ## 0. Purpose
@@ -344,7 +344,7 @@ CRF/preset来源于实际编码命令及receipt，不声称仅凭ffprobe能反�
 
 先写`*.partial.mp4`；正常close、完整validation成功后在同一文件系统atomic rename为最终`.mp4`。
 不得覆盖已有最终文件。失败保留partial、episode标记invalid，不修复后悄悄进入正式dataset。
-当前提供single-writer辅助逻辑，未接生产recorder。
+single-writer辅助逻辑在DATA-002时仅做CPU验收；DATA-004/005/006随后完成真实recorder、媒体关闭/验证、Canonical转换和terminal-before-reset验收。
 
 PNG仅用于asset/calibration/debug/contact/success/terminal快照，禁止将连续训练视频主要保存为PNG序列。
 LeRobot测试工具生成的临时PNG会在编码后清理，它们不是正式Raw或Canonical产品。
@@ -381,10 +381,10 @@ FL reference为现有解析运动学足端点，目标是absolute position；z�
 |---|---|---|---|
 |front_camera / ego|go2_ego|observation.images.ego|ego / go2_ego|
 |task_camera / task|d435i_rgb_task|observation.images.task_centric|task_centric / d435i_rgb_task|
-|configured later|configured observer source|monitor.images.observer|NEVER_MODEL_INPUT / none|
+|approved recorder configuration|recorded observer source|monitor.images.observer|NEVER_MODEL_INPUT / none|
 
 Model role与Python输入key分开；阶段2的`go2_ego/d435i_rgb_task`输入保持不变。
-Observer source key在后续实现中配置；本轮不创建或选择新的物理机位。它不能进入`observation.images.*`。
+Observer source key/机位由已验收的RAMBO recorder与camera配置绑定；DATA-004/005/006已验证真实25Hz observer录制。本contract不新增机位。它不能进入`observation.images.*`。
 
 ---
 
@@ -634,7 +634,7 @@ contact_measurement_is_fresh
 ```
 
 用以明确sample-and-hold。新contact字段的net/per-pair、normal/friction、frame、是否available沿用第9节审计结论。
-缺失数据显式标记；真实500Hz记录与sensor freshness仍需后续运行验收。
+缺失数据显式标记；DATA-004/005/006已完成真实500Hz记录和sensor freshness验收，contact pair缺失仍明确为unknown。
 
 ---
 
@@ -649,7 +649,7 @@ Push Box 已批准。以下 pair evidence 要求仅在可用时作为诊断解�
 - `task.contact.fl_object`必须来自可识别FL接触body与目标object的pair证据；`task.contact.body_object`独立记录非操作腿/机器人body与目标object的接触，并在task profile中明确body集合，不能把FL混入后者。
 - 接触证据记录两端body/object身份、measurement timestamp/sequence、来源/API、坐标系、可用force分量，以及validity和不可用原因；法向力与可用摩擦分量分别解释，torque不可用时不伪造。
 - Body-aggregated contact force（包括FL body净力）不能单独证明接触了目标物体，更不能单独证明任务由FL manipulation完成。距离+净力只作为inferred指标。
-- 未观测到pair数据必须视为unknown，不能写成confirmed false。现有bool列不能单独表达unknown；证据应保存在Raw或具名extensions并由后续版本化task profile绑定，不能仅凭bool值通过任务归因/发布验收。
+- 未观测到pair数据必须视为unknown，不能写成confirmed false。现有bool列不能单独表达unknown；当前已验收的证据保存在Raw/Canonical逐episode诊断sidecar并绑定对应task profile，不能仅凭bool值通过任务归因/发布验收。
 - 任务判定必须能区分FL-object、body-object及两者同时发生的情况。用户已明确：接触不作为success/collection gate；success只依赖整个XY footprint进入区域且机器人未摔倒，连续3个50Hz policy ticks。
 
 这些是条件性的task contract要求，不表示sensor接线或真实pair观测已完成；现有通用schema与profile保持原版本和hash。
@@ -1217,7 +1217,7 @@ N=65仍保留65行，当前完整group使用前64动作，剩余动作在cache m
 
 新episode重置两路causal VAE temporal state、pending frames、KV/history；不继承跨episode上下文。
 若训练时pack多个episode，attention mask必须阻断跨episode attention。
-本轮最小reader使用人工cache测试；正式VAE/T5生成与packing训练器未在本轮实现。
+DATA-002最小reader最初使用人工cache测试；DATA-005/006随后完成实际冻结VAE/T5生成与重载，逐episode重置。Packing/训练采样器仍未实现。
 
 ---
 
@@ -1387,10 +1387,9 @@ Codex 在执行本 contract 时应遵守以下约束：
 
 # 35. Implementation Milestones and Current Authorization
 
-当前只实施schema/manifest/validation、最小读取/映射适配和CPU人工兼容性测试。
-以下Recorder、Pilot、生产转换、真实VAE/T5步骤是后续gate，不因本文存在就自动授权执行。
+以下是DATA-002定义的历史实施顺序；A–E的数据准备链路已由DATA-004/005/006实际验收，50条示范已由DATA-007发布，不应重新列为待执行采集任务。当前只授权DOC-002状态修订和历史AMD证据调查；训练实现、连接服务器和任务提交仍待范围讨论。
 
-Codex 应按以下顺序推进：
+历史gate定义（保留验收含义）：
 
 ### Milestone A — Schema
 
@@ -1467,7 +1466,7 @@ form 1 video : 4 action relation
 generate VAE/text cache
 ```
 
-完成以上 gate 后，才进入正式 3-episode / 10-demo data collection。
+历史顺序是先完成以上gate，再进入3-pilot/10-demo；这些阶段及后续50-demo扩展现已完成。
 
 ---
 
@@ -1511,7 +1510,7 @@ Real terminal-before-reset/reset isolation passed on the current implementation 
 
 WAM reads113 sampled RGB frames per view with inherited source timestamps, encodes real frozen VAE/T5, and reloads latents[1,48,29,24,20], actions/mask[1,9,29,16,1], text[1,512,4096]. Initial mask is false.448 actions enter complete groups;6 tail actions and their timestamps remain in Raw/canonical and are explicitly reported by cache metadata. Normalizer is diagnostic identity, not training statistics.
 
-Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Only the replacement is the current valid pilot. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. Further batch demonstrations require separate authorization; formal training/release and model server closed-loop remain not_run.
+Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Only the replacement is the current valid pilot. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. DATA-005/006 later completed the authorized demonstration batches and DATA-007 completed publication/source pushes. Adaptation v2 formal training and learned-model server closed-loop remain not_run.
 
 
 ## DATA-005 bounded collection result
@@ -1524,4 +1523,4 @@ The demonstration collection has explicit whole-episode train/validation/test sp
 
 WAM fits a non-diagnostic affine q01/q99 normalizer on the 3655 actions from the8 train episodes only, with no clipping, scale1 for constant dimensions and force offsets0/scales1. Validation/test episodes do not affect fitting. VAE temporal state resets per episode; observer never enters model data. Sampling inherits canonical/terminal timestamps. Incomplete tail groups remain in source data and are explicitly listed in cache metadata; the initial action mask is false.
 
-Evidence: workspace `runs/audit/v2/DATA-005/20260916T055512Z/README.md` and `acceptance.json`. Versioned path configs are `pilots-paths.json` and `demonstrations-paths.json` there. This is bounded scripted-expert data acceptance, not learned-policy evaluation, generalization statistics or permission to start SFT. Training, remote jobs, learned-policy server integration and formal release remain not_run. DATA-005 is not committed or pushed.
+Evidence: workspace `runs/audit/v2/DATA-005/20260916T055512Z/README.md` and `acceptance.json`. Versioned path configs are `pilots-paths.json` and `demonstrations-paths.json` there. This is bounded scripted-expert data acceptance, not learned-policy evaluation, generalization statistics or permission to start SFT. Those were the DATA-005 acceptance-time limits. DATA-007 subsequently completed dataset publication and DATA-005/006/007 source commits/pushes. Adaptation v2 training, remote jobs and learned-policy server integration remain not_run.

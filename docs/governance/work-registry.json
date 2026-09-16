@@ -154,6 +154,66 @@
       ],
       "change": "docs/changes/archive/DATA-007/change-spec.md",
       "plan": "docs/work/archive/DATA-007/plan.md"
+    },
+    {
+      "id": "DOC-002",
+      "category": "DOC",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DOC-002/change-spec.md",
+      "plan": "docs/work/archive/DOC-002/plan.md"
+    },
+    {
+      "id": "TRAIN-001",
+      "category": "TRAIN",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/TRAIN-001/change-spec.md",
+      "plan": "docs/work/archive/TRAIN-001/plan.md"
+    },
+    {
+      "id": "DOC-003",
+      "category": "DOC",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DOC-003/change-spec.md",
+      "plan": "docs/work/archive/DOC-003/plan.md"
+    },
+    {
+      "id": "DOC-004",
+      "category": "DOC",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DOC-004/change-spec.md",
+      "plan": "docs/work/archive/DOC-004/plan.md"
+    },
+    {
+      "id": "DOC-005",
+      "category": "DOC",
+      "status": "active",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/active/DOC-005/change-spec.md",
+      "plan": "docs/work/active/DOC-005/plan.md"
     }
   ]
 }

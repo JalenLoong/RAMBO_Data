@@ -9,7 +9,9 @@ source_map:
 ---
 # Current data interface: LeRobot 50Hz
 
-Work ID: **DATA-002**.
+Contract Work ID: **DATA-002**; current acceptance through **DATA-006/007**, status correction **DOC-002**.
+
+Current release: 50 usable scripted demonstrations, 24,335 actions, whole-episode split40/5/5; actual frozen VAE/T5 cache reload passed and train-only normalization uses19,340 actions. DATA-007 publication and source pushes are complete; see [publication](publication-v2.md) and [overview](overview.md). Earlier milestone descriptions below retain their original scope. No Adaptation v2 SFT or learned-policy closed-loop result exists.
 
 [Authoritative dataset contract](adaptation_v2_dataset_contract.md) defines `wam-quadruped-v2.1.0`, LeRobot codebase `v2.1` and `lerobot==0.3.3` compatibility.
 Raw/canonical policy RGB are 50Hz; model RGB is deterministically sampled to 12.5Hz by WAM. Observer25Hz is monitor-only.
@@ -28,13 +30,13 @@ the Isaac interpreter remains unchanged and does not currently include PyArrow. 
 
 The [2.0.0 PNG reference](../work/archive/DATA-001/contracts-v2.0-reference.md) and its original CPU acceptance remain historical evidence.
 `contracts_v2` is retained for that explicit audit and the existing pure runtime protocol; do not use its old PNG dataset schema as the new default.
-Dataset format versioning does not rewrite the existing runtime handshake/profile bundle. The original DATA-002 attempt did not exercise real acquisition. DATA-004 now validates one real50Hz/25Hz pilot, recorder, canonical conversion and VAE/T5 cache. Learned-model sampler/server wiring and formal release remain not_run.
+Dataset format versioning does not rewrite the existing runtime handshake/profile bundle. The original DATA-002 attempt did not exercise real acquisition. DATA-004 subsequently validated the real50Hz/25Hz recorder, replacement pilot, canonical conversion and VAE/T5 cache; DATA-005/006 completed the50-demonstration collection and DATA-007 published it. Learned-model sampler/server wiring and Adaptation v2 SFT remain not_run.
 
 ## Producer-side helpers
 
 `finalize_video` is a single-writer close/validate/rename helper. Failed validation retains partial files and
 returns invalid status for the caller to persist. It neither repairs videos nor publishes episodes.
-Synthetic fixture construction exists for CPU compatibility tests only; it is not a production Raw-to-Canonical converter.
+Synthetic fixture construction remains CPU-test-only. The separate production recorder/export path was subsequently exercised by DATA-004/005/006; DATA-007 published the accepted50-episode collection.
 
 CPU acceptance evidence: workspace `runs/audit/v2/V2-DATA-CONTRACT/20260915T141714Z`. WAM55 tests, data tools37 tests, simulator CPU198 tests and10 cross-namespace cases passed.
 
@@ -63,9 +65,9 @@ Real terminal-before-reset/reset isolation passed on the current implementation 
 
 WAM reads113 sampled RGB frames per view with inherited source timestamps, encodes real frozen VAE/T5, and reloads latents[1,48,29,24,20], actions/mask[1,9,29,16,1], text[1,512,4096]. Initial mask is false.448 actions enter complete groups;6 tail actions and their timestamps remain in Raw/canonical and are explicitly reported by cache metadata. Normalizer is diagnostic identity, not training statistics.
 
-Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Within DATA-004, only the replacement is valid. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. The later DATA-005 batch was separately authorized; formal training/release and model server closed-loop remain not_run.
+Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Within DATA-004, only the replacement is valid. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. The later DATA-005/006 batches were separately authorized and completed; DATA-007 subsequently completed dataset publication and source pushes. Adaptation v2 formal training and model server closed-loop remain not_run.
 
 
 ## DATA-005 completed
 
-Three pilots and ten small-variation demonstrations passed the full data path. The DATA-004 controller/task/cameras remain fixed. Whole-episode splits are8/1/1; no training or publication was performed. See [DATA-005 execution](../work/archive/DATA-005/plan.md), [episode-isolation decision](../decisions/ADR-0009.md) and the [current data contract](adaptation_v2_dataset_contract.md).
+Three pilots and ten small-variation demonstrations passed the full data path. The DATA-004 controller/task/cameras remain fixed. The original whole-episode split is8/1/1 and is retained inside DATA-006's40/5/5 collection. No training occurred; later DATA-007 publication and source pushes are complete. See [DATA-005 execution](../work/archive/DATA-005/plan.md), [episode-isolation decision](../decisions/ADR-0009.md) and the [current data contract](adaptation_v2_dataset_contract.md).
