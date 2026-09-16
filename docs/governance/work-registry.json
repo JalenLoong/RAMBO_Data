@@ -206,14 +206,14 @@
     {
       "id": "DOC-005",
       "category": "DOC",
-      "status": "active",
+      "status": "completed",
       "aliases": [],
       "repositories": [
         "WAM-Policy",
         "RAMBO_Data"
       ],
-      "change": "docs/changes/active/DOC-005/change-spec.md",
-      "plan": "docs/work/active/DOC-005/plan.md"
+      "change": "docs/changes/archive/DOC-005/change-spec.md",
+      "plan": "docs/work/archive/DOC-005/plan.md"
     }
   ]
 }

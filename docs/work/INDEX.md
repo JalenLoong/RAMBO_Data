@@ -24,4 +24,4 @@ Generated from the shared registry; v1 numbering is independent.
 | TRAIN-001 | completed | [spec](../changes/archive/TRAIN-001/change-spec.md) | [plan](../work/archive/TRAIN-001/plan.md) |
 | DOC-003 | completed | [spec](../changes/archive/DOC-003/change-spec.md) | [plan](../work/archive/DOC-003/plan.md) |
 | DOC-004 | completed | [spec](../changes/archive/DOC-004/change-spec.md) | [plan](../work/archive/DOC-004/plan.md) |
-| DOC-005 | active | [spec](../changes/active/DOC-005/change-spec.md) | [plan](../work/active/DOC-005/plan.md) |
+| DOC-005 | completed | [spec](../changes/archive/DOC-005/change-spec.md) | [plan](../work/archive/DOC-005/plan.md) |

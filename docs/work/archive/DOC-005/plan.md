@@ -1,7 +1,7 @@
 ---
 id: DOC-005
 type: exec-plan
-status: active
+status: completed
 source_map: []
 ---
 # DOC-005: README cleanup and authorized source publication
@@ -18,7 +18,10 @@ Workspace runs/audit/v2/DOC-005 records original file hashes, test logs and fina
 ## Progress
 - [x] Inspect both worktrees, branches, remotes and pending-file inventory.
 - [x] Remove selected paragraph and synchronize current routing.
-- [ ] Validate, commit and push; independently read back all target refs.
+- [x] Validate, commit and push; independently read back all target refs.
 
 ## Prepublication validation
-WAM make check98 passed with GPUs hidden and existing synthetic fixtures; RAMBO affected context/governance16 passed. Both docs/governance/import boundaries and whitespace checks passed. Existing three remote branch refs match the DATA-007 local baselines. Only bounded text source/config/test/documentation files are pending; no payloads or credential patterns were found. Commit/push and remote readback are the remaining publication actions.
+WAM make check98 passed with GPUs hidden and existing synthetic fixtures; RAMBO affected context/governance16 passed. Both docs/governance/import boundaries and whitespace checks passed. Existing three remote branch refs match the DATA-007 local baselines. Only bounded text source/config/test/documentation files are pending; no payloads or credential patterns were found. These prepublication checks preceded the successful pushes/readback recorded below.
+
+## Publication completion
+Authorized source commits were pushed with ordinary fast-forward updates and independently read back at all three GitHub destinations: WAM a1e2a576251435e9bd4b93d49ee663b5ec58f414 at AIGeeksGroup and JalenLoong, RAMBO970514acdda738e80e02741a8505fe7f39bb3ab9 at JalenLoong. Screenshot-selected paragraph is removed. No AMD execution or HF payload upload occurred. This archival update only closes the paired governance records; final branch-head receipts (including this closure commit) are recorded in workspace runs/audit/v2/DOC-005/github-publication.json.

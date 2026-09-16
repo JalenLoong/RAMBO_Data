@@ -49,4 +49,4 @@
 
 - [Final checkpoint HF publication instructions](work/archive/DOC-004/plan.md)
 
-- [Authorized source publication](work/active/DOC-005/plan.md)
+- [Authorized source publication](work/archive/DOC-005/plan.md)
