@@ -21,3 +21,13 @@ def test_old_rules_are_marked_and_current_entries_route_to_new_contract():
         text=(ROOT/f'docs/{tree}/archive/DATA-001/{file}').read_text()
         assert 'Historical DATA-001 acceptance' in text and 'superseded' in text
     assert 'Existing 12.5Hz mounted RGB reference' in (ROOT/'README.md').read_text()
+
+
+def test_candidate_task_and_pair_contact_observability_are_explicit():
+    text = (ROOT/'docs/current/adaptation_v2_dataset_contract.md').read_text()
+    for value in ('proposed first-task candidate / pending user approval',
+                  'Body-aggregated contact force', 'FL-object', 'body-object',
+                  'unknown', 'measurement timestamp/sequence',
+                  'Nominal 20ms grid只用于validation'):
+        assert value in text
+    assert 'task.contact.fl_object' in text and 'task.contact.body_object' in text

@@ -40,3 +40,31 @@ Evidence: workspace `runs/audit/v2/V2-CONTRACTS/20260915T060642Z`. Real simulato
 ## Current dataset revision
 
 DATA-002 supersedes the old PNG/direct12.5Hz data clauses with LeRobot v2.1-style50Hz raw/canonical video/action rows, terminal snapshots and separate model cache. See [current interface](contracts-v2.md). Model RGB remains12.5Hz. New50Hz acquisition and25Hz observer are specification targets, not runtime acceptance. Existing DATA-001 CPU results remain evidence only for the old data profile and retained pure protocol.
+
+## First-task approval boundary — DATA-003
+
+Approach-and-Push Box is a **proposed first-task candidate / pending user approval**. Assets, camera coverage, task geometry and success/contact criteria require user approval before the task is frozen. No first task is approved yet.
+
+## System input paths
+
+```mermaid
+flowchart TD
+    RGB["Actual dual RGB + visual history"] --> SAMPLE["Canonical row selection factor 4
+inherit source simulation timestamps"]
+    SAMPLE --> VAE["Frozen causal VAE
+separate temporal state per view"]
+    VAE --> VIDEO["Video latent composition + video input projection"]
+    TEXT["Language text"] --> T5["Frozen T5"]
+    T5 --> COND["Text conditioning"]
+    HISTORY["Confirmed executed 9D action history"] --> NORM["Existing action normalization + validity mask"]
+    NORM --> EMBED["Action embedder"]
+    VIDEO --> MODEL["Shared LingBot-VA backbone"]
+    COND --> MODEL
+    EMBED --> MODEL
+    MODEL --> OUT["Video/action flow outputs"]
+    OUT --> SAMPLEOUT["Later sampler + physical command conversion"]
+    SAMPLEOUT --> RAMBO["RAMBO command boundary + execution acknowledgement"]
+    RAMBO --> HISTORY
+```
+
+The diagram describes existing architecture and planned runtime connections. Flow outputs are not directly executable physical commands. Actual RGB enters the VAE path; text enters T5; only confirmed executed history enters the action path. Telemetry and observer remain outside model inputs. Real sampler/server/Isaac wiring remains not_run.

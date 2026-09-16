@@ -38,3 +38,11 @@ returns invalid status for the caller to persist. It neither repairs videos nor 
 Synthetic fixture construction exists for CPU compatibility tests only; it is not a production Raw-to-Canonical converter.
 
 CPU acceptance evidence: workspace `runs/audit/v2/V2-DATA-CONTRACT/20260915T141714Z`. WAM55 tests, data tools37 tests, simulator CPU198 tests and10 cross-namespace cases passed.
+
+## DATA-003 clarifications
+
+Factor-4 sampling selects canonical rows only. Sampled timestamps inherit authoritative `simulation_time_ns`; a selected terminal uses terminal metadata. Tail action timestamps also inherit source rows. Nominal 20ms is validation only, never a timestamp generator. The actual implementation is WAM `CanonicalReader.alignment` (the fixed-factor resampler role); no separate `FixedFactorResampler` class is required.
+
+Approach-and-Push Box is a **proposed first-task candidate / pending user approval**. Assets, camera coverage, task geometry and success/contact criteria require user approval before the task is frozen. No first task is approved yet.
+
+If Push Box is eventually approved, task-specific pair evidence must distinguish FL-object and body-object contact. Body-aggregated force alone cannot attribute object motion to the FL manipulation leg. Missing pair observations are unknown, not confirmed non-contact. Contact thresholds and success/termination treatment remain pending user approval; existing file schema/profile hashes are unchanged.

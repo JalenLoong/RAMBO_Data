@@ -22,3 +22,5 @@
 - [Shared work registry](governance/work-registry.json)
 - [Work index](work/INDEX.md)
 - [Governance migration decision](decisions/ADR-0005.md)
+
+- [Timestamp and task-approval correction](decisions/ADR-0006.md)

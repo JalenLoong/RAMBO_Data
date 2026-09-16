@@ -640,6 +640,23 @@ contact_measurement_is_fresh
 
 # 14. Task / Object State Contract
 
+## First-task status and conditional Push Box observability — DATA-003
+
+Approach-and-Push Box is a **proposed first-task candidate / pending user approval**. Assets, camera coverage, task geometry and success/contact criteria require user approval before the task is frozen. No first task is approved yet.
+
+若最终采用Push Box，冻结task profile前必须明确以下接触可观测性要求：
+
+- `task.contact.fl_object`必须来自可识别FL接触body与目标object的pair证据；`task.contact.body_object`独立记录非操作腿/机器人body与目标object的接触，并在task profile中明确body集合，不能把FL混入后者。
+- 接触证据记录两端body/object身份、measurement timestamp/sequence、来源/API、坐标系、可用force分量，以及validity和不可用原因；法向力与可用摩擦分量分别解释，torque不可用时不伪造。
+- Body-aggregated contact force（包括FL body净力）不能单独证明接触了目标物体，更不能单独证明任务由FL manipulation完成。距离+净力只作为inferred指标。
+- 未观测到pair数据必须视为unknown，不能写成confirmed false。现有bool列不能单独表达unknown；证据应保存在Raw或具名extensions并由后续版本化task profile绑定，不能仅凭bool值通过任务归因/发布验收。
+- 任务判定必须能区分FL-object、body-object及两者同时发生的情况。接触阈值、持续时间、body碰撞是否允许、与progress/success/termination的关系，均待用户审核，不在本次自动定义。
+
+这些是条件性的task contract要求，不表示sensor接线或真实pair观测已完成；现有通用schema与profile保持原版本和hash。
+
+## Recorded task state
+
+
 每个 50 Hz policy tick 同步保存：
 
 ```text
@@ -1186,6 +1203,7 @@ normalization version
 # 29. Deterministic Sampling, Causal Start and Episode Tail
 
 50Hz source RGB固定选择`0,4,8,12,...`，sampling_phase=0；action保持50Hz。
+Factor-4只决定选择哪些canonical rows。sampled timestamp必须逐项继承对应row的authoritative `simulation_time_ns`；选择terminal边界时继承terminal timestamp。尾部action timestamps同样读取source rows，不通过`index * 20 ms`合成。Nominal 20ms grid只用于validation，不能替代source clock；保留int64纳秒精度，不经float时间戳转换。
 每个12.5Hz model RGB interval对应4个50Hz action；一个后续VAE group覆盖4个model RGB间隔，对应16个action slots。
 不要把model RGB frame与VAE latent frame混用。
 
