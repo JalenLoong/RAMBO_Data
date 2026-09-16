@@ -24,3 +24,8 @@
 - [Governance migration decision](decisions/ADR-0005.md)
 
 - [Timestamp and task-approval correction](decisions/ADR-0006.md)
+
+- [Push Box review to one technical pilot](work/archive/DATA-004/plan.md)
+- [Simple success and diagnostic contact](decisions/ADR-0007.md)
+
+- [One real technical pilot acceptance](decisions/ADR-0008.md)

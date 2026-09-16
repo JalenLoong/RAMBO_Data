@@ -757,6 +757,9 @@ class QPEnv(DirectRLEnv):
 
     def step(self, action: torch.Tensor):
         action = action.to(self.device)
+        recorder = getattr(self, "_v2_recorder", None)
+        if recorder is not None:
+            recorder.before_control(action)
         if self.cfg.action_noise_model:
             action = self._action_noise_model(action)
 
@@ -889,6 +892,8 @@ class QPEnv(DirectRLEnv):
             self.scene.update(dt=self.physics_dt)
 
             self._time_since_reset += self.physics_dt
+            if recorder is not None:
+                recorder.after_physics(external_force_b, external_torque_b)
 
         # post-step:
         # -- update env counters (used for curriculum generation)
@@ -899,6 +904,8 @@ class QPEnv(DirectRLEnv):
         # -- update contact generator and joint position controller
         self.contact_generator.update()
         self._desired_joint_pos = self.joint_position_controller.update()  # this comes from the contact scheduler
+        if recorder is not None:
+            recorder.after_control()
 
         self.reset_terminated[:], self.reset_time_outs[:] = self._get_dones()
         self.reset_buf = self.reset_terminated | self.reset_time_outs
@@ -908,6 +915,10 @@ class QPEnv(DirectRLEnv):
         # -- reset envs that terminated/timed-out and log the episode information
         reset_env_ids = self.reset_buf.nonzero(as_tuple=False).squeeze(-1)
         if len(reset_env_ids) > 0:
+            if recorder is not None:
+                # RGB/state must be copied while the terminal scene still exists.
+                # A failed capture propagates and prevents reset.
+                recorder.before_reset(reset_env_ids)
             self._reset_idx(reset_env_ids)
             if self.sim.is_rendering and self.cfg.num_rerenders_on_reset > 0:
                 for _ in range(self.cfg.num_rerenders_on_reset):

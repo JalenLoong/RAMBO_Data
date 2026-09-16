@@ -25,7 +25,7 @@ def test_old_rules_are_marked_and_current_entries_route_to_new_contract():
 
 def test_candidate_task_and_pair_contact_observability_are_explicit():
     text = (ROOT/'docs/current/adaptation_v2_dataset_contract.md').read_text()
-    for value in ('proposed first-task candidate / pending user approval',
+    for value in ('approved under DATA-004',
                   'Body-aggregated contact force', 'FL-object', 'body-object',
                   'unknown', 'measurement timestamp/sequence',
                   'Nominal 20ms grid只用于validation'):

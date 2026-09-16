@@ -1,0 +1,68 @@
+{
+  "task_profile_version": "push-box-v2-2",
+  "work_id": "DATA-004",
+  "approval": {
+    "status": "approved",
+    "time_utc": "2026-09-16T03:18:06.623764+00:00",
+    "source": "User requests straight face-center pushing and full-footprint success; subsequent steering permits the reviewed narrow face"
+  },
+  "asset_path": "assets/push_box/v2/candidates/cardboard_pack_v0_1/source/usd-cardboard-box-assets/Collected_BOX_5.30X17X22_HIGH/BOX_30X17X22.usdc",
+  "asset_sha256": "3f67cf9ed445fa1c12b061310af897e1754ffb2b1d54bfe1cca2e029353202d5",
+  "scale": 1,
+  "initial_geometric_center_xy": "derived: front face at x=0.54m; center y aligned to native neutral FL lateral command",
+  "initial_floor_clearance": 0.02,
+  "goal_x": [
+    0.95,
+    1.35
+  ],
+  "goal_y": [
+    -0.1,
+    0.4
+  ],
+  "goal_membership": "Four corners of the XY envelope of all eight pose-transformed source box-bound corners inside goal",
+  "success": "box_fully_inside and not fallen for 3 consecutive 50Hz policy ticks",
+  "fall": {
+    "base_height_lt": 0.1,
+    "projected_gravity_error_gt": 0.75
+  },
+  "contact": {
+    "role": "diagnostic_only",
+    "unavailable": "unknown",
+    "bool_columns": "false is an invalid placeholder when extension availability is false; never confirmed non-contact"
+  },
+  "observer": {
+    "position": [
+      1.8,
+      2.0,
+      1.5
+    ],
+    "look_at": [
+      0.65,
+      0.1,
+      0.2
+    ],
+    "fps": 25,
+    "model_input": false
+  },
+  "policy_rgb_fps": 50,
+  "policy_fps": 50,
+  "controller_fps": 100,
+  "physics_fps": 500,
+  "force_zero": true,
+  "success_policy_ticks": 3,
+  "initial_box_yaw_rad": 0.0,
+  "push_face": "local_x_min (reviewed narrow face, selected from actual mesh bounds)",
+  "robot_placement": "retain native robot reset XY origin; move box to obtain frontal FL alignment",
+  "expert": {
+    "settle_seconds": 2.1,
+    "normal_approach_seconds": 1.0,
+    "standoff_m": 0.1,
+    "penetration_m": 0.015,
+    "align_base_speed": 0.14,
+    "push_base_speed": 0.12,
+    "face_distance_for_foot_approach": 0.405,
+    "approach_foot_x": 0.28,
+    "push_foot_x": 0.38
+  },
+  "initial_face_distance_x": 0.54
+}

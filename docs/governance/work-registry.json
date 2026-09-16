@@ -106,6 +106,18 @@
       ],
       "change": "docs/changes/archive/DATA-003/change-spec.md",
       "plan": "docs/work/archive/DATA-003/plan.md"
+    },
+    {
+      "id": "DATA-004",
+      "category": "DATA",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy",
+        "RAMBO_Data"
+      ],
+      "change": "docs/changes/archive/DATA-004/change-spec.md",
+      "plan": "docs/work/archive/DATA-004/plan.md"
     }
   ]
 }

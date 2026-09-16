@@ -139,6 +139,24 @@ def _camera_index(table, counts, periods):
                     'timing', 'camera simulation schedule')
 
 
+
+def _task_contact_diagnostics(root, manifest, n):
+    """The approved Push Box profile must preserve unknown, not false evidence."""
+    ext=manifest.get('extensions', {})
+    if ext.get('task_profile_version') != 'push-box-v2-2':
+        return
+    ref=ext.get('contact_diagnostics')
+    require(isinstance(ref,dict) and set(ref)=={'path','sha256'},'contact','explicit diagnostic availability sidecar required')
+    path=safe_path(root,ref['path'])
+    require(file_hash(path)==ref['sha256'],'contact','diagnostic sidecar checksum')
+    data=read_json(path)
+    require(data.get('role')=='diagnostic_only' and data.get('unavailable')=='unknown' and data.get('bool_columns_are_invalid_placeholders') is True,'contact','unknown semantics')
+    rows=data.get('rows',[])
+    require(len(rows)==n+1,'contact','diagnostics include terminal')
+    for i,row in enumerate(rows):
+        require(row['simulation_time_ns']==i*20_000_000,'contact','diagnostic time alignment')
+        require(row.get('valid') is False and row.get('status')=='unknown' and row.get('fl_object') is None and row.get('body_object') is None and bool(row.get('reason')),'contact','unreliable pairs must be explicitly unknown')
+
 def validate_canonical(root, *, tools, check_media=True):
     root = Path(root)
     sums = inventory(root)
@@ -198,6 +216,8 @@ def validate_canonical(root, *, tools, check_media=True):
         require(ep['status'] != 'success' or terminal['state']['task.success'] == [True], 'state', 'success must follow terminal task state')
         total += n
         reports.append({'episode_index':index,'rows':n,'terminal_action_count':0,'boundary_observations':n+1})
+    if len(manifest['episodes'])==1:
+        _task_contact_diagnostics(root, manifest, total)
     require(total == info['total_frames'] and info['total_videos'] == 2 * len(episodes), 'episode', 'totals')
     require(not any(p.parts[0] in ('latents','text_embeddings','normalization','cache') for p in map(Path,sums)), 'cache', 'model cache inside canonical')
     return {'contract_valid':True,'dataset_schema_version':VERSION,'diagnostic_only':manifest['diagnostic_only'],
@@ -279,6 +299,7 @@ def validate_raw(root, *, tools, check_media=True):
         for camera,video in raw['videos'].items():
             validate_video(safe_path(root,video['path']),count=n+1,fps=50,tools=tools,
                            profile=PROFILE['policy_video'],receipt=video['encoding'])
+    _task_contact_diagnostics(root, raw, n)
     return {'contract_valid':True,'diagnostic_only':raw['diagnostic_only'],'raw_actions':n,'raw_boundaries':n+1,
             'physics_steps':10*n,'controller_steps':2*n,'sensor_updates':len(ct),'sensor_rate':'observed timestamps, not assumed 200Hz',
             'video_validation':'passed' if check_media else 'not_run','published':False}

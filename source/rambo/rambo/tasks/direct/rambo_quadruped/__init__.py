@@ -41,3 +41,11 @@ for _task_id, _cfg_name in (
             "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml",
         },
     )
+
+gym.register(
+    id="Isaac-RAMBO-Quadruped-Push-Box-V2-Go2-v0",
+    entry_point=f"{__name__}.push_box_v2:PushBoxV2Env",
+    disable_env_checker=True,
+    kwargs={"env_cfg_entry_point": f"{__name__}.push_box_v2:PushBoxV2Cfg",
+            "crl2_cfg_entry_point": f"{agents.__name__}:crl2_flat_ppo_cfg.yaml"},
+)

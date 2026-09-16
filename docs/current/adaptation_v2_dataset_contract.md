@@ -16,8 +16,8 @@ source_map:
 > Work ID: `DATA-002` in the independent adaptation-v2 namespace.
 
 > Dataset schema: `wam-quadruped-v2.1.0`; LeRobot codebase: `v2.1`; library: `lerobot==0.3.3`.
-> 本轮范围：contract/schema、最小CPU读取/校验/映射适配与人工测试。
-> 真实50Hz采集、observer机位、recorder、生产converter、VAE/T5批量生成、训练均未在本轮实现。
+> DATA-002原验收范围：contract/schema、最小CPU读取/校验/映射适配与人工测试。
+> DATA-004已验证一条真实50Hz/25Hz替代technical pilot及完整模型缓存链路；本页末尾记录当前结果。大规模生产及训练仍未运行。
 > 原PNG数据契约2.0.0只用于历史审计；同步runtime协议不因落盘格式变化自动升级。
 
 ## 0. Purpose
@@ -242,7 +242,7 @@ Terminal metadata记录第N个边界的simulation timestamp、physics step和sta
 
 Canonical的普通LeRobot读取只遍历N行；WAM可通过terminal metadata读取额外边界图像。
 最后一个action是否进入某个训练窗口由合法future visual target和VAE grouping决定，不能据此删改Raw/Canonical。
-实际50Hz采集及terminal-before-reset hook尚待后续运行验收；不得通过复制12.5Hz帧伪装50Hz采集。
+DATA-004替代pilot已实测50Hz采集及terminal-before-reset；不得通过复制12.5Hz帧伪装50Hz采集。
 
 ---
 
@@ -642,15 +642,15 @@ contact_measurement_is_fresh
 
 ## First-task status and conditional Push Box observability — DATA-003
 
-Approach-and-Push Box is a **proposed first-task candidate / pending user approval**. Assets, camera coverage, task geometry and success/contact criteria require user approval before the task is frozen. No first task is approved yet.
+Approach-and-Push Box / Box 05 is **approved under DATA-004**. The current task requires full-footprint containment for 3 policy ticks; contact provenance is diagnostic only.
 
-若最终采用Push Box，冻结task profile前必须明确以下接触可观测性要求：
+Push Box 已批准。以下 pair evidence 要求仅在可用时作为诊断解释；不阻塞任务冻结、success或采集：
 
 - `task.contact.fl_object`必须来自可识别FL接触body与目标object的pair证据；`task.contact.body_object`独立记录非操作腿/机器人body与目标object的接触，并在task profile中明确body集合，不能把FL混入后者。
 - 接触证据记录两端body/object身份、measurement timestamp/sequence、来源/API、坐标系、可用force分量，以及validity和不可用原因；法向力与可用摩擦分量分别解释，torque不可用时不伪造。
 - Body-aggregated contact force（包括FL body净力）不能单独证明接触了目标物体，更不能单独证明任务由FL manipulation完成。距离+净力只作为inferred指标。
 - 未观测到pair数据必须视为unknown，不能写成confirmed false。现有bool列不能单独表达unknown；证据应保存在Raw或具名extensions并由后续版本化task profile绑定，不能仅凭bool值通过任务归因/发布验收。
-- 任务判定必须能区分FL-object、body-object及两者同时发生的情况。接触阈值、持续时间、body碰撞是否允许、与progress/success/termination的关系，均待用户审核，不在本次自动定义。
+- 任务判定必须能区分FL-object、body-object及两者同时发生的情况。用户已明确：接触不作为success/collection gate；success只依赖整个XY footprint进入区域且机器人未摔倒，连续3个50Hz policy ticks。
 
 这些是条件性的task contract要求，不表示sensor接线或真实pair观测已完成；现有通用schema与profile保持原版本和hash。
 
@@ -1493,3 +1493,22 @@ generate VAE/text cache
   - raw/canonical/model-cache repository separation
 
 This versioned document is the authoritative dataset specification for Adaptation v2. Specification acceptance does not assert production runtime or collection acceptance.
+
+
+## Current DATA-004 valid replacement pilot
+
+The prior 8.04s/402-action center-only pilot is invalid for current DATA-004 and excluded from future training. No legacy/compatibility path or history rewrite was introduced. The only current valid technical pilot is the new straight-push replacement under task profile `push-box-v2-2`.
+
+The reviewed narrow `local_x_min` face is allowed. Actual mesh bounds define its center/normal and all corners. Box dimensions are about30.0763x17.4538x22.6464cm. Nominal geometric center is(0.690382,0.142000,0.133114)m, face center(0.540000,0.142000,0.133114)m and normal(-1,0,0), yaw0. Robot stays at native reset XY origin; FL's neutral lateral command aligns the push line. No yaw randomization, controller replacement or model architecture change.
+
+The scripted expert approaches until the measured face distance is suitable, then approaches normally and advances the body with about0.38m FL forward reference. World-axis references are transformed into the existing projected-com native9 frame. This is demonstration generation using simulator state, not a learned-policy result. Intended face/commanded contact/actual FL EEF/box pose/yaw are recorded in audit-only task-review metadata.
+
+Success requires the entire projected source-box bounding volume inside goal x=[0.95,1.35], y=[-0.10,0.40]m and robot not fallen for3 consecutive50Hz policy ticks. Four XY envelope corners are computed from all8 pose-transformed3D corners, including roll/pitch. Contact remains diagnostic/unknown and never gates success; yaw is reported without a success threshold.
+
+The valid pilot lasts9.08s with454 completed actions. Full containment first appears at physics timestamp9036000000ns and policy timestamp9040000000ns; success ticks are9.04/9.06/9.08s. Terminal footprint X=[0.956747,1.297620],Y=[0.038445,0.257470]m is fully inside. Forward displacement0.436802m, net lateral displacement0.005958m. Yaw range[-12.405,1.875]degrees, final-7.396degrees; residual rotation is disclosed.
+
+Real terminal-before-reset/reset isolation passed on the current implementation and final pilot. Raw/canonical validation and MP4 decode passed:455 dual50Hz Raw boundaries,454 canonical rows/frames plus separate terminal state/RGB,908 controller steps,4540 physics steps/4541 snapshots,909 actual sensor updates,228 observer25Hz frames. Requested/executed native9 and zero desired force/external wrench retained. Observer is never a model input or success ground truth. DATA-002 schema/profile bytes are unchanged.
+
+WAM reads113 sampled RGB frames per view with inherited source timestamps, encodes real frozen VAE/T5, and reloads latents[1,48,29,24,20], actions/mask[1,9,29,16,1], text[1,512,4096]. Initial mask is false.448 actions enter complete groups;6 tail actions and their timestamps remain in Raw/canonical and are explicitly reported by cache metadata. Normalizer is diagnostic identity, not training statistics.
+
+Evidence: workspace `runs/audit/v2/DATA-004/straight-push-20260916T042259Z`. Two failed development collection attempts are excluded (spawn XY/controller reference mismatch; expert overreach and lateral deflection). Only the replacement is the current valid pilot. WAM73 and RAMBO220 CPU tests passed; real data/model gates were executed separately. The user accepted this replacement pilot and authorized DATA-004 commit/push. Further batch demonstrations require separate authorization; formal training/release and model server closed-loop remain not_run.

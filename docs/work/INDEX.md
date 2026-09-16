@@ -16,3 +16,4 @@ Generated from the shared registry; v1 numbering is independent.
 | DATA-002 | completed | [spec](../changes/archive/DATA-002/change-spec.md) | [plan](../work/archive/DATA-002/plan.md) |
 | DOC-001 | completed | [spec](../changes/archive/DOC-001/change-spec.md) | [plan](../work/archive/DOC-001/plan.md) |
 | DATA-003 | completed | [spec](../changes/archive/DATA-003/change-spec.md) | [plan](../work/archive/DATA-003/plan.md) |
+| DATA-004 | completed | [spec](../changes/archive/DATA-004/change-spec.md) | [plan](../work/archive/DATA-004/plan.md) |
