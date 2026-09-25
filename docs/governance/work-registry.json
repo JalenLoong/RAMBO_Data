@@ -225,6 +225,17 @@
       ],
       "change": "docs/changes/archive/TRAIN-002/change-spec.md",
       "plan": "docs/work/archive/TRAIN-002/plan.md"
+    },
+    {
+      "id": "TRAIN-003",
+      "category": "TRAIN",
+      "status": "completed",
+      "aliases": [],
+      "repositories": [
+        "WAM-Policy"
+      ],
+      "change": "docs/changes/archive/TRAIN-003/change-spec.md",
+      "plan": "docs/work/archive/TRAIN-003/plan.md"
     }
   ]
 }
